@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { localAPI } from '@/api/localClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,7 +23,7 @@ function BackgroundItem({ bg, onChange, onDelete, onMoveUp, onMoveDown, isFirst,
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    const { url: file_url } = await localAPI.upload(file);
     onChange({ ...bg, imageUrl: file_url, type: 'image' });
     setUploading(false);
   };

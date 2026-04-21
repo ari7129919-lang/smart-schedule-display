@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { base44 } from '@/api/base44Client';
+import { localAPI } from '@/api/localClient';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence } from 'framer-motion';
 
@@ -118,25 +118,25 @@ export default function Display({ previewMode = false }) {
   // Fetch data - forced refetch every 20 seconds
   const { data: settings } = useQuery({
     queryKey: ['settings'],
-    queryFn: () => base44.entities.SystemSettings.list(),
+    queryFn: () => localAPI.find('SystemSettings'),
     refetchInterval: 20000
   });
 
   const { data: daySchedules } = useQuery({
     queryKey: ['daySchedules'],
-    queryFn: () => base44.entities.DaySchedule.list(),
+    queryFn: () => localAPI.find('DaySchedule'),
     refetchInterval: 20000
   });
 
   const { data: notices } = useQuery({
     queryKey: ['notices'],
-    queryFn: () => base44.entities.Notice.list(),
+    queryFn: () => localAPI.find('Notice'),
     refetchInterval: 20000
   });
 
   const { data: phoneNumbers = [] } = useQuery({
     queryKey: ['phoneNumbers'],
-    queryFn: () => base44.entities.PhoneNumbers.list(),
+    queryFn: () => localAPI.find('PhoneNumbers'),
     refetchInterval: 20000
   });
 

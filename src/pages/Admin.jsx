@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { localAPI } from '@/api/localClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -116,34 +116,34 @@ export default function Admin() {
 
   const { data: daySchedules = [], isLoading: loadingSchedules } = useQuery({
     queryKey: ['daySchedules'],
-    queryFn: () => base44.entities.DaySchedule.list()
+    queryFn: () => localAPI.find('DaySchedule')
   });
 
   const { data: notices = [], isLoading: loadingNotices } = useQuery({
     queryKey: ['notices'],
-    queryFn: () => base44.entities.Notice.list()
+    queryFn: () => localAPI.find('Notice')
   });
 
-  const { data: settings = [] } = useQuery({
+  const { data: settings = [], isLoading: loadingSettings } = useQuery({
     queryKey: ['settings'],
-    queryFn: () => base44.entities.SystemSettings.list()
+    queryFn: () => localAPI.find('SystemSettings')
   });
 
-  const { data: phoneNumbers = [] } = useQuery({
+  const { data: phoneNumbers = [], isLoading: loadingPhoneNumbers } = useQuery({
     queryKey: ['phoneNumbers'],
-    queryFn: () => base44.entities.PhoneNumbers.list()
+    queryFn: () => localAPI.find('PhoneNumbers')
   });
 
   const savePhoneMutation = useMutation({
     mutationFn: (data) => {
-      if (data.id) return base44.entities.PhoneNumbers.update(data.id, data);
-      return base44.entities.PhoneNumbers.create(data);
+      if (data.id) return localAPI.update('PhoneNumbers', data.id, data);
+      return localAPI.create('PhoneNumbers', data);
     },
     onSuccess: () => queryClient.invalidateQueries(['phoneNumbers'])
   });
 
   const deletePhoneMutation = useMutation({
-    mutationFn: (id) => base44.entities.PhoneNumbers.delete(id),
+    mutationFn: (id) => localAPI.delete('PhoneNumbers', id),
     onSuccess: () => queryClient.invalidateQueries(['phoneNumbers'])
   });
 
@@ -156,15 +156,15 @@ export default function Admin() {
 
   useEffect(() => {
     setEditingSettings(systemSettings);
-  }, [systemSettings.id]);
+  }, [settings]);
 
   const saveScheduleMutation = useMutation({
     mutationFn: async (data) => {
       const existing = daySchedules.find(d => d.dayOfWeek === data.dayOfWeek);
       if (existing) {
-        return base44.entities.DaySchedule.update(existing.id, data);
+        return localAPI.update('DaySchedule', existing.id, data);
       }
-      return base44.entities.DaySchedule.create(data);
+      return localAPI.create('DaySchedule', data);
     },
     onSuccess: () => queryClient.invalidateQueries(['daySchedules'])
   });
@@ -172,9 +172,9 @@ export default function Admin() {
   const saveSettingsMutation = useMutation({
     mutationFn: async (data) => {
       if (systemSettings.id) {
-        return base44.entities.SystemSettings.update(systemSettings.id, data);
+        return localAPI.update('SystemSettings', systemSettings.id, data);
       }
-      return base44.entities.SystemSettings.create(data);
+      return localAPI.create('SystemSettings', data);
     },
     onSuccess: () => queryClient.invalidateQueries(['settings'])
   });
@@ -182,15 +182,15 @@ export default function Admin() {
   const saveNoticeMutation = useMutation({
     mutationFn: (data) => {
       if (data.id) {
-        return base44.entities.Notice.update(data.id, data);
+        return localAPI.update('Notice', data.id, data);
       }
-      return base44.entities.Notice.create(data);
+      return localAPI.create('Notice', data);
     },
     onSuccess: () => queryClient.invalidateQueries(['notices'])
   });
 
   const deleteNoticeMutation = useMutation({
-    mutationFn: (id) => base44.entities.Notice.delete(id),
+    mutationFn: (id) => localAPI.delete('Notice', id),
     onSuccess: () => queryClient.invalidateQueries(['notices'])
   });
 
@@ -1379,7 +1379,7 @@ function NoticesManager({ notices, onSave, onDelete }) {
                     onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
-                      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+                      const { url: file_url } = await localAPI.upload(file);
                       setEditingNotice({...editingNotice, pdfUrl: file_url});
                     }}
                   />
@@ -1412,7 +1412,7 @@ function NoticesManager({ notices, onSave, onDelete }) {
                     onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
-                      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+                      const { url: file_url } = await localAPI.upload(file);
                       setEditingNotice({...editingNotice, imageUrl: file_url});
                     }}
                   />
