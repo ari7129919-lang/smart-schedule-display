@@ -1,0 +1,259 @@
+{
+  "name": "SystemSettings",
+  "type": "object",
+  "properties": {
+    "screenProfile": {
+      "type": "string",
+      "enum": [
+        "14",
+        "32",
+        "50",
+        "60"
+      ],
+      "description": "\u05e4\u05e8\u05d5\u05e4\u05d9\u05dc \u05d2\u05d5\u05d3\u05dc \u05de\u05e1\u05da"
+    },
+    "tickerText": {
+      "type": "string"
+    },
+    "contactInfo": {
+      "type": "string"
+    },
+    "operatingHours": {
+      "type": "string"
+    },
+    "fixedRules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "overrideMode": {
+      "type": "string",
+      "enum": [
+        "none",
+        "kickoff",
+        "break",
+        "motzei",
+        "custom"
+      ]
+    },
+    "overrideDay": {
+      "type": "string"
+    },
+    "customModeConfig": {
+      "type": "object",
+      "properties": {
+        "showNotices": {
+          "type": "boolean"
+        },
+        "showGroups": {
+          "type": "boolean"
+        },
+        "showCongrats": {
+          "type": "boolean"
+        },
+        "showCircle": {
+          "type": "boolean"
+        },
+        "showRules": {
+          "type": "boolean"
+        },
+        "showTicker": {
+          "type": "boolean"
+        },
+        "showHeader": {
+          "type": "boolean"
+        },
+        "showDutyPerson": {
+          "type": "boolean"
+        },
+        "fullScreenMessage": {
+          "type": "boolean"
+        },
+        "customMessage": {
+          "type": "string"
+        }
+      }
+    },
+    "groupRotationSeconds": {
+      "type": "number"
+    },
+    "noticeRotationSeconds": {
+      "type": "number"
+    },
+    "timerTitle": {
+      "type": "string"
+    },
+    "timerFullScreenMinutes": {
+      "type": "number"
+    },
+    "dualNoticeMode": {
+      "type": "boolean"
+    },
+    "pauseAllSessionAdvance": {
+      "type": "boolean"
+    },
+    "boardDesign": {
+      "type": "object",
+      "properties": {
+        "bgColor": {
+          "type": "string"
+        },
+        "primaryColor": {
+          "type": "string"
+        },
+        "sideColumnWidth": {
+          "type": "string"
+        },
+        "noticeFontScale": {
+          "type": "number"
+        },
+        "cardOpacity": {
+          "type": "number"
+        },
+        "clockFontScale": {
+          "type": "number"
+        },
+        "headerTitleScale": {
+          "type": "number"
+        },
+        "blockTextScale": {
+          "type": "number"
+        },
+        "tickerFontScale": {
+          "type": "number"
+        }
+      }
+    },
+    "motzeiConfig": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "subtitle": {
+          "type": "string"
+        },
+        "contactLabel": {
+          "type": "string"
+        },
+        "contactNumber": {
+          "type": "string"
+        },
+        "showClock": {
+          "type": "boolean"
+        },
+        "clockStyle": {
+          "type": "string"
+        },
+        "clockSize": {
+          "type": "number"
+        }
+      }
+    },
+    "breakConfig": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "subtitle": {
+          "type": "string"
+        },
+        "defaultDuration": {
+          "type": "number"
+        },
+        "bgColor": {
+          "type": "string"
+        }
+      }
+    },
+    "kickoffConfig": {
+      "type": "object",
+      "properties": {
+        "readyTitle": {
+          "type": "string"
+        },
+        "readySubtitle": {
+          "type": "string"
+        },
+        "startedTitle": {
+          "type": "string"
+        },
+        "quietText": {
+          "type": "string"
+        },
+        "showClock": {
+          "type": "boolean"
+        },
+        "clockStyle": {
+          "type": "string"
+        },
+        "clockSize": {
+          "type": "number"
+        }
+      }
+    },
+    "backgrounds": {
+      "type": "array",
+      "description": "\u05e8\u05e9\u05d9\u05de\u05ea \u05e8\u05e7\u05e2\u05d9\u05dd \u05de\u05d5\u05d2\u05d3\u05e8\u05d9\u05dd",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "none",
+              "image",
+              "html"
+            ]
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "htmlContent": {
+            "type": "string"
+          },
+          "displayMode": {
+            "type": "string",
+            "enum": [
+              "full",
+              "watermark"
+            ]
+          },
+          "opacity": {
+            "type": "number"
+          },
+          "fitMode": {
+            "type": "string",
+            "enum": [
+              "cover",
+              "contain",
+              "stretch",6
+              "center"
+            ]
+          },
+          "durationSeconds": {
+            "type": "number"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "backgroundRotationEnabled": {
+      "type": "boolean",
+      "description": "\u05d4\u05d0\u05dd \u05dc\u05d4\u05d7\u05dc\u05d9\u05e3 \u05e8\u05e7\u05e2\u05d9\u05dd \u05d0\u05d5\u05d8\u05d5\u05de\u05d8\u05d9\u05ea"
+    }
+  },
+  "required": [
+    "screenProfile"
+  ]
+}

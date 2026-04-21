@@ -1,0 +1,152 @@
+{
+  "name": "DaySchedule",
+  "type": "object",
+  "properties": {
+    "dayOfWeek": {
+      "type": "string",
+      "enum": [
+        "sunday",
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "saturday"
+      ],
+      "description": "\u05d9\u05d5\u05dd \u05d1\u05e9\u05d1\u05d5\u05e2"
+    },
+    "workshops": {
+      "type": "array",
+      "description": "\u05e8\u05e9\u05d9\u05de\u05ea \u05e1\u05d3\u05e0\u05d0\u05d5\u05ea \u05dc\u05d9\u05d5\u05dd \u05d6\u05d4",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "startTime": {
+            "type": "string"
+          },
+          "endTime": {
+            "type": "string"
+          },
+          "totalSessions": {
+            "type": "number"
+          },
+          "currentSession": {
+            "type": "number"
+          },
+          "baseSession": {
+            "type": "number",
+            "description": "\u05de\u05e4\u05d2\u05e9 \u05d1\u05e1\u05d9\u05e1 \u05dc\u05de\u05d9\u05e1\u05e4\u05d5\u05e8 \u05d0\u05d5\u05d8\u05d5\u05de\u05d8\u05d9 (\u05e9\u05d1\u05d5\u05e2 \u05e8\u05d0\u05e9\u05d5\u05df)"
+          },
+          "pauseSessionAdvance": {
+            "type": "boolean",
+            "description": "\u05d4\u05e9\u05d4\u05d4 \u05de\u05d9\u05e1\u05e4\u05d5\u05e8 \u05dc\u05e1\u05d3\u05e0\u05d0 \u05d6\u05d5 \u05d1\u05dc\u05d1\u05d3"
+          },
+          "kickoffEnabled": {
+            "type": "boolean"
+          },
+          "hideSmallGroups": {
+            "type": "boolean"
+          },
+          "hideInternalCircle": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "dutyPerson": {
+      "type": "string",
+      "description": "\u05d0\u05d7\u05e8\u05d0\u05d9 \u05ea\u05d5\u05e8\u05df"
+    },
+    "weekStartDate": {
+      "type": "string",
+      "format": "date",
+      "description": "\u05ea\u05d0\u05e8\u05d9\u05da \u05ea\u05d7\u05d9\u05dc\u05ea \u05de\u05d7\u05d6\u05d5\u05e8 \u05d4\u05e9\u05d1\u05d5\u05e2\u05d5\u05ea \u2014 \u05d4\u05de\u05e2\u05e8\u05db\u05ea \u05ea\u05d7\u05e9\u05d1 \u05de\u05e4\u05d2\u05e9 \u05d0\u05d5\u05d8\u05d5\u05de\u05d8\u05d9 \u05dc\u05e4\u05d9 \u05e9\u05d1\u05d5\u05e2\u05d5\u05ea \u05e9\u05e2\u05d1\u05e8\u05d5"
+    },
+    "pauseAllSessionAdvance": {
+      "type": "boolean",
+      "description": "\u05d4\u05e9\u05d4\u05d4 \u05d0\u05ea \u05db\u05dc \u05d4\u05de\u05d9\u05e1\u05e4\u05d5\u05e8\u05d9\u05dd \u05d1\u05d9\u05d5\u05dd \u05d6\u05d4 (\u05e9\u05d1\u05d5\u05e2 \u05d7\u05d5\u05e4\u05e9)"
+    },
+    "allCircleMembers": {
+      "type": "array",
+      "description": "\u05db\u05dc \u05d7\u05d1\u05e8\u05d9 \u05d4\u05de\u05e2\u05d2\u05dc \u05d4\u05e4\u05e0\u05d9\u05de\u05d9 \u05dc\u05d7\u05dc\u05d5\u05e7\u05d4 \u05d0\u05d5\u05d8\u05d5\u05de\u05d8\u05d9\u05ea \u05dc-3 \u05e7\u05d1\u05d5\u05e6\u05d5\u05ea",
+      "items": {
+        "type": "string"
+      }
+    },
+    "internalCircleLists": {
+      "type": "array",
+      "description": "3 \u05e8\u05e9\u05d9\u05de\u05d5\u05ea \u05dc\u05de\u05e2\u05d2\u05dc \u05e4\u05e0\u05d9\u05de\u05d9 \u05de\u05d7\u05d6\u05d5\u05e8\u05d9",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "currentCircleIndex": {
+      "type": "number",
+      "description": "\u05d0\u05d9\u05e0\u05d3\u05e7\u05e1 \u05d4\u05e8\u05e9\u05d9\u05de\u05d4 \u05d4\u05e0\u05d5\u05db\u05d7\u05d9\u05ea (1-3)"
+    },
+    "circleDisplayMode": {
+      "type": "string",
+      "enum": [
+        "all",
+        "range_only"
+      ],
+      "description": "\u05d0\u05d5\u05e4\u05df \u05d4\u05e6\u05d2\u05ea \u05d4\u05de\u05e2\u05d2\u05dc: all = \u05d2\u05dc\u05d9\u05dc\u05ea \u05db\u05dc \u05d4\u05e9\u05de\u05d5\u05ea, range_only = \u05e9\u05dd \u05e8\u05d0\u05e9\u05d5\u05df \u05d5\u05d0\u05d7\u05e8\u05d5\u05df \u05d1\u05dc\u05d1\u05d3"
+    },
+    "hideSmallGroups": {
+      "type": "boolean",
+      "description": "\u05d4\u05e1\u05ea\u05e8 \u05e7\u05d1\u05d5\u05e6\u05d5\u05ea \u05e7\u05d8\u05e0\u05d5\u05ea \u05d1\u05ea\u05e6\u05d5\u05d2\u05d4 \u05dc\u05d9\u05d5\u05dd \u05d6\u05d4"
+    },
+    "hideInternalCircle": {
+      "type": "boolean",
+      "description": "\u05d4\u05e1\u05ea\u05e8 \u05de\u05e2\u05d2\u05dc \u05e4\u05e0\u05d9\u05de\u05d9 \u05d1\u05ea\u05e6\u05d5\u05d2\u05d4 \u05dc\u05d9\u05d5\u05dd \u05d6\u05d4"
+    },
+    "smallGroups": {
+      "type": "array",
+      "description": "\u05e7\u05d1\u05d5\u05e6\u05d5\u05ea \u05e7\u05d8\u05e0\u05d5\u05ea",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "congratulations": {
+      "type": "array",
+      "description": "\u05e8\u05e9\u05d9\u05de\u05ea \u05de\u05d6\u05dc \u05d8\u05d5\u05d1",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "breakDurations": {
+      "type": "array",
+      "description": "\u05de\u05e9\u05db\u05d9 \u05d4\u05e4\u05e1\u05e7\u05d5\u05ea \u05d1\u05d3\u05e7\u05d5\u05ea",
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "required": [
+    "dayOfWeek"
+  ]
+}
