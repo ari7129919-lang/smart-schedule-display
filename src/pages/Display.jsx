@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { localAPI } from '@/api/localClient';
+import { supabaseAPI } from '@/api/supabaseClient';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence } from 'framer-motion';
 
@@ -118,25 +118,25 @@ export default function Display({ previewMode = false }) {
   // Fetch data - forced refetch every 20 seconds
   const { data: settings } = useQuery({
     queryKey: ['settings'],
-    queryFn: () => localAPI.find('SystemSettings'),
+    queryFn: () => supabaseAPI.find('SystemSettings'),
     refetchInterval: 20000
   });
 
   const { data: daySchedules } = useQuery({
     queryKey: ['daySchedules'],
-    queryFn: () => localAPI.find('DaySchedule'),
+    queryFn: () => supabaseAPI.find('DaySchedule'),
     refetchInterval: 20000
   });
 
   const { data: notices } = useQuery({
     queryKey: ['notices'],
-    queryFn: () => localAPI.find('Notice'),
+    queryFn: () => supabaseAPI.find('Notice'),
     refetchInterval: 20000
   });
 
   const { data: phoneNumbers = [] } = useQuery({
     queryKey: ['phoneNumbers'],
-    queryFn: () => localAPI.find('PhoneNumbers'),
+    queryFn: () => supabaseAPI.find('PhoneNumbers'),
     refetchInterval: 20000
   });
 
@@ -309,15 +309,11 @@ export default function Display({ previewMode = false }) {
         .bg-secondary { background-color: var(--secondary); }
         .bg-leaf { background-color: var(--leaf); }
         .bg-accent { background-color: var(--accent); }
-        .bg-neutral { background-color: var(--neutral); }
-        .border-neutral { border-color: var(--neutral); }
-        .border-accent { border-color: var(--accent); }
       `}</style>
 
       {/* Custom background layer — below everything */}
       <BackgroundLayer settings={systemSettings} onCurrentBgChange={setCurrentBg} />
 
-      <TimerOverlay screenScale={screenScale} fullScreenThresholdSeconds={timerFullScreenSeconds} />
       {!isFullBg && <BackgroundLeaves 
         extraLeaves={
           (displayMode === 'normal' || displayMode === 'custom') &&
@@ -327,15 +323,6 @@ export default function Display({ previewMode = false }) {
       />}
 
       <AnimatePresence mode="wait">
-        {displayMode === 'kickoff' && (
-          <KickoffMode 
-            key="kickoff"
-            screenScale={screenScale} 
-            onComplete={handleKickoffComplete}
-            kickoffConfig={systemSettings.kickoffConfig || {}}
-          />
-        )}
-        
         {displayMode === 'break' && (
           <BreakMode 
             key="break"
@@ -351,7 +338,7 @@ export default function Display({ previewMode = false }) {
         )}
       </AnimatePresence>
 
-      {(displayMode === 'normal' || displayMode === 'custom') && (
+      {(displayMode === 'normal' || displayMode === 'custom' || displayMode === 'kickoff') && (
         <div className="h-full flex flex-col">
           {shouldShow('showHeader') && (
             <Header 
@@ -412,8 +399,18 @@ export default function Display({ previewMode = false }) {
               </div>
 
               {/* Center Column */}
-              <div className="flex-1 min-w-0">
-                {shouldShow('showNotices') && (
+              <div className="flex-1 min-w-0 relative">
+                <TimerOverlay screenScale={screenScale} fullScreenThresholdSeconds={timerFullScreenSeconds} centerOnly={true} />
+                {displayMode === 'kickoff' && (
+                  <KickoffMode
+                    key="kickoff"
+                    screenScale={screenScale}
+                    onComplete={handleKickoffComplete}
+                    kickoffConfig={systemSettings.kickoffConfig || {}}
+                    centerOnly={true}
+                  />
+                )}
+                {shouldShow('showNotices') && displayMode !== 'kickoff' && (
                   <NoticesGallery 
                     notices={todayNotices}
                     rotationSeconds={systemSettings.noticeRotationSeconds || 20}
@@ -421,7 +418,6 @@ export default function Display({ previewMode = false }) {
                     dualMode={systemSettings.dualNoticeMode || false}
                     cardOpacity={cardOpacity}
                   />
-
                 )}
               </div>
 

@@ -1,7 +1,7 @@
 // Local API client to replace Base44
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? '/api' 
-  : 'http://localhost:3001/api';
+const API_BASE_URL = process.env.NODE_ENV === 'production'
+  ? 'http://YOUR_IP:3015/api'  // ← החלף ב-IP או דומיין שלך
+  : 'http://localhost:3015/api';
 
 class LocalAPI {
   constructor() {

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { localAPI } from '@/api/localClient';
+import React, { useState, useEffect, useRef } from 'react';
+import { supabaseAPI } from '@/api/supabaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { 
   Settings, Calendar, FileText, Users, Clock, Play, 
   Plus, Trash2, Save, Eye, RefreshCw, Monitor, Timer, ExternalLink, Phone,
-  Palette, Star
+  Palette, Star, Copy
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -116,34 +116,34 @@ export default function Admin() {
 
   const { data: daySchedules = [], isLoading: loadingSchedules } = useQuery({
     queryKey: ['daySchedules'],
-    queryFn: () => localAPI.find('DaySchedule')
+    queryFn: () => supabaseAPI.find('DaySchedule')
   });
 
   const { data: notices = [], isLoading: loadingNotices } = useQuery({
     queryKey: ['notices'],
-    queryFn: () => localAPI.find('Notice')
+    queryFn: () => supabaseAPI.find('Notice')
   });
 
   const { data: settings = [], isLoading: loadingSettings } = useQuery({
     queryKey: ['settings'],
-    queryFn: () => localAPI.find('SystemSettings')
+    queryFn: () => supabaseAPI.find('SystemSettings')
   });
 
   const { data: phoneNumbers = [], isLoading: loadingPhoneNumbers } = useQuery({
     queryKey: ['phoneNumbers'],
-    queryFn: () => localAPI.find('PhoneNumbers')
+    queryFn: () => supabaseAPI.find('PhoneNumbers')
   });
 
   const savePhoneMutation = useMutation({
     mutationFn: (data) => {
-      if (data.id) return localAPI.update('PhoneNumbers', data.id, data);
-      return localAPI.create('PhoneNumbers', data);
+      if (data.id) return supabaseAPI.update('PhoneNumbers', data.id, data);
+      return supabaseAPI.create('PhoneNumbers', data);
     },
     onSuccess: () => queryClient.invalidateQueries(['phoneNumbers'])
   });
 
   const deletePhoneMutation = useMutation({
-    mutationFn: (id) => localAPI.delete('PhoneNumbers', id),
+    mutationFn: (id) => supabaseAPI.delete('PhoneNumbers', id),
     onSuccess: () => queryClient.invalidateQueries(['phoneNumbers'])
   });
 
@@ -155,16 +155,24 @@ export default function Admin() {
   }, [activeDay, daySchedules]);
 
   useEffect(() => {
-    setEditingSettings(systemSettings);
-  }, [settings]);
+    if (systemSettings && Object.keys(systemSettings).length > 0) {
+      setEditingSettings(prev => {
+        // Only update if different to prevent infinite loop
+        if (JSON.stringify(prev) !== JSON.stringify(systemSettings)) {
+          return systemSettings;
+        }
+        return prev;
+      });
+    }
+  }, [systemSettings]);
 
   const saveScheduleMutation = useMutation({
     mutationFn: async (data) => {
       const existing = daySchedules.find(d => d.dayOfWeek === data.dayOfWeek);
       if (existing) {
-        return localAPI.update('DaySchedule', existing.id, data);
+        return supabaseAPI.update('DaySchedule', existing.id, data);
       }
-      return localAPI.create('DaySchedule', data);
+      return supabaseAPI.create('DaySchedule', data);
     },
     onSuccess: () => queryClient.invalidateQueries(['daySchedules'])
   });
@@ -172,9 +180,9 @@ export default function Admin() {
   const saveSettingsMutation = useMutation({
     mutationFn: async (data) => {
       if (systemSettings.id) {
-        return localAPI.update('SystemSettings', systemSettings.id, data);
+        return supabaseAPI.update('SystemSettings', systemSettings.id, data);
       }
-      return localAPI.create('SystemSettings', data);
+      return supabaseAPI.create('SystemSettings', data);
     },
     onSuccess: () => queryClient.invalidateQueries(['settings'])
   });
@@ -182,15 +190,15 @@ export default function Admin() {
   const saveNoticeMutation = useMutation({
     mutationFn: (data) => {
       if (data.id) {
-        return localAPI.update('Notice', data.id, data);
+        return supabaseAPI.update('Notice', data.id, data);
       }
-      return localAPI.create('Notice', data);
+      return supabaseAPI.create('Notice', data);
     },
     onSuccess: () => queryClient.invalidateQueries(['notices'])
   });
 
   const deleteNoticeMutation = useMutation({
-    mutationFn: (id) => localAPI.delete('Notice', id),
+    mutationFn: (id) => supabaseAPI.delete('Notice', id),
     onSuccess: () => queryClient.invalidateQueries(['notices'])
   });
 
@@ -406,392 +414,475 @@ export default function Admin() {
 
             {editingSchedule && (
               <>
-                {/* Workshops */}
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
-                      <Clock className="w-5 h-5" />
-                      סדנאות - יום {dayNames[activeDay]}
-                    </CardTitle>
-                    <div className="flex gap-2">
-                      <Button onClick={handleStartWorkshop} variant="outline" className="gap-2">
-                        <Play className="w-4 h-4" />
-                        עדכן מפגש נוכחי
-                      </Button>
-                      <Button onClick={addWorkshop} size="sm" className="gap-2">
-                        <Plus className="w-4 h-4" />
-                        הוסף סדנא
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {editingSchedule.workshops?.map((workshop, idx) => (
-                      <div key={idx} className="p-4 border rounded-lg space-y-4 bg-gray-50">
-                        <div className="flex items-center justify-between">
-                          <Badge variant="secondary">סדנא {idx + 1}</Badge>
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => removeWorkshop(idx)}
-                          >
-                            <Trash2 className="w-4 h-4 text-red-500" />
+                {/* Day Content Tabs */}
+                <Tabs defaultValue="workshops" className="space-y-4">
+                  <TabsList className="bg-white shadow-sm flex-wrap h-auto">
+                    <TabsTrigger value="workshops" className="gap-2">
+                      <Clock className="w-4 h-4" />
+                      סדנאות
+                    </TabsTrigger>
+                    <TabsTrigger value="circle" className="gap-2">
+                      <Users className="w-4 h-4" />
+                      מעגל פנימי
+                    </TabsTrigger>
+                    <TabsTrigger value="groups" className="gap-2">
+                      <Users className="w-4 h-4" />
+                      קבוצות קטנות
+                    </TabsTrigger>
+                    <TabsTrigger value="congrats" className="gap-2">
+                      <Star className="w-4 h-4" />
+                      מזל טוב
+                    </TabsTrigger>
+                    <TabsTrigger value="settings" className="gap-2">
+                      <Settings className="w-4 h-4" />
+                      הגדרות נוספות
+                    </TabsTrigger>
+                  </TabsList>
+
+                  {/* Workshops Tab */}
+                  <TabsContent value="workshops" className="space-y-4">
+                    <Card>
+                      <CardHeader className="flex flex-row items-center justify-between">
+                        <CardTitle className="flex items-center gap-2">
+                          <Clock className="w-5 h-5" />
+                          סדנאות - יום {dayNames[activeDay]}
+                        </CardTitle>
+                        <div className="flex gap-2">
+                          <Button onClick={handleStartWorkshop} variant="outline" className="gap-2">
+                            <Play className="w-4 h-4" />
+                            עדכן מפגש נוכחי
+                          </Button>
+                          <Button onClick={addWorkshop} size="sm" className="gap-2">
+                            <Plus className="w-4 h-4" />
+                            הוסף סדנא
                           </Button>
                         </div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          <div>
-                            <Label>שם הסדנא</Label>
-                            <Input
-                              value={workshop.name || ''}
-                              onChange={e => updateWorkshop(idx, 'name', e.target.value)}
-                              placeholder="שם הסדנא"
-                            />
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {editingSchedule.workshops?.map((workshop, idx) => (
+                          <div key={idx} className="p-4 border rounded-lg space-y-4 bg-gray-50">
+                            <div className="flex items-center justify-between">
+                              <Badge variant="secondary">סדנא {idx + 1}</Badge>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => removeWorkshop(idx)}
+                              >
+                                <Trash2 className="w-4 h-4 text-red-500" />
+                              </Button>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                              <div>
+                                <Label>שם הסדנא</Label>
+                                <Input
+                                  value={workshop.name || ''}
+                                  onChange={e => updateWorkshop(idx, 'name', e.target.value)}
+                                  placeholder="שם הסדנא"
+                                />
+                              </div>
+                              <div>
+                                <Label>שעת התחלה</Label>
+                                <Input
+                                  type="time"
+                                  value={workshop.startTime || ''}
+                                  onChange={e => updateWorkshop(idx, 'startTime', e.target.value)}
+                                />
+                              </div>
+                              <div>
+                                <Label>שעת סיום</Label>
+                                <Input
+                                  type="time"
+                                  value={workshop.endTime || ''}
+                                  onChange={e => updateWorkshop(idx, 'endTime', e.target.value)}
+                                />
+                              </div>
+                              <div>
+                                <Label>מפגש נוכחי (מתוך 12)</Label>
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  max="12"
+                                  value={workshop.currentSession || 1}
+                                  onChange={e => updateWorkshop(idx, 'currentSession', Number(e.target.value))}
+                                />
+                                {/* Show auto-calculated session based on weekStartDate */}
+                                {(() => {
+                                  const weekStart = editingSchedule.weekStartDate ? new Date(editingSchedule.weekStartDate) : null;
+                                  const globalPause = systemSettings.pauseAllSessionAdvance;
+                                  const dayPause = editingSchedule.pauseAllSessionAdvance;
+                                  if (!weekStart || globalPause || dayPause || workshop.pauseSessionAdvance) return null;
+                                  const now = new Date();
+                                  const msSinceStart = now - weekStart;
+                                  if (msSinceStart < 0) return null;
+                                  const weeksPassed = Math.floor(msSinceStart / (7 * 24 * 60 * 60 * 1000));
+                                  const base = workshop.baseSession || workshop.currentSession || 1;
+                                  const auto = Math.min(base + weeksPassed, workshop.totalSessions || 12);
+                                  return (
+                                    <p className="text-xs text-blue-600 mt-1 font-medium">
+                                      📺 מוצג בתצוגה: מפגש {auto}
+                                    </p>
+                                  );
+                                })()}
+                              </div>
+                              <div className="flex items-center gap-2 pt-6">
+                                <Switch
+                                  checked={workshop.kickoffEnabled}
+                                  onCheckedChange={v => updateWorkshop(idx, 'kickoffEnabled', v)}
+                                />
+                                <Label>הפעל Kickoff</Label>
+                              </div>
+                              <div className="flex items-center gap-2 pt-6">
+                                <Switch
+                                  checked={workshop.hideSmallGroups !== true}
+                                  onCheckedChange={v => updateWorkshop(idx, 'hideSmallGroups', !v)}
+                                />
+                                <Label>הצג קבוצות קטנות</Label>
+                              </div>
+                              <div className="flex items-center gap-2 pt-6">
+                                <Switch
+                                   checked={workshop.hideInternalCircle !== true}
+                                  onCheckedChange={v => updateWorkshop(idx, 'hideInternalCircle', !v)}
+                                />
+                                <Label>הצג מעגל פנימי</Label>
+                              </div>
+                              <div className="flex items-center gap-2 pt-6">
+                                <Switch
+                                  checked={workshop.pauseSessionAdvance === true}
+                                  onCheckedChange={v => updateWorkshop(idx, 'pauseSessionAdvance', v)}
+                                />
+                                <Label className="text-orange-600 font-medium">⏸ השהה מיספור מפגשים</Label>
+                              </div>
+                              <div>
+                                <Label>מפגש בסיס (למיספור אוטומטי)</Label>
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  max="12"
+                                  value={workshop.baseSession || workshop.currentSession || 1}
+                                  onChange={e => updateWorkshop(idx, 'baseSession', Number(e.target.value))}
+                                  placeholder="מפגש התחלתי"
+                                />
+                                <p className="text-xs text-gray-400 mt-1">המפגש שממנו מתחיל המיספור (בשבוע הראשון)</p>
+                              </div>
+                            </div>
                           </div>
-                          <div>
-                            <Label>שעת התחלה</Label>
-                            <Input
-                              type="time"
-                              value={workshop.startTime || ''}
-                              onChange={e => updateWorkshop(idx, 'startTime', e.target.value)}
-                            />
-                          </div>
-                          <div>
-                            <Label>שעת סיום</Label>
-                            <Input
-                              type="time"
-                              value={workshop.endTime || ''}
-                              onChange={e => updateWorkshop(idx, 'endTime', e.target.value)}
-                            />
-                          </div>
-                          <div>
-                            <Label>מפגש נוכחי (מתוך 12)</Label>
-                            <Input
-                              type="number"
-                              min="1"
-                              max="12"
-                              value={workshop.currentSession || 1}
-                              onChange={e => updateWorkshop(idx, 'currentSession', Number(e.target.value))}
-                            />
-                            {/* Show auto-calculated session based on weekStartDate */}
-                            {(() => {
-                              const weekStart = editingSchedule.weekStartDate ? new Date(editingSchedule.weekStartDate) : null;
-                              const globalPause = systemSettings.pauseAllSessionAdvance;
-                              const dayPause = editingSchedule.pauseAllSessionAdvance;
-                              if (!weekStart || globalPause || dayPause || workshop.pauseSessionAdvance) return null;
-                              const now = new Date();
-                              const msSinceStart = now - weekStart;
-                              if (msSinceStart < 0) return null;
-                              const weeksPassed = Math.floor(msSinceStart / (7 * 24 * 60 * 60 * 1000));
-                              const base = workshop.baseSession || workshop.currentSession || 1;
-                              const auto = Math.min(base + weeksPassed, workshop.totalSessions || 12);
-                              return (
-                                <p className="text-xs text-blue-600 mt-1 font-medium">
-                                  📺 מוצג בתצוגה: מפגש {auto}
-                                </p>
-                              );
-                            })()}
-                          </div>
-                          <div className="flex items-center gap-2 pt-6">
-                            <Switch
-                              checked={workshop.kickoffEnabled}
-                              onCheckedChange={v => updateWorkshop(idx, 'kickoffEnabled', v)}
-                            />
-                            <Label>הפעל Kickoff</Label>
-                          </div>
-                          <div className="flex items-center gap-2 pt-6">
-                            <Switch
-                              checked={workshop.hideSmallGroups !== true}
-                              onCheckedChange={v => updateWorkshop(idx, 'hideSmallGroups', !v)}
-                            />
-                            <Label>הצג קבוצות קטנות</Label>
-                          </div>
-                          <div className="flex items-center gap-2 pt-6">
-                            <Switch
-                               checked={workshop.hideInternalCircle !== true}
-                              onCheckedChange={v => updateWorkshop(idx, 'hideInternalCircle', !v)}
-                            />
-                            <Label>הצג מעגל פנימי</Label>
-                          </div>
-                          <div className="flex items-center gap-2 pt-6">
-                            <Switch
-                              checked={workshop.pauseSessionAdvance === true}
-                              onCheckedChange={v => updateWorkshop(idx, 'pauseSessionAdvance', v)}
-                            />
-                            <Label className="text-orange-600 font-medium">⏸ השהה מיספור מפגשים</Label>
-                          </div>
-                          <div>
-                            <Label>מפגש בסיס (למיספור אוטומטי)</Label>
-                            <Input
-                              type="number"
-                              min="1"
-                              max="12"
-                              value={workshop.baseSession || workshop.currentSession || 1}
-                              onChange={e => updateWorkshop(idx, 'baseSession', Number(e.target.value))}
-                              placeholder="מפגש התחלתי"
-                            />
-                            <p className="text-xs text-gray-400 mt-1">המפגש שממנו מתחיל המיספור (בשבוע הראשון)</p>
-                          </div>
-                          </div>
-                          </div>
-                          ))}
-                          {(!editingSchedule.workshops || editingSchedule.workshops.length === 0) && (
-                      <p className="text-gray-500 text-center py-8">אין סדנאות מוגדרות ליום זה</p>
-                    )}
-                  </CardContent>
-                </Card>
+                        ))}
+                        {(!editingSchedule.workshops || editingSchedule.workshops.length === 0) && (
+                          <p className="text-gray-500 text-center py-8">אין סדנאות מוגדרות ליום זה</p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
 
-                {/* Week settings */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Clock className="w-5 h-5" />
-                      הגדרות מיספור מפגשים
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label>תאריך תחילת מחזור (שבוע ראשון)</Label>
-                        <Input
-                          type="date"
-                          value={editingSchedule.weekStartDate || ''}
-                          onChange={e => setEditingSchedule({...editingSchedule, weekStartDate: e.target.value})}
-                        />
-                        <p className="text-xs text-gray-400 mt-1">
-                          המערכת תחשב אוטומטית את מספר השבועות שעברו ותעלה את המפגש בהתאם
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 bg-orange-50 rounded-lg border border-orange-200">
-                      <Switch
-                        checked={editingSchedule.pauseAllSessionAdvance === true}
-                        onCheckedChange={v => setEditingSchedule({...editingSchedule, pauseAllSessionAdvance: v})}
-                      />
-                      <div>
-                        <Label className="text-orange-700 font-medium">⏸ השהה את כל המיספורים ליום זה</Label>
-                        <p className="text-xs text-orange-500 mt-0.5">שימושי בשבוע חופש — המיספור לא יעלה לאף סדנא ביום זה</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Duty Person */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>אחראי שותפים</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <Input
-                      value={editingSchedule.dutyPerson || ''}
-                      onChange={e => setEditingSchedule({...editingSchedule, dutyPerson: e.target.value})}
-                      placeholder="שם האחראי"
-                    />
-                  </CardContent>
-                </Card>
-
-                {/* Internal Circle Lists - Auto Division */}
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <CardTitle>מעגל פנימי - חלוקה אוטומטית</CardTitle>
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          checked={editingSchedule.hideInternalCircle !== true}
-                          onCheckedChange={v => setEditingSchedule({...editingSchedule, hideInternalCircle: !v})}
-                        />
-                        <Label className="text-sm text-gray-500">הצג בתצוגה</Label>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <Label>כל חברי המעגל (הכנס את כולם - המערכת תחלק אוטומטית ל-3 קבוצות)</Label>
-                      <Textarea
-                        className="mt-1 h-28"
-                        value={(editingSchedule.allCircleMembers || []).join(', ')}
-                        onChange={e => {
-                          const all = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
-                          // Auto-split into 3 roughly equal groups
-                          const total = all.length;
-                          const base = Math.floor(total / 3);
-                          const extra = total % 3;
-                          const g1 = all.slice(0, base + (extra > 0 ? 1 : 0));
-                          const g2 = all.slice(g1.length, g1.length + base + (extra > 1 ? 1 : 0));
-                          const g3 = all.slice(g1.length + g2.length);
-                          setEditingSchedule({
-                            ...editingSchedule,
-                            allCircleMembers: all,
-                            internalCircleLists: [g1, g2, g3]
-                          });
-                        }}
-                        placeholder="שמות מופרדים בפסיקים: ראובן, שמעון, לוי, יהודה..."
-                      />
-                      {(editingSchedule.allCircleMembers?.length > 0) && (
-                        <p className="text-sm text-green-600 mt-1">
-                          סה"כ {editingSchedule.allCircleMembers.length} אנשים — מחולק ל: {(editingSchedule.internalCircleLists || []).map(l => l.length).join(' / ')}
-                        </p>
-                      )}
-                    </div>
-                    <div className="border-t pt-3">
-                      <Label className="font-medium">אופן הצגת המעגל בתצוגה</Label>
-                      <div className="flex gap-3 mt-2 mb-4">
-                        <button
-                          type="button"
-                          onClick={() => setEditingSchedule({...editingSchedule, circleDisplayMode: 'all'})}
-                          className={`flex-1 py-2 px-3 rounded-lg border text-sm font-medium transition-colors ${
-                            (editingSchedule.circleDisplayMode || 'all') === 'all'
-                              ? 'bg-blue-600 text-white border-blue-600'
-                              : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
-                          }`}
-                        >
-                          📜 גלילת כל השמות
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEditingSchedule({...editingSchedule, circleDisplayMode: 'range_only'})}
-                          className={`flex-1 py-2 px-3 rounded-lg border text-sm font-medium transition-colors ${
-                            editingSchedule.circleDisplayMode === 'range_only'
-                              ? 'bg-blue-600 text-white border-blue-600'
-                              : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
-                          }`}
-                        >
-                          🔤 שם ראשון ואחרון בלבד
-                        </button>
-                      </div>
-                    </div>
-                    <div className="border-t pt-3">
-                      <p className="text-xs text-gray-500 mb-2">קבוצות שנוצרו אוטומטית (ניתן לערוך ידנית):</p>
-                      {[0, 1, 2].map(listIdx => (
-                        <div key={listIdx} className="mb-2">
-                          <Label className="text-xs">קבוצה {listIdx + 1} ({(editingSchedule.internalCircleLists?.[listIdx] || []).length} אנשים)</Label>
-                          <Textarea
-                            className="h-16 text-sm"
-                            value={(editingSchedule.internalCircleLists?.[listIdx] || []).join(', ')}
-                            onChange={e => {
-                              const lists = [...(editingSchedule.internalCircleLists || [[], [], []])];
-                              lists[listIdx] = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
-                              setEditingSchedule({...editingSchedule, internalCircleLists: lists});
-                            }}
-                            placeholder="שמות מופרדים בפסיקים"
-                          />
+                  {/* Internal Circle Tab */}
+                  <TabsContent value="circle" className="space-y-4">
+                    <Card>
+                      <CardHeader className="flex flex-row items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <CardTitle>מעגל פנימי - חלוקה אוטומטית</CardTitle>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={editingSchedule.hideInternalCircle !== true}
+                              onCheckedChange={v => setEditingSchedule({...editingSchedule, hideInternalCircle: !v})}
+                            />
+                            <Label className="text-sm text-gray-500">הצג בתצוגה</Label>
+                          </div>
                         </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Small Groups */}
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <CardTitle>קבוצות קטנות</CardTitle>
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          checked={editingSchedule.hideSmallGroups !== true}
-                          onCheckedChange={v => setEditingSchedule({...editingSchedule, hideSmallGroups: !v})}
-                        />
-                        <Label className="text-sm text-gray-500">הצג בתצוגה</Label>
-                      </div>
-                    </div>
-                    <Button onClick={addSmallGroup} size="sm" className="gap-2">
-                      <Plus className="w-4 h-4" />
-                      הוסף קבוצה
-                    </Button>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {editingSchedule.smallGroups?.map((group, idx) => (
-                      <div key={idx} className="p-4 border rounded-lg space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Input
-                            value={group.name || ''}
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div>
+                          <Label>כל חברי המעגל (הכנס את כולם - המערכת תחלק אוטומטית ל-3 קבוצות)</Label>
+                          <Textarea
+                            className="mt-1 h-28"
+                            value={(editingSchedule.allCircleMembers || []).join(', ')}
                             onChange={e => {
-                              const groups = [...editingSchedule.smallGroups];
-                              groups[idx] = { ...groups[idx], name: e.target.value };
-                              setEditingSchedule({...editingSchedule, smallGroups: groups});
-                            }}
-                            placeholder="שם הקבוצה"
-                            className="flex-1"
-                          />
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => {
+                              const all = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                              // Auto-split into 3 roughly equal groups
+                              const total = all.length;
+                              const base = Math.floor(total / 3);
+                              const extra = total % 3;
+                              const g1 = all.slice(0, base + (extra > 0 ? 1 : 0));
+                              const g2 = all.slice(g1.length, g1.length + base + (extra > 1 ? 1 : 0));
+                              const g3 = all.slice(g1.length + g2.length);
                               setEditingSchedule({
                                 ...editingSchedule,
-                                smallGroups: editingSchedule.smallGroups.filter((_, i) => i !== idx)
+                                allCircleMembers: all,
+                                internalCircleLists: [g1, g2, g3]
                               });
                             }}
-                          >
-                            <Trash2 className="w-4 h-4 text-red-500" />
+                            placeholder="שמות מופרדים בפסיקים: ראובן, שמעון, לוי, יהודה..."
+                          />
+                          {(editingSchedule.allCircleMembers?.length > 0) && (
+                            <p className="text-sm text-green-600 mt-1">
+                              סה"כ {editingSchedule.allCircleMembers.length} אנשים — מחולק ל: {(editingSchedule.internalCircleLists || []).map(l => l.length).join(' / ')}
+                            </p>
+                          )}
+                        </div>
+                        <div className="border-t pt-3">
+                          <Label className="font-medium">אופן הצגת המעגל בתצוגה</Label>
+                          <div className="flex gap-3 mt-2 mb-4">
+                            <button
+                              type="button"
+                              onClick={() => setEditingSchedule({...editingSchedule, circleDisplayMode: 'all'})}
+                              className={`flex-1 py-2 px-3 rounded-lg border text-sm font-medium transition-colors ${
+                                (editingSchedule.circleDisplayMode || 'all') === 'all'
+                                  ? 'bg-blue-600 text-white border-blue-600'
+                                  : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                              }`}
+                            >
+                              📜 גלילת כל השמות
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingSchedule({...editingSchedule, circleDisplayMode: 'range_only'})}
+                              className={`flex-1 py-2 px-3 rounded-lg border text-sm font-medium transition-colors ${
+                                editingSchedule.circleDisplayMode === 'range_only'
+                                  ? 'bg-blue-600 text-white border-blue-600'
+                                  : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                              }`}
+                            >
+                              🔤 שם ראשון ואחרון בלבד
+                            </button>
+                          </div>
+                        </div>
+                        <div className="border-t pt-3">
+                          <p className="text-xs text-gray-500 mb-2">קבוצות שנוצרו אוטומטית (ניתן לערוך ידנית):</p>
+                          {[0, 1, 2].map(listIdx => (
+                            <div key={listIdx} className="mb-2">
+                              <Label className="text-xs">קבוצה {listIdx + 1} ({(editingSchedule.internalCircleLists?.[listIdx] || []).length} אנשים)</Label>
+                              <Textarea
+                                className="h-16 text-sm"
+                                value={(editingSchedule.internalCircleLists?.[listIdx] || []).join(', ')}
+                                onChange={e => {
+                                  const lists = [...(editingSchedule.internalCircleLists || [[], [], []])];
+                                  lists[listIdx] = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                                  setEditingSchedule({...editingSchedule, internalCircleLists: lists});
+                                }}
+                                placeholder="שמות מופרדים בפסיקים"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+
+                  {/* Small Groups Tab */}
+                  <TabsContent value="groups" className="space-y-4">
+                    <Card>
+                      <CardHeader className="flex flex-row items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <CardTitle>קבוצות קטנות</CardTitle>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={editingSchedule.hideSmallGroups !== true}
+                              onCheckedChange={v => setEditingSchedule({...editingSchedule, hideSmallGroups: !v})}
+                            />
+                            <Label className="text-sm text-gray-500">הצג בתצוגה</Label>
+                          </div>
+                        </div>
+                        <Button onClick={addSmallGroup} size="sm" className="gap-2">
+                          <Plus className="w-4 h-4" />
+                          הוסף קבוצה
+                        </Button>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {editingSchedule.smallGroups?.map((group, idx) => (
+                          <div key={idx} className="p-4 border rounded-lg space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Input
+                                value={group.name || ''}
+                                onChange={e => {
+                                  const groups = [...editingSchedule.smallGroups];
+                                  groups[idx] = { ...groups[idx], name: e.target.value };
+                                  setEditingSchedule({...editingSchedule, smallGroups: groups});
+                                }}
+                                placeholder="שם הקבוצה"
+                                className="flex-1"
+                              />
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setEditingSchedule({
+                                    ...editingSchedule,
+                                    smallGroups: editingSchedule.smallGroups.filter((_, i) => i !== idx)
+                                  });
+                                }}
+                              >
+                                <Trash2 className="w-4 h-4 text-red-500" />
+                              </Button>
+                            </div>
+                            <Textarea
+                              value={(group.members || []).join(', ')}
+                              onChange={e => {
+                                const groups = [...editingSchedule.smallGroups];
+                                groups[idx] = {
+                                  ...groups[idx],
+                                  members: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
+                                };
+                                setEditingSchedule({...editingSchedule, smallGroups: groups});
+                              }}
+                              placeholder="חברי קבוצה מופרדים בפסיקים"
+                            />
+                          </div>
+                        ))}
+                        {(!editingSchedule.smallGroups || editingSchedule.smallGroups.length === 0) && (
+                          <p className="text-gray-500 text-center py-8">אין קבוצות קטנות מוגדרות ליום זה</p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+
+                  {/* Congratulations Tab */}
+                  <TabsContent value="congrats" className="space-y-4">
+                    <Card>
+                      <CardHeader className="flex flex-row items-center justify-between">
+                        <CardTitle className="flex items-center gap-2">
+                          <Star className="w-5 h-5" />
+                          מזל טוב - יום {dayNames[activeDay]}
+                        </CardTitle>
+                        <div className="flex gap-2">
+                          <CopyCongratsDropdown
+                            daySchedules={daySchedules}
+                            currentDay={activeDay}
+                            currentCongrats={editingSchedule.congratulations || []}
+                            onCopy={(targetDay) => {
+                              const targetSchedule = daySchedules.find(d => d.dayOfWeek === targetDay);
+                              if (targetSchedule?.congratulations?.length > 0) {
+                                setEditingSchedule(prev => ({
+                                  ...prev,
+                                  congratulations: [...(prev.congratulations || []), ...targetSchedule.congratulations]
+                                }));
+                              }
+                            }}
+                            onSaveAndCopy={(targetDays) => {
+                              // First save current
+                              handleSaveSchedule();
+                              // Then copy to other days
+                              targetDays.forEach(targetDay => {
+                                const targetSchedule = daySchedules.find(d => d.dayOfWeek === targetDay);
+                                if (targetSchedule) {
+                                  const updatedSchedule = {
+                                    ...targetSchedule,
+                                    congratulations: [...(targetSchedule.congratulations || []), ...(editingSchedule.congratulations || [])]
+                                  };
+                                  saveScheduleMutation.mutate(updatedSchedule);
+                                } else {
+                                  // Create new schedule for that day
+                                  saveScheduleMutation.mutate({
+                                    dayOfWeek: targetDay,
+                                    congratulations: editingSchedule.congratulations || []
+                                  });
+                                }
+                              });
+                            }}
+                          />
+                          <Button onClick={addCongrats} size="sm" className="gap-2">
+                            <Plus className="w-4 h-4" />
+                            הוסף ברכה
                           </Button>
                         </div>
-                        <Textarea
-                          value={(group.members || []).join(', ')}
-                          onChange={e => {
-                            const groups = [...editingSchedule.smallGroups];
-                            groups[idx] = { 
-                              ...groups[idx], 
-                              members: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
-                            };
-                            setEditingSchedule({...editingSchedule, smallGroups: groups});
-                          }}
-                          placeholder="חברי קבוצה מופרדים בפסיקים"
-                        />
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {editingSchedule.congratulations?.map((item, idx) => (
+                          <div key={idx} className="flex gap-2 items-start p-3 border rounded-lg bg-gray-50">
+                            <Input
+                              value={item.name || ''}
+                              onChange={e => {
+                                const congrats = [...editingSchedule.congratulations];
+                                congrats[idx] = { ...congrats[idx], name: e.target.value };
+                                setEditingSchedule({...editingSchedule, congratulations: congrats});
+                              }}
+                              placeholder="שם"
+                              className="w-1/3"
+                            />
+                            <Input
+                              value={item.message || ''}
+                              onChange={e => {
+                                const congrats = [...editingSchedule.congratulations];
+                                congrats[idx] = { ...congrats[idx], message: e.target.value };
+                                setEditingSchedule({...editingSchedule, congratulations: congrats});
+                              }}
+                              placeholder="הודעה (אופציונלי)"
+                              className="flex-1"
+                            />
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                setEditingSchedule({
+                                  ...editingSchedule,
+                                  congratulations: editingSchedule.congratulations.filter((_, i) => i !== idx)
+                                });
+                              }}
+                            >
+                              <Trash2 className="w-4 h-4 text-red-500" />
+                            </Button>
+                          </div>
+                        ))}
+                        {(!editingSchedule.congratulations || editingSchedule.congratulations.length === 0) && (
+                          <p className="text-gray-500 text-center py-8">אין ברכות מוגדרות ליום זה</p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
 
-                {/* Congratulations */}
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle>מזל טוב</CardTitle>
-                    <Button onClick={addCongrats} size="sm" className="gap-2">
-                      <Plus className="w-4 h-4" />
-                      הוסף
-                    </Button>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {editingSchedule.congratulations?.map((item, idx) => (
-                      <div key={idx} className="flex gap-2 items-start">
+                  {/* Settings Tab */}
+                  <TabsContent value="settings" className="space-y-4">
+                    {/* Week settings */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Clock className="w-5 h-5" />
+                          הגדרות מיספור מפגשים
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label>תאריך תחילת מחזור (שבוע ראשון)</Label>
+                            <Input
+                              type="date"
+                              value={editingSchedule.weekStartDate || ''}
+                              onChange={e => setEditingSchedule({...editingSchedule, weekStartDate: e.target.value})}
+                            />
+                            <p className="text-xs text-gray-400 mt-1">
+                              המערכת תחשב אוטומטית את מספר השבועות שעברו ותעלה את המפגש בהתאם
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 p-3 bg-orange-50 rounded-lg border border-orange-200">
+                          <Switch
+                            checked={editingSchedule.pauseAllSessionAdvance === true}
+                            onCheckedChange={v => setEditingSchedule({...editingSchedule, pauseAllSessionAdvance: v})}
+                          />
+                          <div>
+                            <Label className="text-orange-700 font-medium">⏸ השהה את כל המיספורים ליום זה</Label>
+                            <p className="text-xs text-orange-500 mt-0.5">שימושי בשבוע חופש — המיספור לא יעלה לאף סדנא ביום זה</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Duty Person */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>אחראי שותפים</CardTitle>
+                      </CardHeader>
+                      <CardContent>
                         <Input
-                          value={item.name || ''}
-                          onChange={e => {
-                            const congrats = [...editingSchedule.congratulations];
-                            congrats[idx] = { ...congrats[idx], name: e.target.value };
-                            setEditingSchedule({...editingSchedule, congratulations: congrats});
-                          }}
-                          placeholder="שם"
-                          className="w-1/3"
+                          value={editingSchedule.dutyPerson || ''}
+                          onChange={e => setEditingSchedule({...editingSchedule, dutyPerson: e.target.value})}
+                          placeholder="שם האחראי"
                         />
-                        <Input
-                          value={item.message || ''}
-                          onChange={e => {
-                            const congrats = [...editingSchedule.congratulations];
-                            congrats[idx] = { ...congrats[idx], message: e.target.value };
-                            setEditingSchedule({...editingSchedule, congratulations: congrats});
-                          }}
-                          placeholder="הודעה (אופציונלי)"
-                          className="flex-1"
-                        />
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => {
-                            setEditingSchedule({
-                              ...editingSchedule,
-                              congratulations: editingSchedule.congratulations.filter((_, i) => i !== idx)
-                            });
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4 text-red-500" />
-                        </Button>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                </Tabs>
 
                 <div className="flex justify-end">
-                  <Button 
+                  <Button
                     onClick={handleSaveSchedule}
                     disabled={saveScheduleMutation.isPending}
                     className="gap-2"
@@ -1160,6 +1251,115 @@ export default function Admin() {
   );
 }
 
+function CopyCongratsDropdown({ daySchedules, currentDay, currentCongrats, onCopy, onSaveAndCopy }) {
+  const [open, setOpen] = useState(false);
+  const [selectedDays, setSelectedDays] = useState([]);
+  const dropdownRef = useRef(null);
+
+  const otherDays = daySchedules.filter(d => d.dayOfWeek !== currentDay && d.congratulations?.length > 0);
+  const dayOrderFiltered = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'saturday'].filter(d => d !== currentDay);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleDayToggle = (day) => {
+    setSelectedDays(prev => 
+      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
+    );
+  };
+
+  const handleCopyFrom = (targetDay) => {
+    onCopy(targetDay);
+    setOpen(false);
+  };
+
+  const handleSaveAndCopy = () => {
+    if (selectedDays.length > 0) {
+      onSaveAndCopy(selectedDays);
+      setSelectedDays([]);
+      setOpen(false);
+    }
+  };
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <Button 
+        onClick={() => setOpen(!open)} 
+        variant="outline" 
+        size="sm" 
+        className="gap-2"
+        disabled={currentCongrats.length === 0 && otherDays.length === 0}
+      >
+        <Copy className="w-4 h-4" />
+        שכפל
+      </Button>
+      
+      {open && (
+        <div className="absolute left-0 top-full mt-1 w-72 bg-white border rounded-lg shadow-lg z-50 p-3">
+          {/* Copy FROM other days */}
+          {otherDays.length > 0 && (
+            <div className="mb-4 pb-3 border-b">
+              <p className="text-sm font-medium text-gray-700 mb-2">העתק מיום אחר:</p>
+              <div className="space-y-1">
+                {otherDays.map(schedule => (
+                  <button
+                    key={schedule.dayOfWeek}
+                    onClick={() => handleCopyFrom(schedule.dayOfWeek)}
+                    className="w-full text-right px-3 py-2 rounded hover:bg-gray-100 text-sm"
+                  >
+                    {dayNames[schedule.dayOfWeek]} ({schedule.congratulations.length} ברכות)
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Copy TO other days */}
+          {currentCongrats.length > 0 && (
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-2">שמור ושכפל לימים:</p>
+              <div className="space-y-1 mb-3">
+                {dayOrderFiltered.map(day => (
+                  <label key={day} className="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-50 rounded cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedDays.includes(day)}
+                      onChange={() => handleDayToggle(day)}
+                      className="rounded border-gray-300"
+                    />
+                    <span className="text-sm">{dayNames[day]}</span>
+                  </label>
+                ))}
+              </div>
+              <Button 
+                onClick={handleSaveAndCopy}
+                disabled={selectedDays.length === 0}
+                size="sm"
+                className="w-full"
+              >
+                שמור ושכפל ({selectedDays.length} ימים)
+              </Button>
+            </div>
+          )}
+          
+          {currentCongrats.length === 0 && otherDays.length === 0 && (
+            <p className="text-sm text-gray-500 text-center py-2">
+              אין ברכות לשכפול
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function PhoneNumbersManager({ phones, onSave, onDelete }) {
   const [editing, setEditing] = useState(null);
 
@@ -1379,8 +1579,22 @@ function NoticesManager({ notices, onSave, onDelete }) {
                     onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
-                      const { url: file_url } = await localAPI.upload(file);
-                      setEditingNotice({...editingNotice, pdfUrl: file_url});
+                      if (file.size > 10 * 1024 * 1024) {
+                        alert('הקובץ גדול מדי. מקסימום 10MB');
+                        return;
+                      }
+                      try {
+                        const result = await supabaseAPI.upload(file);
+                        if (result && result.url) {
+                          setEditingNotice({...editingNotice, pdfUrl: result.url});
+                        } else {
+                          alert('שגיאה בהעלאת הקובץ');
+                        }
+                      } catch (error) {
+                        console.error('Upload error:', error);
+                        alert('שגיאה בהעלאת הקובץ: ' + (error.message || 'בעיית חיבור לשרת'));
+                      }
+                      e.target.value = '';
                     }}
                   />
                 </label>
@@ -1412,8 +1626,22 @@ function NoticesManager({ notices, onSave, onDelete }) {
                     onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
-                      const { url: file_url } = await localAPI.upload(file);
-                      setEditingNotice({...editingNotice, imageUrl: file_url});
+                      if (file.size > 10 * 1024 * 1024) {
+                        alert('הקובץ גדול מדי. מקסימום 10MB');
+                        return;
+                      }
+                      try {
+                        const result = await supabaseAPI.upload(file);
+                        if (result && result.url) {
+                          setEditingNotice({...editingNotice, imageUrl: result.url});
+                        } else {
+                          alert('שגיאה בהעלאת הקובץ');
+                        }
+                      } catch (error) {
+                        console.error('Upload error:', error);
+                        alert('שגיאה בהעלאת הקובץ: ' + (error.message || 'בעיית חיבור לשרת'));
+                      }
+                      e.target.value = '';
                     }}
                   />
                 </label>

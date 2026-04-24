@@ -3,9 +3,10 @@ import cors from 'cors';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { db, dbHelpers, initDatabase, initSampleData } from './database.js';
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3015;
 
 // Middleware
 app.use(cors());
@@ -29,18 +30,6 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage });
-
-// In-memory storage (replace with database in production)
-const db = {
-  DaySchedule: [],
-  Notice: [],
-  PhoneNumbers: [],
-  SystemSettings: {},
-  users: []
-};
-
-// Helper functions
-const generateId = () => Date.now().toString() + Math.random().toString(36).substr(2, 9);
 
 // Auth middleware (simplified)
 const authMiddleware = (req, res, next) => {
@@ -73,60 +62,64 @@ app.get('/api/auth/me', authMiddleware, (req, res) => {
 });
 
 // Entity routes
-app.get('/api/:entity', authMiddleware, (req, res) => {
-  const { entity } = req.params;
-  const data = db[entity] || [];
-  res.json(data);
+app.get('/api/:entity', authMiddleware, async (req, res) => {
+  try {
+    const { entity } = req.params;
+    const data = await dbHelpers.findAll(entity);
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
-app.get('/api/:entity/:id', authMiddleware, (req, res) => {
-  const { entity, id } = req.params;
-  const data = db[entity] || [];
-  const item = data.find(item => item.id === id);
-  
-  if (!item) {
-    return res.status(404).json({ error: 'Not found' });
+app.get('/api/:entity/:id', authMiddleware, async (req, res) => {
+  try {
+    const { entity, id } = req.params;
+    const item = await dbHelpers.findById(entity, id);
+    
+    if (!item) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+    
+    res.json(item);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-  
-  res.json(item);
 });
 
-app.post('/api/:entity', authMiddleware, (req, res) => {
-  const { entity } = req.params;
-  const item = { id: generateId(), ...req.body, createdAt: new Date().toISOString() };
-  
-  if (!db[entity]) {
-    db[entity] = [];
+app.post('/api/:entity', authMiddleware, async (req, res) => {
+  try {
+    const { entity } = req.params;
+    const item = await dbHelpers.create(entity, req.body);
+    res.json(item);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-  
-  db[entity].push(item);
-  res.json(item);
 });
 
-app.put('/api/:entity/:id', authMiddleware, (req, res) => {
-  const { entity, id } = req.params;
-  const data = db[entity] || [];
-  const index = data.findIndex(item => item.id === id);
-  
-  if (index === -1) {
-    return res.status(404).json({ error: 'Not found' });
+app.put('/api/:entity/:id', authMiddleware, async (req, res) => {
+  try {
+    const { entity, id } = req.params;
+    const item = await dbHelpers.update(entity, id, req.body);
+    
+    if (!item) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+    
+    res.json(item);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-  
-  data[index] = { ...data[index], ...req.body, updatedAt: new Date().toISOString() };
-  res.json(data[index]);
 });
 
-app.delete('/api/:entity/:id', authMiddleware, (req, res) => {
-  const { entity, id } = req.params;
-  const data = db[entity] || [];
-  const index = data.findIndex(item => item.id === id);
-  
-  if (index === -1) {
-    return res.status(404).json({ error: 'Not found' });
+app.delete('/api/:entity/:id', authMiddleware, async (req, res) => {
+  try {
+    const { entity, id } = req.params;
+    const result = await dbHelpers.delete(entity, id);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-  
-  data.splice(index, 1);
-  res.json({ message: 'Deleted' });
 });
 
 // File upload route
@@ -139,36 +132,13 @@ app.post('/api/upload', authMiddleware, upload.single('file'), (req, res) => {
   res.json({ url: fileUrl, filename: req.file.filename });
 });
 
-// Initialize sample data
-function initializeSampleData() {
-  // Sample system settings
-  db.SystemSettings = [{
-    id: '1',
-    organizationName: 'Smart Schedule Display',
-    theme: 'default',
-    screenScale: '32',
-    autoRefresh: true
-  }];
-
-  // Sample phone numbers
-  db.PhoneNumbers = [
-    { id: '1', name: 'Office', number: '123-456-7890', active: true },
-    { id: '2', name: 'Emergency', number: '911', active: true }
-  ];
-
-  // Sample notices
-  db.Notice = [
-    { id: '1', title: 'Welcome', content: 'Welcome to Smart Schedule Display', active: true },
-    { id: '2', title: 'Meeting', content: 'Team meeting at 3 PM', active: true }
-  ];
-
-  console.log('Sample data initialized');
-}
-
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
-  initializeSampleData();
+  
+  // Initialize database
+  await initDatabase();
+  await initSampleData();
 });
 
 export default app;

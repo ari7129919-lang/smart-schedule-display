@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { localAPI } from '@/api/localClient';
+import { supabaseAPI } from '@/api/supabaseClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,10 +22,29 @@ function BackgroundItem({ bg, onChange, onDelete, onMoveUp, onMoveDown, isFirst,
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('הקובץ גדול מדי. מקסימום 10MB');
+      return;
+    }
+
     setUploading(true);
-    const { url: file_url } = await localAPI.upload(file);
-    onChange({ ...bg, imageUrl: file_url, type: 'image' });
-    setUploading(false);
+    try {
+      const result = await supabaseAPI.upload(file);
+      if (result && result.url) {
+        onChange({ ...bg, imageUrl: result.url, type: 'image' });
+      } else {
+        alert('שגיאה בהעלאת הקובץ: תשובה לא תקינה מהשרת');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('שגיאה בהעלאת הקובץ: ' + (error.message || 'בעיית חיבור לשרת'));
+    } finally {
+      setUploading(false);
+      // Reset file input
+      e.target.value = '';
+    }
   };
 
   return (
@@ -105,7 +124,7 @@ function BackgroundItem({ bg, onChange, onDelete, onMoveUp, onMoveDown, isFirst,
                 <span className="inline-flex items-center gap-1 px-3 py-2 bg-white hover:bg-gray-100 border border-gray-300 rounded-md text-sm font-medium whitespace-nowrap transition-colors shadow-sm">
                   {uploading ? '⏳ מעלה...' : '📎 העלה קובץ'}
                 </span>
-                <input type="file" accept="image/*,.gif,.webp,.svg" className="hidden" onChange={handleFileUpload} disabled={uploading} />
+                <input type="file" accept="image/*,.gif,.webp,.svg,.pdf" className="hidden" onChange={handleFileUpload} disabled={uploading} />
               </label>
             </div>
             {bg.imageUrl && (
