@@ -62,6 +62,7 @@ export default function Header({
   totalSessions = 12,
   screenScale = 1,
   showProgress = true,
+  hideSessionText = false,
   timerEndTime = null,
   timerTitle = '',
   workshopName = '',
@@ -261,19 +262,21 @@ export default function Header({
 
           {showProgress && (
             <>
-              {/* Session label */}
-              <div
-                className="font-bold"
-                style={{
-                  fontSize: `${22 * screenScale}px`,
-                  color: primary,
-                  opacity: 0.85,
-                  marginTop: `${8 * screenScale}px`,
-                  letterSpacing: '0.01em',
-                }}
-              >
-                מפגש {currentSession} מתוך {totalSessions}
-              </div>
+              {/* Session label - hidden when hideSessionText is true */}
+              {!hideSessionText && (
+                <div
+                  className="font-bold"
+                  style={{
+                    fontSize: `${22 * screenScale}px`,
+                    color: primary,
+                    opacity: 0.85,
+                    marginTop: `${8 * screenScale}px`,
+                    letterSpacing: '0.01em',
+                  }}
+                >
+                  מפגש {currentSession} מתוך {totalSessions}
+                </div>
+              )}
 
               {/* Progress dots only */}
               <div className="flex items-center flex-wrap justify-center" style={{ gap: `${6 * screenScale}px`, marginTop: `${10 * screenScale}px` }}>

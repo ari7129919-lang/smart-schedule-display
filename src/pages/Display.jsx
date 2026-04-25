@@ -149,6 +149,7 @@ export default function Display({ previewMode = false }) {
   const sideWidth = design.sideColumnWidth ? `${design.sideColumnWidth}%` : '25%';
   const centerWidth = design.sideColumnWidth ? `${100 - 2 * parseInt(design.sideColumnWidth)}%` : '50%';
   const noticeFontScale = parseFloat(design.noticeFontScale) || 1.0;
+  const noticeContentScale = parseFloat(design.noticeContentScale) || 1.0;
   const cardOpacity = parseInt(design.cardOpacity) || 88;
   const clockFontScale = parseFloat(design.clockFontScale) || 1.0;
   const headerTitleScale = parseFloat(design.headerTitleScale) || 1.0;
@@ -343,9 +344,10 @@ export default function Display({ previewMode = false }) {
           {shouldShow('showHeader') && (
             <Header 
               currentSession={currentWorkshop?.currentSession || 1}
-              totalSessions={12}
+              totalSessions={currentWorkshop?.totalSessions || 12}
               screenScale={screenScale}
               showProgress={displayMode !== 'custom' || customConfig.showProgress !== false}
+              hideSessionText={currentWorkshop?.hideSessionText || false}
               timerEndTime={timerEndTime}
               timerTitle={systemSettings.timerTitle || ''}
               workshopName={currentWorkshop?.name || ''}
@@ -417,6 +419,8 @@ export default function Display({ previewMode = false }) {
                     screenScale={screenScale * noticeFontScale}
                     dualMode={systemSettings.dualNoticeMode || false}
                     cardOpacity={cardOpacity}
+                    noticeFontScale={noticeFontScale}
+                    noticeContentScale={noticeContentScale}
                   />
                 )}
               </div>

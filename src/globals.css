@@ -138,3 +138,48 @@ body {
 }
 
 /* Logo animation handled by framer-motion in Header component */
+
+/* Jodit editor custom styling */
+.rich-text-editor .jodit-container {
+  border: none !important;
+  border-radius: 0 0 8px 8px;
+}
+
+.rich-text-editor .jodit-toolbar {
+  background: #f9fafb;
+  border-bottom: 1px solid #d1d5db;
+  border-radius: 8px 8px 0 0;
+}
+
+.rich-text-editor .jodit-workplace {
+  min-height: 150px;
+  max-height: 300px;
+}
+
+.rich-text-editor .jodit-wysiwyg {
+  min-height: 150px;
+  padding: 12px;
+  line-height: 1.6;
+  direction: rtl;
+  text-align: right;
+}
+
+.rich-text-editor .jodit-wysiwyg p {
+  margin: 0.5em 0;
+}
+
+/* Jodit toolbar buttons */
+.rich-text-editor .jodit-toolbar-button {
+  height: 28px;
+  width: 28px;
+}
+
+.rich-text-editor .jodit-toolbar-button__button {
+  padding: 3px;
+}
+
+/* Ensure Jodit editor fits in modal properly */
+.rich-text-editor .jodit-container {
+  border-radius: 0 0 8px 8px;
+  overflow: hidden;
+}

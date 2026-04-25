@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { 
   Settings, Calendar, FileText, Users, Clock, Play, 
   Plus, Trash2, Save, Eye, RefreshCw, Monitor, Timer, ExternalLink, Phone,
@@ -505,11 +506,21 @@ export default function Admin() {
                                 />
                               </div>
                               <div>
-                                <Label>מפגש נוכחי (מתוך 12)</Label>
+                                <Label>מספר מפגשים בסה"כ</Label>
                                 <Input
                                   type="number"
                                   min="1"
-                                  max="12"
+                                  max="52"
+                                  value={workshop.totalSessions || 12}
+                                  onChange={e => updateWorkshop(idx, 'totalSessions', Number(e.target.value))}
+                                />
+                              </div>
+                              <div>
+                                <Label>מפגש נוכחי (מתוך {workshop.totalSessions || 12})</Label>
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  max={workshop.totalSessions || 12}
                                   value={workshop.currentSession || 1}
                                   onChange={e => updateWorkshop(idx, 'currentSession', Number(e.target.value))}
                                 />
@@ -548,7 +559,7 @@ export default function Admin() {
                               </div>
                               <div className="flex items-center gap-2 pt-6">
                                 <Switch
-                                   checked={workshop.hideInternalCircle !== true}
+                                  checked={workshop.hideInternalCircle !== true}
                                   onCheckedChange={v => updateWorkshop(idx, 'hideInternalCircle', !v)}
                                 />
                                 <Label>הצג מעגל פנימי</Label>
@@ -560,12 +571,19 @@ export default function Admin() {
                                 />
                                 <Label className="text-orange-600 font-medium">⏸ השהה מיספור מפגשים</Label>
                               </div>
+                              <div className="flex items-center gap-2 pt-6">
+                                <Switch
+                                  checked={workshop.hideSessionText === true}
+                                  onCheckedChange={v => updateWorkshop(idx, 'hideSessionText', v)}
+                                />
+                                <Label>הסתר טקסט מפגש (הצג רק פס התקדמות)</Label>
+                              </div>
                               <div>
                                 <Label>מפגש בסיס (למיספור אוטומטי)</Label>
                                 <Input
                                   type="number"
                                   min="1"
-                                  max="12"
+                                  max={workshop.totalSessions || 12}
                                   value={workshop.baseSession || workshop.currentSession || 1}
                                   onChange={e => updateWorkshop(idx, 'baseSession', Number(e.target.value))}
                                   placeholder="מפגש התחלתי"
@@ -924,283 +942,309 @@ export default function Admin() {
           {/* System Settings */}
           <TabsContent value="settings" className="space-y-6">
             {editingSettings && (
-              <>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Monitor className="w-5 h-5" />
-                      הגדרות תצוגה
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border">
-                      <Switch
-                        checked={editingSettings.dualNoticeMode || false}
-                        onCheckedChange={v => setEditingSettings({...editingSettings, dualNoticeMode: v})}
-                      />
-                      <div>
-                        <Label className="font-medium">הצג שתי מודעות בו זמנית</Label>
-                        <p className="text-sm text-gray-500 mt-0.5">שתי מודעות יוצגו זה לצד זה בעמודת המרכז</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-4 bg-orange-50 rounded-lg border border-orange-200">
-                      <Switch
-                        checked={editingSettings.pauseAllSessionAdvance === true}
-                        onCheckedChange={v => setEditingSettings({...editingSettings, pauseAllSessionAdvance: v})}
-                      />
-                      <div>
-                        <Label className="text-orange-700 font-medium">⏸ השהה את כל המיספורים בכל הימים (שבוע חופש)</Label>
-                        <p className="text-sm text-orange-500 mt-0.5">כשמופעל — המיספור לא יתקדם אוטומטית באף יום עד שתכבה זאת</p>
-                      </div>
-                    </div>
-                    <div>
-                      <Label>פרופיל מסך</Label>
-                      <Select
-                        value={editingSettings.screenProfile || '50'}
-                        onValueChange={v => setEditingSettings({...editingSettings, screenProfile: v})}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="14">14 אינץ' (לפטופ)</SelectItem>
-                          <SelectItem value="32">32 אינץ'</SelectItem>
-                          <SelectItem value="50">50 אינץ'</SelectItem>
-                          <SelectItem value="60">60 אינץ' (מסך גדול)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label>החלפת קבוצה (שניות)</Label>
-                        <Input
-                          type="number"
-                          value={editingSettings.groupRotationSeconds || 8}
-                          onChange={e => setEditingSettings({...editingSettings, groupRotationSeconds: Number(e.target.value)})}
-                        />
-                      </div>
-                      <div>
-                        <Label>החלפת מודעה (שניות)</Label>
-                        <Input
-                          type="number"
-                          value={editingSettings.noticeRotationSeconds || 20}
-                          onChange={e => setEditingSettings({...editingSettings, noticeRotationSeconds: Number(e.target.value)})}
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+              <Tabs defaultValue="display" className="space-y-4">
+                <TabsList className="bg-white shadow-sm flex-wrap h-auto">
+                  <TabsTrigger value="display" className="gap-2">
+                    <Monitor className="w-4 h-4" />
+                    תצוגה
+                  </TabsTrigger>
+                  <TabsTrigger value="timers" className="gap-2">
+                    <Timer className="w-4 h-4" />
+                    טיימרים
+                  </TabsTrigger>
+                  <TabsTrigger value="override" className="gap-2">
+                    <Settings className="w-4 h-4" />
+                    מצב תצוגה
+                  </TabsTrigger>
+                  <TabsTrigger value="ticker" className="gap-2">
+                    <FileText className="w-4 h-4" />
+                    טיקר וכללים
+                  </TabsTrigger>
+                </TabsList>
 
-                {/* Timers */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Timer className="w-5 h-5" />
-                      טיימרים
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <ActiveTimerDisplay />
-                    <div>
-                      <Label>כותרת הטיימר (תופיע מעל הספירה)</Label>
-                      <Input
-                        value={editingSettings.timerTitle || ''}
-                        onChange={e => setEditingSettings({...editingSettings, timerTitle: e.target.value})}
-                        placeholder="לדוגמה: הפסקה, זמן לסיכום..."
-                      />
-                    </div>
-                    <div className="flex flex-wrap gap-3">
-                      <Button onClick={() => handleStartTimer(5)} variant="outline">
-                        5 דקות
-                      </Button>
-                      <Button onClick={() => handleStartTimer(10)} variant="outline">
-                        10 דקות
-                      </Button>
-                      <Button onClick={() => handleStartTimer(15)} variant="outline">
-                        15 דקות
-                      </Button>
-                      <Button onClick={() => handleStartTimer(20)} variant="outline">
-                        20 דקות
-                      </Button>
-                      <Button onClick={() => handleStartTimer(30)} variant="outline">
-                        30 דקות
-                      </Button>
-                    </div>
-                    {/* Custom timer */}
-                    <div className="flex items-center gap-2 pt-2 border-t">
-                      <Label className="whitespace-nowrap">זמן מותאם אישית:</Label>
-                      <Input
-                        type="number"
-                        min="1"
-                        max="120"
-                        placeholder="דקות"
-                        className="w-24"
-                        id="custom-timer-minutes"
-                      />
-                      <Button
-                        variant="default"
-                        onClick={() => {
-                          const val = parseInt(document.getElementById('custom-timer-minutes').value);
-                          if (val > 0) handleStartTimer(val);
-                        }}
-                      >
-                        הפעל
-                      </Button>
-                    </div>
-                    <div className="pt-2 border-t">
-                      <Label>הצגת טיימר על כל המסך — כמה דקות לפני הסוף (ברירת מחדל: 3)</Label>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Input
-                          type="number"
-                          min="1"
-                          max="30"
-                          value={editingSettings.timerFullScreenMinutes ?? 3}
-                          onChange={e => setEditingSettings({...editingSettings, timerFullScreenMinutes: Number(e.target.value)})}
-                          className="w-24"
+                <TabsContent value="display" className="space-y-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Monitor className="w-5 h-5" />
+                        הגדרות תצוגה
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border">
+                        <Switch
+                          checked={editingSettings.dualNoticeMode || false}
+                          onCheckedChange={v => setEditingSettings({...editingSettings, dualNoticeMode: v})}
                         />
-                        <span className="text-sm text-gray-500">דקות לפני הסוף</span>
+                        <div>
+                          <Label className="font-medium">הצג שתי מודעות בו זמנית</Label>
+                          <p className="text-sm text-gray-500 mt-0.5">שתי מודעות יוצגו זה לצד זה בעמודת המרכז</p>
+                        </div>
                       </div>
-                    </div>
-                    <p className="text-xs text-gray-400 mt-1">
-                      💡 קיצורי מקשים בתצוגה: <kbd className="bg-gray-100 px-1 rounded">PageUp</kbd> = 10 דק  <kbd className="bg-gray-100 px-1 rounded">PageDown</kbd> = 15 דק  <kbd className="bg-gray-100 px-1 rounded">Tab</kbd> = ביטול
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Override ידני</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <Label>מצב תצוגה</Label>
-                      <div className="flex gap-2">
+                      <div className="flex items-center gap-3 p-4 bg-orange-50 rounded-lg border border-orange-200">
+                        <Switch
+                          checked={editingSettings.pauseAllSessionAdvance === true}
+                          onCheckedChange={v => setEditingSettings({...editingSettings, pauseAllSessionAdvance: v})}
+                        />
+                        <div>
+                          <Label className="text-orange-700 font-medium">⏸ השהה את כל המיספורים בכל הימים (שבוע חופש)</Label>
+                          <p className="text-sm text-orange-500 mt-0.5">כשמופעל — המיספור לא יתקדם אוטומטית באף יום עד שתכבה זאת</p>
+                        </div>
+                      </div>
+                      <div>
+                        <Label>פרופיל מסך</Label>
                         <Select
-                          value={editingSettings.overrideMode || 'none'}
-                          onValueChange={v => {
-                            if (v === 'custom') {
-                              setShowCustomPanel(true);
-                            } else {
-                              setEditingSettings({...editingSettings, overrideMode: v});
-                            }
-                          }}
+                          value={editingSettings.screenProfile || '50'}
+                          onValueChange={v => setEditingSettings({...editingSettings, screenProfile: v})}
                         >
-                          <SelectTrigger className="flex-1">
+                          <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="none">אוטומטי</SelectItem>
-                            <SelectItem value="kickoff">מצב התחלה</SelectItem>
-                            <SelectItem value="break">הפסקה</SelectItem>
-                            <SelectItem value="motzei">מוצאי שבת</SelectItem>
-                            <SelectItem value="custom">מותאם אישית...</SelectItem>
+                            <SelectItem value="14">14 אינץ' (לפטופ)</SelectItem>
+                            <SelectItem value="32">32 אינץ'</SelectItem>
+                            <SelectItem value="50">50 אינץ'</SelectItem>
+                            <SelectItem value="60">60 אינץ' (מסך גדול)</SelectItem>
                           </SelectContent>
                         </Select>
-                        {editingSettings.overrideMode === 'custom' && (
-                          <Button variant="outline" onClick={() => setShowCustomPanel(true)}>
-                            ערוך התאמה
-                          </Button>
-                        )}
                       </div>
-                    </div>
-                    <div>
-                      <Label>Override יום</Label>
-                      <Select
-                        value={editingSettings.overrideDay || ''}
-                        onValueChange={v => setEditingSettings({...editingSettings, overrideDay: v || null})}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="ללא (יום נוכחי)" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={null}>ללא (יום נוכחי)</SelectItem>
-                          {dayOrder.map(day => (
-                            <SelectItem key={day} value={day}>{dayNames[day]}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </CardContent>
-                </Card>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label>החלפת קבוצה (שניות)</Label>
+                          <Input
+                            type="number"
+                            value={editingSettings.groupRotationSeconds || 8}
+                            onChange={e => setEditingSettings({...editingSettings, groupRotationSeconds: Number(e.target.value)})}
+                          />
+                        </div>
+                        <div>
+                          <Label>החלפת מודעה (שניות)</Label>
+                          <Input
+                            type="number"
+                            value={editingSettings.noticeRotationSeconds || 20}
+                            onChange={e => setEditingSettings({...editingSettings, noticeRotationSeconds: Number(e.target.value)})}
+                          />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle>טיקר תחתון</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <Label>טקסט טיקר</Label>
-                      <Textarea
-                        value={editingSettings.tickerText || ''}
-                        onChange={e => setEditingSettings({...editingSettings, tickerText: e.target.value})}
-                        placeholder="טקסט שירוץ בתחתית המסך"
-                      />
-                      <p className="text-xs text-gray-400 mt-1">
-                        💡 טיפ: לכתוב <code className="bg-gray-100 px-1 rounded">**טקסט מודגש**</code> כדי להדגיש מידע חשוב (יופיע לבן בהיר, שאר הטקסט אפור)
-                      </p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
+                <TabsContent value="timers" className="space-y-4">
+                  {/* Timers */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Timer className="w-5 h-5" />
+                        טיימרים
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <ActiveTimerDisplay />
                       <div>
-                        <Label>פרטי קשר</Label>
+                        <Label>כותרת הטיימר (תופיע מעל הספירה)</Label>
                         <Input
-                          value={editingSettings.contactInfo || ''}
-                          onChange={e => setEditingSettings({...editingSettings, contactInfo: e.target.value})}
-                          placeholder="072-2351290"
+                          value={editingSettings.timerTitle || ''}
+                          onChange={e => setEditingSettings({...editingSettings, timerTitle: e.target.value})}
+                          placeholder="לדוגמה: הפסקה, זמן לסיכום..."
                         />
                       </div>
-                      <div>
-                        <Label>שעות פעילות</Label>
-                        <Input
-                          value={editingSettings.operatingHours || ''}
-                          onChange={e => setEditingSettings({...editingSettings, operatingHours: e.target.value})}
-                          placeholder="ראשון-חמישי"
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle>כללים קבועים</CardTitle>
-                    <Button onClick={addRule} size="sm" className="gap-2">
-                      <Plus className="w-4 h-4" />
-                      הוסף כלל
-                    </Button>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {(editingSettings.fixedRules || []).map((rule, idx) => (
-                      <div key={idx} className="flex gap-2">
-                        <Input
-                          value={rule}
-                          onChange={e => {
-                            const rules = [...(editingSettings.fixedRules || [])];
-                            rules[idx] = e.target.value;
-                            setEditingSettings({...editingSettings, fixedRules: rules});
-                          }}
-                          placeholder="כלל..."
-                        />
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => {
-                            setEditingSettings({
-                              ...editingSettings,
-                              fixedRules: editingSettings.fixedRules.filter((_, i) => i !== idx)
-                            });
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4 text-red-500" />
+                      <div className="flex flex-wrap gap-3">
+                        <Button onClick={() => handleStartTimer(5)} variant="outline">
+                          5 דקות
+                        </Button>
+                        <Button onClick={() => handleStartTimer(10)} variant="outline">
+                          10 דקות
+                        </Button>
+                        <Button onClick={() => handleStartTimer(15)} variant="outline">
+                          15 דקות
+                        </Button>
+                        <Button onClick={() => handleStartTimer(20)} variant="outline">
+                          20 דקות
+                        </Button>
+                        <Button onClick={() => handleStartTimer(30)} variant="outline">
+                          30 דקות
                         </Button>
                       </div>
-                    ))}
-                    {(!editingSettings.fixedRules || editingSettings.fixedRules.length === 0) && (
-                      <p className="text-gray-500 text-center py-4">אין כללים מוגדרים</p>
-                    )}
-                  </CardContent>
-                </Card>
+                      {/* Custom timer */}
+                      <div className="flex items-center gap-2 pt-2 border-t">
+                        <Label className="whitespace-nowrap">זמן מותאם אישית:</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          max="120"
+                          placeholder="דקות"
+                          className="w-24"
+                          id="custom-timer-minutes"
+                        />
+                        <Button
+                          variant="default"
+                          onClick={() => {
+                            const val = parseInt(document.getElementById('custom-timer-minutes').value);
+                            if (val > 0) handleStartTimer(val);
+                          }}
+                        >
+                          הפעל
+                        </Button>
+                      </div>
+                      <div className="pt-2 border-t">
+                        <Label>הצגת טיימר על כל המסך — כמה דקות לפני הסוף (ברירת מחדל: 3)</Label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Input
+                            type="number"
+                            min="1"
+                            max="30"
+                            value={editingSettings.timerFullScreenMinutes ?? 3}
+                            onChange={e => setEditingSettings({...editingSettings, timerFullScreenMinutes: Number(e.target.value)})}
+                            className="w-24"
+                          />
+                          <span className="text-sm text-gray-500">דקות לפני הסוף</span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">
+                        💡 קיצורי מקשים בתצוגה: <kbd className="bg-gray-100 px-1 rounded">PageUp</kbd> = 10 דק  <kbd className="bg-gray-100 px-1 rounded">PageDown</kbd> = 15 דק  <kbd className="bg-gray-100 px-1 rounded">Tab</kbd> = ביטול
+                      </p>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
 
-                <div className="flex justify-end">
+                <TabsContent value="override" className="space-y-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Override ידני</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <Label>מצב תצוגה</Label>
+                        <div className="flex gap-2">
+                          <Select
+                            value={editingSettings.overrideMode || 'none'}
+                            onValueChange={v => {
+                              if (v === 'custom') {
+                                setShowCustomPanel(true);
+                              } else {
+                                setEditingSettings({...editingSettings, overrideMode: v});
+                              }
+                            }}
+                          >
+                            <SelectTrigger className="flex-1">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">אוטומטי</SelectItem>
+                              <SelectItem value="kickoff">מצב התחלה</SelectItem>
+                              <SelectItem value="break">הפסקה</SelectItem>
+                              <SelectItem value="motzei">מוצאי שבת</SelectItem>
+                              <SelectItem value="custom">מותאם אישית...</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {editingSettings.overrideMode === 'custom' && (
+                            <Button variant="outline" onClick={() => setShowCustomPanel(true)}>
+                              ערוך התאמה
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <Label>Override יום</Label>
+                        <Select
+                          value={editingSettings.overrideDay || ''}
+                          onValueChange={v => setEditingSettings({...editingSettings, overrideDay: v || null})}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="ללא (יום נוכחי)" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={null}>ללא (יום נוכחי)</SelectItem>
+                            {dayOrder.map(day => (
+                              <SelectItem key={day} value={day}>{dayNames[day]}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="ticker" className="space-y-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>טיקר תחתון</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <Label>טקסט טיקר</Label>
+                        <Textarea
+                          value={editingSettings.tickerText || ''}
+                          onChange={e => setEditingSettings({...editingSettings, tickerText: e.target.value})}
+                          placeholder="טקסט שירוץ בתחתית המסך"
+                        />
+                        <p className="text-xs text-gray-400 mt-1">
+                          💡 טיפ: לכתוב <code className="bg-gray-100 px-1 rounded">**טקסט מודגש**</code> כדי להדגיש מידע חשוב (יופיע לבן בהיר, שאר הטקסט אפור)
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label>פרטי קשר</Label>
+                          <Input
+                            value={editingSettings.contactInfo || ''}
+                            onChange={e => setEditingSettings({...editingSettings, contactInfo: e.target.value})}
+                            placeholder="072-2351290"
+                          />
+                        </div>
+                        <div>
+                          <Label>שעות פעילות</Label>
+                          <Input
+                            value={editingSettings.operatingHours || ''}
+                            onChange={e => setEditingSettings({...editingSettings, operatingHours: e.target.value})}
+                            placeholder="ראשון-חמישי"
+                          />
+                        </div>
+                      </div>
+                      <Card>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                          <CardTitle>כללים קבועים</CardTitle>
+                          <Button onClick={addRule} size="sm" className="gap-2">
+                            <Plus className="w-4 h-4" />
+                            הוסף כלל
+                          </Button>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          {(editingSettings.fixedRules || []).map((rule, idx) => (
+                            <div key={idx} className="flex gap-2">
+                              <Input
+                                value={rule}
+                                onChange={e => {
+                                  const rules = [...(editingSettings.fixedRules || [])];
+                                  rules[idx] = e.target.value;
+                                  setEditingSettings({...editingSettings, fixedRules: rules});
+                                }}
+                                placeholder="כלל..."
+                              />
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => {
+                                  setEditingSettings({
+                                    ...editingSettings,
+                                    fixedRules: editingSettings.fixedRules.filter((_, i) => i !== idx)
+                                  });
+                                }}
+                              >
+                                <Trash2 className="w-4 h-4 text-red-500" />
+                              </Button>
+                            </div>
+                          ))}
+                          {(!editingSettings.fixedRules || editingSettings.fixedRules.length === 0) && (
+                            <p className="text-gray-500 text-center py-4">אין כללים מוגדרים</p>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <div className="flex justify-end pt-4">
                   <Button 
                     onClick={handleSaveSettings}
                     disabled={saveSettingsMutation.isPending}
@@ -1210,7 +1254,7 @@ export default function Admin() {
                     שמור הגדרות מערכת
                   </Button>
                 </div>
-              </>
+              </Tabs>
             )}
           </TabsContent>
 
@@ -1546,24 +1590,24 @@ function NoticesManager({ notices, onSave, onDelete }) {
         </CardContent>
       </Card>
 
-      {editingNotice && (
-        <Card>
-          <CardHeader>
-            <CardTitle>{editingNotice.id ? 'עריכת מודעה' : 'מודעה חדשה'}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+      <Dialog open={!!editingNotice} onOpenChange={(open) => !open && setEditingNotice(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingNotice?.id ? 'עריכת מודעה' : 'מודעה חדשה'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
             <div>
               <Label>כותרת</Label>
               <Input
-                value={editingNotice.title || ''}
-                onChange={e => setEditingNotice({...editingNotice, title: e.target.value})}
+                value={editingNotice?.title || ''}
+                onChange={e => setEditingNotice(prev => prev ? {...prev, title: e.target.value} : null)}
               />
             </div>
             <div>
               <Label>תוכן המודעה</Label>
               <RichTextEditor
-                value={editingNotice.content || ''}
-                onChange={v => setEditingNotice({...editingNotice, content: v})}
+                value={editingNotice?.content || ''}
+                onChange={v => setEditingNotice(prev => prev ? {...prev, content: v} : null)}
                 placeholder="תוכן המודעה..."
               />
             </div>
@@ -1571,8 +1615,8 @@ function NoticesManager({ notices, onSave, onDelete }) {
               <Label>קובץ PDF (לחלופין במקום טקסט)</Label>
               <div className="flex gap-2 mt-1 items-center">
                 <Input
-                  value={editingNotice.pdfUrl || ''}
-                  onChange={e => setEditingNotice({...editingNotice, pdfUrl: e.target.value})}
+                  value={editingNotice?.pdfUrl || ''}
+                  onChange={e => setEditingNotice(prev => prev ? {...prev, pdfUrl: e.target.value} : null)}
                   placeholder="הדבק URL של PDF..."
                   dir="ltr"
                 />
@@ -1594,7 +1638,7 @@ function NoticesManager({ notices, onSave, onDelete }) {
                       try {
                         const result = await supabaseAPI.upload(file);
                         if (result && result.url) {
-                          setEditingNotice({...editingNotice, pdfUrl: result.url});
+                          setEditingNotice(prev => prev ? {...prev, pdfUrl: result.url} : null);
                         } else {
                           alert('שגיאה בהעלאת הקובץ');
                         }
@@ -1607,10 +1651,10 @@ function NoticesManager({ notices, onSave, onDelete }) {
                   />
                 </label>
               </div>
-              {editingNotice.pdfUrl && (
+              {editingNotice?.pdfUrl && (
                 <div className="mt-2 flex items-center gap-2">
                   <span className="text-sm text-green-600">✅ PDF מחובר</span>
-                  <button onClick={() => setEditingNotice({...editingNotice, pdfUrl: ''})} className="text-red-400 text-sm hover:text-red-600">הסר</button>
+                  <button onClick={() => setEditingNotice(prev => prev ? {...prev, pdfUrl: ''} : null)} className="text-red-400 text-sm hover:text-red-600">הסר</button>
                 </div>
               )}
             </div>
@@ -1618,8 +1662,8 @@ function NoticesManager({ notices, onSave, onDelete }) {
               <Label>תמונה (לחלופין / בנוסף לטקסט)</Label>
               <div className="flex gap-2 mt-1 items-center">
                 <Input
-                  value={editingNotice.imageUrl || ''}
-                  onChange={e => setEditingNotice({...editingNotice, imageUrl: e.target.value})}
+                  value={editingNotice?.imageUrl || ''}
+                  onChange={e => setEditingNotice(prev => prev ? {...prev, imageUrl: e.target.value} : null)}
                   placeholder="הדבק URL של תמונה..."
                   dir="ltr"
                 />
@@ -1641,7 +1685,7 @@ function NoticesManager({ notices, onSave, onDelete }) {
                       try {
                         const result = await supabaseAPI.upload(file);
                         if (result && result.url) {
-                          setEditingNotice({...editingNotice, imageUrl: result.url});
+                          setEditingNotice(prev => prev ? {...prev, imageUrl: result.url} : null);
                         } else {
                           alert('שגיאה בהעלאת הקובץ');
                         }
@@ -1654,10 +1698,10 @@ function NoticesManager({ notices, onSave, onDelete }) {
                   />
                 </label>
               </div>
-              {editingNotice.imageUrl && (
+              {editingNotice?.imageUrl && (
                 <div className="mt-2 flex items-center gap-2">
-                  <img src={editingNotice.imageUrl} alt="" className="h-16 rounded object-cover border" />
-                  <button onClick={() => setEditingNotice({...editingNotice, imageUrl: ''})} className="text-red-400 text-sm hover:text-red-600">הסר</button>
+                  <img src={editingNotice?.imageUrl} alt="" className="h-16 rounded object-cover border" />
+                  <button onClick={() => setEditingNotice(prev => prev ? {...prev, imageUrl: ''} : null)} className="text-red-400 text-sm hover:text-red-600">הסר</button>
                 </div>
               )}
             </div>
@@ -1666,8 +1710,8 @@ function NoticesManager({ notices, onSave, onDelete }) {
                 <Label>תאריך יעד (לספירה לאחור)</Label>
                 <Input
                   type="date"
-                  value={editingNotice.targetDate || ''}
-                  onChange={e => setEditingNotice({...editingNotice, targetDate: e.target.value})}
+                  value={editingNotice?.targetDate || ''}
+                  onChange={e => setEditingNotice(prev => prev ? {...prev, targetDate: e.target.value} : null)}
                 />
               </div>
               <div>
@@ -1676,8 +1720,8 @@ function NoticesManager({ notices, onSave, onDelete }) {
                   type="number"
                   min="3"
                   max="300"
-                  value={editingNotice.displaySeconds || ''}
-                  onChange={e => setEditingNotice({...editingNotice, displaySeconds: e.target.value ? Number(e.target.value) : null})}
+                  value={editingNotice?.displaySeconds || ''}
+                  onChange={e => setEditingNotice(prev => prev ? {...prev, displaySeconds: e.target.value ? Number(e.target.value) : null} : null)}
                   placeholder="לדוגמה: 30"
                 />
               </div>
@@ -1688,15 +1732,18 @@ function NoticesManager({ notices, onSave, onDelete }) {
                 {dayOrder.map(day => (
                   <Badge
                     key={day}
-                    variant={(editingNotice.days || []).includes(day) ? 'default' : 'outline'}
+                    variant={(editingNotice?.days || []).includes(day) ? 'default' : 'outline'}
                     className="cursor-pointer"
                     onClick={() => {
-                      const days = editingNotice.days || [];
-                      if (days.includes(day)) {
-                        setEditingNotice({...editingNotice, days: days.filter(d => d !== day)});
-                      } else {
-                        setEditingNotice({...editingNotice, days: [...days, day]});
-                      }
+                      setEditingNotice(prev => {
+                        if (!prev) return null;
+                        const days = prev.days || [];
+                        if (days.includes(day)) {
+                          return {...prev, days: days.filter(d => d !== day)};
+                        } else {
+                          return {...prev, days: [...days, day]};
+                        }
+                      });
                     }}
                   >
                     {dayNames[day]}
@@ -1706,30 +1753,30 @@ function NoticesManager({ notices, onSave, onDelete }) {
             </div>
             <div className="flex items-center gap-2">
               <Switch
-                checked={editingNotice.active}
-                onCheckedChange={v => setEditingNotice({...editingNotice, active: v})}
+                checked={editingNotice?.active}
+                onCheckedChange={v => setEditingNotice(prev => prev ? {...prev, active: v} : null)}
               />
               <Label>מודעה פעילה</Label>
             </div>
             <div className="flex items-center gap-2">
               <Switch
-                checked={editingNotice.isFullScreen}
-                onCheckedChange={v => setEditingNotice({...editingNotice, isFullScreen: v})}
+                checked={editingNotice?.isFullScreen}
+                onCheckedChange={v => setEditingNotice(prev => prev ? {...prev, isFullScreen: v} : null)}
               />
               <Label>הצג על כל המסך</Label>
             </div>
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setEditingNotice(null)}>
-                ביטול
-              </Button>
-              <Button onClick={handleSave} className="gap-2">
-                <Save className="w-4 h-4" />
-                שמור
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setEditingNotice(null)}>
+              ביטול
+            </Button>
+            <Button onClick={handleSave} className="gap-2">
+              <Save className="w-4 h-4" />
+              שמור
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

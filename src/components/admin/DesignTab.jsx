@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Save, Palette, Monitor, Type } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Save, Palette, Monitor, Type, LayoutGrid, Paintbrush } from 'lucide-react';
 
 const BG_PRESETS = [
   { label: 'כחול-אפור (ברירת מחדל)', value: '#F2F4F7' },
@@ -45,186 +46,234 @@ export default function DesignTab({ settings, onChange, onSave, isPending }) {
   const update = (key, value) => onChange({ ...settings, boardDesign: { ...design, [key]: value } });
 
   return (
-    <div className="space-y-6">
-      {/* Background Color */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Palette className="w-5 h-5" />
-            צבע רקע הלוח
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid grid-cols-3 gap-2">
-            {BG_PRESETS.map(p => (
-              <ColorSwatch key={p.value} {...p} selected={design.bgColor === p.value} onClick={() => update('bgColor', p.value)} />
-            ))}
-          </div>
-          <div className="flex items-center gap-3 pt-2 border-t">
-            <Label className="whitespace-nowrap">צבע מותאם:</Label>
-            <input 
-              type="color" 
-              value={design.bgColor || '#F2F4F7'}
-              onChange={e => update('bgColor', e.target.value)}
-              className="w-10 h-10 rounded cursor-pointer border"
-            />
-            <Input 
-              value={design.bgColor || ''}
-              onChange={e => update('bgColor', e.target.value)}
-              placeholder="#F2F4F7"
-              className="w-32 font-mono"
-              dir="ltr"
-            />
-          </div>
-        </CardContent>
-      </Card>
+    <div className="space-y-4">
+      <Tabs defaultValue="colors" className="space-y-4">
+        <TabsList className="bg-white shadow-sm flex-wrap h-auto">
+          <TabsTrigger value="colors" className="gap-2">
+            <Palette className="w-4 h-4" />
+            צבעים
+          </TabsTrigger>
+          <TabsTrigger value="typography" className="gap-2">
+            <Type className="w-4 h-4" />
+            טיפוגרפיה
+          </TabsTrigger>
+          <TabsTrigger value="layout" className="gap-2">
+            <LayoutGrid className="w-4 h-4" />
+            פריסה
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Primary Color */}
-      <Card>
-        <CardHeader>
-          <CardTitle>צבע ראשי (כותרות, כפתורים, פסים)</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid grid-cols-3 gap-2">
-            {PRIMARY_PRESETS.map(p => (
-              <ColorSwatch key={p.value} {...p} selected={design.primaryColor === p.value} onClick={() => update('primaryColor', p.value)} />
-            ))}
-          </div>
-          <div className="flex items-center gap-3 pt-2 border-t">
-            <Label className="whitespace-nowrap">צבע מותאם:</Label>
-            <input 
-              type="color" 
-              value={design.primaryColor || '#2F4580'}
-              onChange={e => update('primaryColor', e.target.value)}
-              className="w-10 h-10 rounded cursor-pointer border"
-            />
-            <Input 
-              value={design.primaryColor || ''}
-              onChange={e => update('primaryColor', e.target.value)}
-              placeholder="#2F4580"
-              className="w-32 font-mono"
-              dir="ltr"
-            />
-          </div>
-        </CardContent>
-      </Card>
+        {/* Colors Tab */}
+        <TabsContent value="colors" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Paintbrush className="w-5 h-5" />
+                צבע רקע הלוח
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-3 gap-2">
+                {BG_PRESETS.map(p => (
+                  <ColorSwatch key={p.value} {...p} selected={design.bgColor === p.value} onClick={() => update('bgColor', p.value)} />
+                ))}
+              </div>
+              <div className="flex items-center gap-3 pt-2 border-t">
+                <Label className="whitespace-nowrap">צבע מותאם:</Label>
+                <input
+                  type="color"
+                  value={design.bgColor || '#F2F4F7'}
+                  onChange={e => update('bgColor', e.target.value)}
+                  className="w-10 h-10 rounded cursor-pointer border"
+                />
+                <Input
+                  value={design.bgColor || ''}
+                  onChange={e => update('bgColor', e.target.value)}
+                  placeholder="#F2F4F7"
+                  className="w-32 font-mono"
+                  dir="ltr"
+                />
+              </div>
+            </CardContent>
+          </Card>
 
-      {/* Layout */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Monitor className="w-5 h-5" />
-            פריסת הלוח
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          <div>
-            <Label className="font-medium">רוחב עמודות הצד (מעגל פנימי / כללים) — ברירת מחדל: 20%</Label>
-            <div className="flex items-center gap-3 mt-2">
-              <input 
-                type="range" min="12" max="32" step="1"
-                value={parseInt(design.sideColumnWidth) || 20}
-                onChange={e => update('sideColumnWidth', e.target.value)}
-                className="flex-1"
-              />
-              <span className="font-mono font-bold w-14 text-center text-blue-700 bg-blue-50 px-2 py-1 rounded">
-                {design.sideColumnWidth || 20}%
-              </span>
-            </div>
-            <p className="text-xs text-gray-400 mt-1">עמודת מרכז (מודעות) תגדל/תקטן בהתאם</p>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>צבע ראשי (כותרות, כפתורים, פסים)</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-3 gap-2">
+                {PRIMARY_PRESETS.map(p => (
+                  <ColorSwatch key={p.value} {...p} selected={design.primaryColor === p.value} onClick={() => update('primaryColor', p.value)} />
+                ))}
+              </div>
+              <div className="flex items-center gap-3 pt-2 border-t">
+                <Label className="whitespace-nowrap">צבע מותאם:</Label>
+                <input
+                  type="color"
+                  value={design.primaryColor || '#2F4580'}
+                  onChange={e => update('primaryColor', e.target.value)}
+                  className="w-10 h-10 rounded cursor-pointer border"
+                />
+                <Input
+                  value={design.primaryColor || ''}
+                  onChange={e => update('primaryColor', e.target.value)}
+                  placeholder="#2F4580"
+                  className="w-32 font-mono"
+                  dir="ltr"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-          <div className="border-t pt-4">
-            <Label className="font-medium">גודל גופן מודעות (כותרת + תוכן) — ברירת מחדל: 1.0</Label>
-            <div className="flex items-center gap-3 mt-2">
-              <input
-                type="range" min="0.4" max="2.5" step="0.05"
-                value={parseFloat(design.noticeFontScale) || 1.0}
-                onChange={e => update('noticeFontScale', parseFloat(e.target.value))}
-                className="flex-1"
-              />
-              <span className="font-mono font-bold w-14 text-center text-blue-700 bg-blue-50 px-2 py-1 rounded">
-                ×{(parseFloat(design.noticeFontScale) || 1.0).toFixed(2)}
-              </span>
-            </div>
-          </div>
+        {/* Typography Tab */}
+        <TabsContent value="typography" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Type className="w-5 h-5" />
+                גדלי גופנים
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div>
+                <Label className="font-medium">גודל כותרת מודעה — ברירת מחדל: 1.0</Label>
+                <div className="flex items-center gap-3 mt-2">
+                  <input
+                    type="range" min="0.4" max="2.5" step="0.05"
+                    value={parseFloat(design.noticeFontScale) || 1.0}
+                    onChange={e => update('noticeFontScale', parseFloat(e.target.value))}
+                    className="flex-1"
+                  />
+                  <span className="font-mono font-bold w-14 text-center text-blue-700 bg-blue-50 px-2 py-1 rounded">
+                    ×{(parseFloat(design.noticeFontScale) || 1.0).toFixed(2)}
+                  </span>
+                </div>
+              </div>
 
-          <div className="border-t pt-4">
-            <Label className="font-medium">גודל שעה ותאריך (כותרת עליונה) — ברירת מחדל: 1.0</Label>
-            <div className="flex items-center gap-3 mt-2">
-              <input
-                type="range" min="0.4" max="2.5" step="0.05"
-                value={parseFloat(design.clockFontScale) || 1.0}
-                onChange={e => update('clockFontScale', parseFloat(e.target.value))}
-                className="flex-1"
-              />
-              <span className="font-mono font-bold w-14 text-center text-blue-700 bg-blue-50 px-2 py-1 rounded">
-                ×{(parseFloat(design.clockFontScale) || 1.0).toFixed(2)}
-              </span>
-            </div>
-          </div>
+              <div className="border-t pt-4">
+                <Label className="font-medium">גודל תוכן המודעה — ברירת מחדל: 1.0</Label>
+                <div className="flex items-center gap-3 mt-2">
+                  <input
+                    type="range" min="0.4" max="2.5" step="0.05"
+                    value={parseFloat(design.noticeContentScale) || 1.0}
+                    onChange={e => update('noticeContentScale', parseFloat(e.target.value))}
+                    className="flex-1"
+                  />
+                  <span className="font-mono font-bold w-14 text-center text-blue-700 bg-blue-50 px-2 py-1 rounded">
+                    ×{(parseFloat(design.noticeContentScale) || 1.0).toFixed(2)}
+                  </span>
+                </div>
+              </div>
 
-          <div className="border-t pt-4">
-            <Label className="font-medium">גודל שם הסדנה (כותרת עליונה) — ברירת מחדל: 1.0</Label>
-            <div className="flex items-center gap-3 mt-2">
-              <input
-                type="range" min="0.4" max="2.5" step="0.05"
-                value={parseFloat(design.headerTitleScale) || 1.0}
-                onChange={e => update('headerTitleScale', parseFloat(e.target.value))}
-                className="flex-1"
-              />
-              <span className="font-mono font-bold w-14 text-center text-blue-700 bg-blue-50 px-2 py-1 rounded">
-                ×{(parseFloat(design.headerTitleScale) || 1.0).toFixed(2)}
-              </span>
-            </div>
-          </div>
+              <div className="border-t pt-4">
+                <Label className="font-medium">גודל שעה ותאריך (כותרת עליונה) — ברירת מחדל: 1.0</Label>
+                <div className="flex items-center gap-3 mt-2">
+                  <input
+                    type="range" min="0.4" max="2.5" step="0.05"
+                    value={parseFloat(design.clockFontScale) || 1.0}
+                    onChange={e => update('clockFontScale', parseFloat(e.target.value))}
+                    className="flex-1"
+                  />
+                  <span className="font-mono font-bold w-14 text-center text-blue-700 bg-blue-50 px-2 py-1 rounded">
+                    ×{(parseFloat(design.clockFontScale) || 1.0).toFixed(2)}
+                  </span>
+                </div>
+              </div>
 
-          <div className="border-t pt-4">
-            <Label className="font-medium">גודל טקסט בלוקים (מעגל, קבוצות, כללים...) — ברירת מחדל: 1.0</Label>
-            <div className="flex items-center gap-3 mt-2">
-              <input
-                type="range" min="0.4" max="2.5" step="0.05"
-                value={parseFloat(design.blockTextScale) || 1.0}
-                onChange={e => update('blockTextScale', parseFloat(e.target.value))}
-                className="flex-1"
-              />
-              <span className="font-mono font-bold w-14 text-center text-blue-700 bg-blue-50 px-2 py-1 rounded">
-                ×{(parseFloat(design.blockTextScale) || 1.0).toFixed(2)}
-              </span>
-            </div>
-          </div>
+              <div className="border-t pt-4">
+                <Label className="font-medium">גודל שם הסדנה (כותרת עליונה) — ברירת מחדל: 1.0</Label>
+                <div className="flex items-center gap-3 mt-2">
+                  <input
+                    type="range" min="0.4" max="2.5" step="0.05"
+                    value={parseFloat(design.headerTitleScale) || 1.0}
+                    onChange={e => update('headerTitleScale', parseFloat(e.target.value))}
+                    className="flex-1"
+                  />
+                  <span className="font-mono font-bold w-14 text-center text-blue-700 bg-blue-50 px-2 py-1 rounded">
+                    ×{(parseFloat(design.headerTitleScale) || 1.0).toFixed(2)}
+                  </span>
+                </div>
+              </div>
 
-          <div className="border-t pt-4">
-            <Label className="font-medium">גודל גופן טיקר תחתון — ברירת מחדל: 1.0</Label>
-            <div className="flex items-center gap-3 mt-2">
-              <input
-                type="range" min="0.4" max="2.5" step="0.05"
-                value={parseFloat(design.tickerFontScale) || 1.0}
-                onChange={e => update('tickerFontScale', parseFloat(e.target.value))}
-                className="flex-1"
-              />
-              <span className="font-mono font-bold w-14 text-center text-blue-700 bg-blue-50 px-2 py-1 rounded">
-                ×{(parseFloat(design.tickerFontScale) || 1.0).toFixed(2)}
-              </span>
-            </div>
-          </div>
+              <div className="border-t pt-4">
+                <Label className="font-medium">גודל טקסט בלוקים (מעגל, קבוצות, כללים...) — ברירת מחדל: 1.0</Label>
+                <div className="flex items-center gap-3 mt-2">
+                  <input
+                    type="range" min="0.4" max="2.5" step="0.05"
+                    value={parseFloat(design.blockTextScale) || 1.0}
+                    onChange={e => update('blockTextScale', parseFloat(e.target.value))}
+                    className="flex-1"
+                  />
+                  <span className="font-mono font-bold w-14 text-center text-blue-700 bg-blue-50 px-2 py-1 rounded">
+                    ×{(parseFloat(design.blockTextScale) || 1.0).toFixed(2)}
+                  </span>
+                </div>
+              </div>
 
-          <div className="border-t pt-4">
-            <Label className="font-medium">שקיפות כרטיסי מודעות (%) — ברירת מחדל: 88</Label>
-            <div className="flex items-center gap-3 mt-2">
-              <input
-                type="range" min="50" max="100" step="1"
-                value={parseInt(design.cardOpacity) || 88}
-                onChange={e => update('cardOpacity', parseInt(e.target.value))}
-                className="flex-1"
-              />
-              <span className="font-mono font-bold w-14 text-center text-blue-700 bg-blue-50 px-2 py-1 rounded">
-                {design.cardOpacity || 88}%
-              </span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+              <div className="border-t pt-4">
+                <Label className="font-medium">גודל גופן טיקר תחתון — ברירת מחדל: 1.0</Label>
+                <div className="flex items-center gap-3 mt-2">
+                  <input
+                    type="range" min="0.4" max="2.5" step="0.05"
+                    value={parseFloat(design.tickerFontScale) || 1.0}
+                    onChange={e => update('tickerFontScale', parseFloat(e.target.value))}
+                    className="flex-1"
+                  />
+                  <span className="font-mono font-bold w-14 text-center text-blue-700 bg-blue-50 px-2 py-1 rounded">
+                    ×{(parseFloat(design.tickerFontScale) || 1.0).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Layout Tab */}
+        <TabsContent value="layout" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Monitor className="w-5 h-5" />
+                פריסת הלוח
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div>
+                <Label className="font-medium">רוחב עמודות הצד (מעגל פנימי / כללים) — ברירת מחדל: 20%</Label>
+                <div className="flex items-center gap-3 mt-2">
+                  <input
+                    type="range" min="12" max="32" step="1"
+                    value={parseInt(design.sideColumnWidth) || 20}
+                    onChange={e => update('sideColumnWidth', e.target.value)}
+                    className="flex-1"
+                  />
+                  <span className="font-mono font-bold w-14 text-center text-blue-700 bg-blue-50 px-2 py-1 rounded">
+                    {design.sideColumnWidth || 20}%
+                  </span>
+                </div>
+                <p className="text-xs text-gray-400 mt-1">עמודת מרכז (מודעות) תגדל/תקטן בהתאם</p>
+              </div>
+
+              <div className="border-t pt-4">
+                <Label className="font-medium">שקיפות כרטיסי מודעות (%) — ברירת מחדל: 88</Label>
+                <div className="flex items-center gap-3 mt-2">
+                  <input
+                    type="range" min="50" max="100" step="1"
+                    value={parseInt(design.cardOpacity) || 88}
+                    onChange={e => update('cardOpacity', parseInt(e.target.value))}
+                    className="flex-1"
+                  />
+                  <span className="font-mono font-bold w-14 text-center text-blue-700 bg-blue-50 px-2 py-1 rounded">
+                    {design.cardOpacity || 88}%
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       <div className="flex justify-end">
         <Button onClick={onSave} disabled={isPending} className="gap-2">

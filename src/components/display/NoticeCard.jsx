@@ -12,6 +12,14 @@ const noticeStyles = `
   .notice-content li { margin: 0.2em 0; }
   .notice-content strong { font-weight: 700; }
   .notice-content * { max-width: 100%; overflow-wrap: break-word; word-break: break-word; }
+  /* Preserve text alignment from HTML content */
+  .notice-content *[style*="text-align: center"], .notice-content center { text-align: center !important; }
+  .notice-content *[style*="text-align: left"], .notice-content *[style*="text-align:left"] { text-align: left !important; }
+  .notice-content *[style*="text-align: right"], .notice-content *[style*="text-align:right"] { text-align: right !important; }
+  /* Quill editor alignment classes */
+  .notice-content .ql-align-center { text-align: center !important; }
+  .notice-content .ql-align-left { text-align: left !important; }
+  .notice-content .ql-align-right { text-align: right !important; }
 `;
 
 // PDF container that hides scroll by oversizing + clipping
@@ -81,7 +89,9 @@ export default function NoticeCard({
   notice, 
   screenScale = 1,
   isFullScreen = false,
-  cardOpacity = 88
+  cardOpacity = 88,
+  noticeFontScale = 1.0,
+  noticeContentScale = 1.0
 }) {
   const daysRemaining = useMemo(() => {
     if (!notice?.targetDate) return null;
@@ -111,12 +121,12 @@ export default function NoticeCard({
           <PdfEmbed url={notice.pdfUrl} style={{ width: '88vw', height: '88vh', borderRadius: '16px' }} />
         ) : (
           <div className="text-center text-white max-w-5xl px-12">
-            <h1 className="font-bold mb-8" style={{ fontSize: `${68 * screenScale}px`, lineHeight: 1.2 }}>
+            <h1 className="font-bold mb-8" style={{ fontSize: `${68 * screenScale * noticeFontScale}px`, lineHeight: 1.2 }}>
               {notice.title}
             </h1>
             <div 
               className="leading-relaxed opacity-90 notice-content"
-              style={{ fontSize: `${36 * screenScale}px`, lineHeight: 1.65 }}
+              style={{ fontSize: `${36 * screenScale * noticeContentScale}px`, lineHeight: 1.65 }}
               dangerouslySetInnerHTML={{ __html: notice.content }}
             />
             {daysRemaining !== null && (
@@ -177,7 +187,7 @@ export default function NoticeCard({
           <h2 
             className="text-primary font-bold flex-shrink-0"
             style={{ 
-              fontSize: `${72 * screenScale}px`, 
+              fontSize: `${72 * screenScale * noticeFontScale}px`, 
               lineHeight: 1.2,
               marginBottom: `${12 * screenScale}px`,
             }}
@@ -190,7 +200,7 @@ export default function NoticeCard({
             <div 
               className="text-secondary leading-relaxed notice-content"
               style={{ 
-                fontSize: `${44 * screenScale}px`,
+                fontSize: `${44 * screenScale * noticeContentScale}px`,
                 lineHeight: 1.65,
               }}
               dangerouslySetInnerHTML={{ __html: notice.content }}

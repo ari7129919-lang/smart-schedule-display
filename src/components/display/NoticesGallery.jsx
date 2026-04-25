@@ -7,7 +7,9 @@ export default function NoticesGallery({
   rotationSeconds = 20,
   screenScale = 1,
   dualMode = false,
-  cardOpacity = 88
+  cardOpacity = 88,
+  noticeFontScale = 1.0,
+  noticeContentScale = 1.0
 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const activeNotices = notices.filter(n => n.active);
@@ -59,10 +61,10 @@ export default function NoticesGallery({
         <AnimatePresence mode="wait">
           <div key={`dual-${currentIndex}`} className="flex gap-4 flex-1 min-h-0 items-stretch">
             <div className="flex-1 min-h-0">
-              <NoticeCard notice={notice1} screenScale={screenScale * 0.85} cardOpacity={cardOpacity} />
+              <NoticeCard notice={notice1} screenScale={screenScale * 0.85} cardOpacity={cardOpacity} noticeFontScale={noticeFontScale} noticeContentScale={noticeContentScale} />
             </div>
             <div className="flex-1 min-h-0">
-              <NoticeCard notice={notice2} screenScale={screenScale * 0.85} cardOpacity={cardOpacity} />
+              <NoticeCard notice={notice2} screenScale={screenScale * 0.85} cardOpacity={cardOpacity} noticeFontScale={noticeFontScale} noticeContentScale={noticeContentScale} />
             </div>
           </div>
         </AnimatePresence>
@@ -100,6 +102,8 @@ export default function NoticesGallery({
             notice={notice1} 
             screenScale={screenScale}
             cardOpacity={cardOpacity}
+            noticeFontScale={noticeFontScale}
+            noticeContentScale={noticeContentScale}
           />
         </AnimatePresence>
       </div>
