@@ -151,20 +151,28 @@ export default function Admin() {
 
   useEffect(() => {
     const currentSchedule = daySchedules.find(d => d.dayOfWeek === activeDay);
-    setEditingSchedule(currentSchedule || { dayOfWeek: activeDay });
+    const newSchedule = currentSchedule || { dayOfWeek: activeDay };
+    setEditingSchedule(prev => {
+      // Only update if ID changed or prev is empty
+      if (!prev || prev.id !== newSchedule.id) {
+        return newSchedule;
+      }
+      return prev;
+    });
   }, [activeDay, daySchedules]);
 
   useEffect(() => {
     if (systemSettings && Object.keys(systemSettings).length > 0) {
       setEditingSettings(prev => {
-        // Only update if different to prevent infinite loop
-        if (JSON.stringify(prev) !== JSON.stringify(systemSettings)) {
-          return systemSettings;
+        // Skip if prev is already set and equals systemSettings
+        if (prev && Object.keys(prev).length > 0 && 
+            prev.id === systemSettings.id) {
+          return prev;
         }
-        return prev;
+        return systemSettings;
       });
     }
-  }, [systemSettings]);
+  }, [systemSettings?.id]);
 
   const saveScheduleMutation = useMutation({
     mutationFn: async (data) => {
