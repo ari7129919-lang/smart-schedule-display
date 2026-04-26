@@ -248,14 +248,19 @@ export default function Display({ previewMode = false }) {
       return;
     }
 
-    // Check for kickoff timing (1 min before start until 5 min after)
-    if (currentWorkshop?.kickoffEnabled && currentWorkshop?.startTime) {
-      const [startH, startM] = currentWorkshop.startTime.split(':').map(Number);
-      const workshopStart = startH * 60 + startM;
-      const currentTime = now.getHours() * 60 + now.getMinutes();
-      if (currentTime >= workshopStart - 1 && currentTime < workshopStart + 5) {
-        setDisplayMode('kickoff');
-        return;
+    // Check for kickoff timing
+    if (currentWorkshop?.kickoffEnabled) {
+      // Use kickoffStartTime if set, otherwise fallback to startTime
+      const kickoffTime = currentWorkshop.kickoffStartTime || currentWorkshop.startTime;
+      if (kickoffTime) {
+        const [startH, startM] = kickoffTime.split(':').map(Number);
+        const kickoffStart = startH * 60 + startM;
+        const currentTime = now.getHours() * 60 + now.getMinutes();
+        // Kickoff runs from the set time until 5 minutes after
+        if (currentTime >= kickoffStart && currentTime < kickoffStart + 5) {
+          setDisplayMode('kickoff');
+          return;
+        }
       }
     }
 

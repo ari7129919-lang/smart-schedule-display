@@ -290,7 +290,8 @@ export default function Admin() {
         endTime: '',
         totalSessions: 12,
         currentSession: 1,
-        kickoffEnabled: true
+        kickoffEnabled: true,
+        kickoffStartTime: ''
       }]
     }));
   };
@@ -550,6 +551,20 @@ export default function Admin() {
                                 />
                                 <Label>הפעל Kickoff</Label>
                               </div>
+                              {workshop.kickoffEnabled && (
+                                <div className="pt-2">
+                                  <Label className="text-sm text-gray-600 mb-1 block">זמן הפעלת Kickoff</Label>
+                                  <Input
+                                    type="time"
+                                    value={workshop.kickoffStartTime || ''}
+                                    onChange={e => updateWorkshop(idx, 'kickoffStartTime', e.target.value)}
+                                    placeholder="בחר זמן"
+                                  />
+                                  <p className="text-xs text-gray-400 mt-1">
+                                    ה-Kickoff יופעל בזמן זה (לא תלוי בזמן תחילת הסדנא)
+                                  </p>
+                                </div>
+                              )}
                               <div className="flex items-center gap-2 pt-6">
                                 <Switch
                                   checked={workshop.hideSmallGroups !== true}
