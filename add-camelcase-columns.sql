@@ -43,6 +43,7 @@ ALTER TABLE "Notice" ADD COLUMN IF NOT EXISTS "imageUrl" TEXT;
 ALTER TABLE "Notice" ADD COLUMN IF NOT EXISTS "isFullScreen" BOOLEAN DEFAULT false;
 ALTER TABLE "Notice" ADD COLUMN IF NOT EXISTS "displaySeconds" INTEGER;
 ALTER TABLE "Notice" ADD COLUMN IF NOT EXISTS "targetDate" DATE;
+ALTER TABLE "Notice" ADD COLUMN IF NOT EXISTS "layout" TEXT DEFAULT 'single';
 
 -- טריגר לסנכרון נתונים בין snake_case ל-camelCase (אופציונלי)
 -- זה יעתיק אוטומטית נתונים מ-snake_case ל-camelCase בכל UPDATE

@@ -1751,19 +1751,56 @@ function NoticesManager({ notices, onSave, onDelete }) {
                 ))}
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Switch
-                checked={editingNotice?.active}
-                onCheckedChange={v => setEditingNotice(prev => prev ? {...prev, active: v} : null)}
-              />
-              <Label>מודעה פעילה</Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <Switch
-                checked={editingNotice?.isFullScreen}
-                onCheckedChange={v => setEditingNotice(prev => prev ? {...prev, isFullScreen: v} : null)}
-              />
-              <Label>הצג על כל המסך</Label>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="mb-2 block">סידור תצוגה</Label>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setEditingNotice(prev => prev ? {...prev, layout: 'single'} : null)}
+                    className={`flex-1 py-2 px-3 border rounded-md text-sm transition-colors ${
+                      (!editingNotice?.layout || editingNotice?.layout === 'single') 
+                        ? 'bg-blue-50 border-blue-500 text-blue-700' 
+                        : 'bg-white border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    מודעה אחת
+                  </button>
+                  <button
+                    onClick={() => setEditingNotice(prev => prev ? {...prev, layout: 'dual'} : null)}
+                    className={`flex-1 py-2 px-3 border rounded-md text-sm transition-colors ${
+                      editingNotice?.layout === 'dual' 
+                        ? 'bg-blue-50 border-blue-500 text-blue-700' 
+                        : 'bg-white border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    שתי מודעות צד-בצד
+                  </button>
+                </div>
+                <p className="text-xs text-gray-400 mt-1">
+                  {editingNotice?.layout === 'dual' 
+                    ? 'המודעה תוצג במחצית הגודל לצד מודעה אחרת' 
+                    : 'מודעה בגודל מלא'}
+                </p>
+              </div>
+              <div>
+                <Label className="mb-2 block">מצב מודעה</Label>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={editingNotice?.active}
+                      onCheckedChange={v => setEditingNotice(prev => prev ? {...prev, active: v} : null)}
+                    />
+                    <Label className="text-sm">מודעה פעילה</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={editingNotice?.isFullScreen}
+                      onCheckedChange={v => setEditingNotice(prev => prev ? {...prev, isFullScreen: v} : null)}
+                    />
+                    <Label className="text-sm">הצג על כל המסך</Label>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           <DialogFooter className="gap-2">

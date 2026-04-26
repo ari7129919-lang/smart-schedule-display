@@ -417,10 +417,10 @@ export default function Display({ previewMode = false }) {
                     notices={todayNotices}
                     rotationSeconds={systemSettings.noticeRotationSeconds || 20}
                     screenScale={screenScale * noticeFontScale}
-                    dualMode={systemSettings.dualNoticeMode || false}
                     cardOpacity={cardOpacity}
                     noticeFontScale={noticeFontScale}
                     noticeContentScale={noticeContentScale}
+                    dualMode={systemSettings.dualNoticeMode || false}
                   />
                 )}
               </div>

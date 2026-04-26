@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import NoticeCard from './NoticeCard';
 
@@ -6,35 +6,67 @@ export default function NoticesGallery({
   notices = [], 
   rotationSeconds = 20,
   screenScale = 1,
-  dualMode = false,
   cardOpacity = 88,
   noticeFontScale = 1.0,
-  noticeContentScale = 1.0
+  noticeContentScale = 1.0,
+  dualMode = false
 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const activeNotices = notices.filter(n => n.active);
 
+  // Build display slots based on dualMode setting and per-notice layout
+  const displaySlots = useMemo(() => {
+    console.log('[NoticesGallery] dualMode:', dualMode, 'activeNotices:', activeNotices.map(n => ({ id: n.id, title: n.title?.substring(0, 20), layout: n.layout })));
+    const slots = [];
+    let i = 0;
+    while (i < activeNotices.length) {
+      const notice = activeNotices[i];
+      // Only pair notices if global dualMode is enabled AND this notice has layout='dual'
+      if (dualMode && notice.layout === 'dual' && i + 1 < activeNotices.length) {
+        console.log('[NoticesGallery] Creating dual slot for:', notice.title, '+', activeNotices[i + 1].title);
+        slots.push({
+          type: 'dual',
+          notices: [notice, activeNotices[i + 1]],
+          indices: [i, i + 1]
+        });
+        i += 2;
+      } else {
+        // Single notice slot (either global dualMode is off, or this notice is single)
+        slots.push({
+          type: 'single',
+          notices: [notice],
+          indices: [i]
+        });
+        i += 1;
+      }
+    }
+    console.log('[NoticesGallery] displaySlots:', slots.length, slots.map(s => s.type));
+    return slots;
+  }, [activeNotices, dualMode]);
+
+  // Reset index when notices or dualMode change
   useEffect(() => {
     setCurrentIndex(0);
-  }, [dualMode]);
+  }, [notices, dualMode]);
 
+  // Auto-rotation timer
   useEffect(() => {
-    const step = dualMode ? 2 : 1;
-    if (activeNotices.length <= step) return;
+    if (displaySlots.length <= 1) return;
 
-    // Use per-notice displaySeconds if set, otherwise fallback to global rotationSeconds
-    const currentNotice = activeNotices[currentIndex];
-    const delay = (currentNotice?.displaySeconds > 0 ? currentNotice.displaySeconds : rotationSeconds) * 1000;
+    const currentSlot = displaySlots[currentIndex];
+    // Use the first notice's displaySeconds if set
+    const firstNotice = currentSlot.notices[0];
+    const delay = (firstNotice?.displaySeconds > 0 ? firstNotice.displaySeconds : rotationSeconds) * 1000;
 
     const timeout = setTimeout(() => {
       setCurrentIndex(prev => {
-        const next = prev + step;
-        return next >= activeNotices.length ? 0 : next;
+        const next = prev + 1;
+        return next >= displaySlots.length ? 0 : next;
       });
     }, delay);
 
     return () => clearTimeout(timeout);
-  }, [activeNotices.length, rotationSeconds, dualMode, currentIndex]);
+  }, [displaySlots, currentIndex, rotationSeconds, dualMode]);
 
   if (activeNotices.length === 0) {
     return (
@@ -49,70 +81,60 @@ export default function NoticesGallery({
     );
   }
 
-  const notice1 = activeNotices[currentIndex];
-  const notice2 = dualMode ? activeNotices[(currentIndex + 1) % activeNotices.length] : null;
+  const currentSlot = displaySlots[currentIndex];
+  const isDual = currentSlot.type === 'dual';
+  const notice1 = currentSlot.notices[0];
+  const notice2 = isDual ? currentSlot.notices[1] : null;
 
-  // In dual mode, show 2 notices side by side
-  if (dualMode && activeNotices.length >= 2) {
-    const totalPairs = Math.ceil(activeNotices.length / 2);
-    const currentPair = Math.floor(currentIndex / 2);
-    return (
-      <div className="h-full flex flex-col gap-2">
-        <AnimatePresence mode="wait">
-          <div key={`dual-${currentIndex}`} className="flex gap-4 flex-1 min-h-0 items-stretch">
-            <div className="flex-1 min-h-0">
-              <NoticeCard notice={notice1} screenScale={screenScale * 0.85} cardOpacity={cardOpacity} noticeFontScale={noticeFontScale} noticeContentScale={noticeContentScale} />
-            </div>
-            <div className="flex-1 min-h-0">
-              <NoticeCard notice={notice2} screenScale={screenScale * 0.85} cardOpacity={cardOpacity} noticeFontScale={noticeFontScale} noticeContentScale={noticeContentScale} />
-            </div>
-          </div>
-        </AnimatePresence>
-
-        {totalPairs > 1 && (
-          <div className="flex items-center justify-center gap-3 flex-shrink-0 pb-1">
-            <div className="flex gap-1.5 items-center">
-              {Array.from({ length: totalPairs }).map((_, idx) => (
-                <div
-                  key={idx}
-                  className="rounded-full transition-all duration-300"
-                  style={{ 
-                    width: idx === currentPair ? `${20 * screenScale}px` : `${8 * screenScale}px`,
-                    height: `${8 * screenScale}px`,
-                    backgroundColor: idx === currentPair ? 'var(--primary)' : 'var(--neutral)'
-                  }}
-                />
-              ))}
-            </div>
-            <span className="text-secondary font-medium" style={{ fontSize: `${22 * screenScale}px`, opacity: 0.8 }}>
-              {currentIndex + 1}–{Math.min(currentIndex + 2, activeNotices.length)} מתוך {activeNotices.length}
-            </span>
-          </div>
-        )}
-      </div>
-    );
-  }
+  // Calculate progress indicators
+  const firstIndex = currentSlot.indices[0];
+  const lastIndex = currentSlot.indices[currentSlot.indices.length - 1];
 
   return (
     <div className="h-full flex flex-col gap-2">
       <div className="flex-1 relative min-h-0">
         <AnimatePresence mode="wait">
-          <NoticeCard 
-            key={notice1?.id || currentIndex}
-            notice={notice1} 
-            screenScale={screenScale}
-            cardOpacity={cardOpacity}
-            noticeFontScale={noticeFontScale}
-            noticeContentScale={noticeContentScale}
-          />
+          {isDual ? (
+            // Dual mode - two notices stacked vertically (top/bottom)
+            <div key={`dual-${currentIndex}`} className="flex flex-col gap-4 flex-1 min-h-0 h-full">
+              <div className="flex-1 min-h-0">
+                <NoticeCard 
+                  notice={notice1} 
+                  screenScale={screenScale * 0.85} 
+                  cardOpacity={cardOpacity} 
+                  noticeFontScale={noticeFontScale} 
+                  noticeContentScale={noticeContentScale} 
+                />
+              </div>
+              <div className="flex-1 min-h-0">
+                <NoticeCard 
+                  notice={notice2} 
+                  screenScale={screenScale * 0.85} 
+                  cardOpacity={cardOpacity} 
+                  noticeFontScale={noticeFontScale} 
+                  noticeContentScale={noticeContentScale} 
+                />
+              </div>
+            </div>
+          ) : (
+            // Single mode
+            <NoticeCard 
+              key={notice1?.id || currentIndex}
+              notice={notice1} 
+              screenScale={screenScale}
+              cardOpacity={cardOpacity}
+              noticeFontScale={noticeFontScale}
+              noticeContentScale={noticeContentScale}
+            />
+          )}
         </AnimatePresence>
       </div>
 
-      {/* Notice counter: מודעה X מתוך Y */}
-      {activeNotices.length > 1 && (
+      {/* Progress indicator */}
+      {displaySlots.length > 1 && (
         <div className="flex items-center justify-center gap-3 flex-shrink-0 pb-1">
           <div className="flex gap-1.5 items-center">
-            {activeNotices.map((_, idx) => (
+            {displaySlots.map((_, idx) => (
               <div
                 key={idx}
                 className="rounded-full transition-all duration-300"
@@ -126,9 +148,9 @@ export default function NoticesGallery({
           </div>
           <span 
             className="text-secondary font-medium"
-            style={{ fontSize: `${24 * screenScale}px`, opacity: 0.85 }}
+            style={{ fontSize: `${22 * screenScale}px`, opacity: 0.85 }}
           >
-            מודעה {currentIndex + 1} מתוך {activeNotices.length}
+            {firstIndex + 1}{isDual ? `–${lastIndex + 1}` : ''} מתוך {activeNotices.length}
           </span>
         </div>
       )}

@@ -90,8 +90,12 @@ CREATE TABLE IF NOT EXISTS "Notice" (
   days TEXT[] DEFAULT '{}',
   priority INTEGER DEFAULT 0,
   target_date DATE,
+  targetDate DATE,
   display_seconds INTEGER,
+  displaySeconds INTEGER,
   is_full_screen BOOLEAN DEFAULT false,
+  isFullScreen BOOLEAN DEFAULT false,
+  layout TEXT DEFAULT 'single',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
