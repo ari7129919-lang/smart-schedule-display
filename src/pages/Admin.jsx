@@ -165,15 +165,15 @@ export default function Admin() {
   useEffect(() => {
     if (systemSettings && Object.keys(systemSettings).length > 0) {
       setEditingSettings(prev => {
-        // Skip if prev is already set and equals systemSettings
-        if (prev && Object.keys(prev).length > 0 && 
-            prev.id === systemSettings.id) {
+        // Only update if data actually changed
+        if (prev && prev.id === systemSettings.id && 
+            JSON.stringify(prev) === JSON.stringify(systemSettings)) {
           return prev;
         }
         return systemSettings;
       });
     }
-  }, [systemSettings?.id]);
+  }, [systemSettings]);
 
   const saveScheduleMutation = useMutation({
     mutationFn: async (data) => {
