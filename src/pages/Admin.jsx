@@ -1163,14 +1163,14 @@ export default function Admin() {
                       <div>
                         <Label>Override יום</Label>
                         <Select
-                          value={editingSettings.overrideDay || ''}
-                          onValueChange={v => setEditingSettings({...editingSettings, overrideDay: v || null})}
+                          value={editingSettings.overrideDay || '_none'}
+                          onValueChange={v => setEditingSettings({...editingSettings, overrideDay: v === '_none' ? null : v})}
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="ללא (יום נוכחי)" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">ללא (יום נוכחי)</SelectItem>
+                            <SelectItem value="_none">ללא (יום נוכחי)</SelectItem>
                             {dayOrder.map(day => (
                               <SelectItem key={day} value={day}>{dayNames[day]}</SelectItem>
                             ))}
