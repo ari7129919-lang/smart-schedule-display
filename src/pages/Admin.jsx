@@ -1170,7 +1170,7 @@ export default function Admin() {
                             <SelectValue placeholder="ללא (יום נוכחי)" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value={null}>ללא (יום נוכחי)</SelectItem>
+                            <SelectItem value="">ללא (יום נוכחי)</SelectItem>
                             {dayOrder.map(day => (
                               <SelectItem key={day} value={day}>{dayNames[day]}</SelectItem>
                             ))}

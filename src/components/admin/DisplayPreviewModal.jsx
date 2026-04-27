@@ -1,6 +1,6 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useLayoutEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Monitor } from 'lucide-react';
+import { X, Monitor, Maximize, Tv } from 'lucide-react';
 import Display from '@/pages/Display';
 
 // 60" screen is typically 1920x1080 logical pixels
@@ -11,29 +11,52 @@ export default function DisplayPreviewModal({ open, onClose }) {
   const containerRef = useRef(null);
   const [scale, setScale] = useState(1);
   const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
+  const [fitToScreen, setFitToScreen] = useState(false);
 
-  useEffect(() => {
+  // Use layout effect for synchronous calculation to avoid flash
+  useLayoutEffect(() => {
     if (!open) return;
     const updateScale = () => {
       if (!containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
-      const availW = rect.width - 32; // padding
-      const availH = rect.height - 32;
-      const scaleW = availW / TARGET_WIDTH;
-      const scaleH = availH / TARGET_HEIGHT;
+      const availW = Math.max(100, rect.width); // min 100px
+      const availH = Math.max(100, rect.height); // min 100px
+      
+      // Calculate scale to fit the 1920x1080 content within available space
+      // Use 0.98 multiplier to ensure nothing gets cut off at edges
+      const scaleW = (availW / TARGET_WIDTH) * 0.98;
+      const scaleH = (availH / TARGET_HEIGHT) * 0.98;
       const s = Math.min(scaleW, scaleH);
+      
       setScale(s);
       setContainerSize({ w: availW, h: availH });
     };
     updateScale();
     window.addEventListener('resize', updateScale);
     return () => window.removeEventListener('resize', updateScale);
-  }, [open]);
+  }, [open, fitToScreen]);
 
   if (!open) return null;
 
-  const previewW = TARGET_WIDTH * scale;
-  const previewH = TARGET_HEIGHT * scale;
+  // Calculate dimensions based on mode
+  let previewW, previewH, displayScale;
+  
+  // Ensure we have valid container size, fallback to scale if not ready
+  const effectiveScale = (containerSize.w > 0 && containerSize.h > 0) 
+    ? Math.min(containerSize.w / TARGET_WIDTH, containerSize.h / TARGET_HEIGHT)
+    : scale;
+  
+  if (fitToScreen) {
+    // Fill entire available space - use all available width/height
+    displayScale = effectiveScale;
+    previewW = TARGET_WIDTH * displayScale;
+    previewH = TARGET_HEIGHT * displayScale;
+  } else {
+    // Simulation mode - same scaling but show info about the scale
+    displayScale = effectiveScale;
+    previewW = TARGET_WIDTH * displayScale;
+    previewH = TARGET_HEIGHT * displayScale;
+  }
 
   return (
     <AnimatePresence>
@@ -49,23 +72,37 @@ export default function DisplayPreviewModal({ open, onClose }) {
         <div className="flex items-center justify-between px-4 py-3 bg-gray-900 border-b border-gray-700 shrink-0">
           <div className="flex items-center gap-3">
             <Monitor className="w-5 h-5 text-blue-400" />
-            <span className="text-white font-medium">תצוגה מקדימה — כמו מסך 60 אינץ'</span>
-            <span className="text-gray-400 text-sm">
-              (מוצג ב-{Math.round(scale * 100)}% מגודל המסך האמיתי)
+            <span className="text-white font-medium">
+              {fitToScreen ? 'תצוגה מקדימה — מסך מלא' : 'תצוגה מקדימה — סימולציית מסך 60 אינץ\''}
             </span>
+            {!fitToScreen && (
+              <span className="text-gray-400 text-sm">
+                (מוצג ב-{Math.round(scale * 100)}% מגודל המסך האמיתי)
+              </span>
+            )}
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors p-1 rounded"
-          >
-            <X className="w-6 h-6" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setFitToScreen(!fitToScreen)}
+              className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-300 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+              title={fitToScreen ? 'switch לסימולציית מסך' : 'switch למסך מלא'}
+            >
+              {fitToScreen ? <Tv className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+              {fitToScreen ? 'סימולציה' : 'מסך מלא'}
+            </button>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-white transition-colors p-1 rounded"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
         </div>
 
         {/* Preview area */}
         <div
           ref={containerRef}
-          className="flex-1 flex items-center justify-center overflow-hidden p-4"
+          className="flex-1 flex items-center justify-center p-4 overflow-visible"
         >
           <div
             style={{
@@ -74,8 +111,8 @@ export default function DisplayPreviewModal({ open, onClose }) {
               position: 'relative',
               boxShadow: '0 0 60px rgba(0,0,0,0.8), 0 0 0 2px rgba(255,255,255,0.1)',
               borderRadius: 8,
-              overflow: 'hidden',
               flexShrink: 0,
+              overflow: 'visible',
             }}
           >
             {/* Scale wrapper — shrinks the entire Display page to fit */}
@@ -83,7 +120,7 @@ export default function DisplayPreviewModal({ open, onClose }) {
               style={{
                 width: TARGET_WIDTH,
                 height: TARGET_HEIGHT,
-                transform: `scale(${scale})`,
+                transform: `scale(${displayScale})`,
                 transformOrigin: 'top left',
                 position: 'absolute',
                 top: 0,
@@ -91,7 +128,7 @@ export default function DisplayPreviewModal({ open, onClose }) {
                 pointerEvents: 'none',
               }}
             >
-              <Display previewMode={true} />
+              <Display previewMode={true} fitToScreen={fitToScreen} />
             </div>
           </div>
         </div>

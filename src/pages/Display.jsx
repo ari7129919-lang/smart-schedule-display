@@ -36,7 +36,7 @@ const screenScales = {
   '60': 1.25
 };
 
-export default function Display({ previewMode = false }) {
+export default function Display({ previewMode = false, fitToScreen = false }) {
   const [displayMode, setDisplayMode] = useState('normal');
   const [breakDuration, setBreakDuration] = useState(10);
   const [timerEndTime, setTimerEndTime] = useState(null);
@@ -141,7 +141,9 @@ export default function Display({ previewMode = false }) {
   });
 
   const systemSettings = settings?.[0] || { screenProfile: '50' };
-  const screenScale = screenScales[systemSettings.screenProfile] || 1;
+  // In preview mode, use smaller scale (0.20) to fit entire display board on laptop screen
+  // In actual display mode, use the configured screen profile
+  const screenScale = previewMode ? 0.20 : (screenScales[systemSettings.screenProfile] || 1);
   const customConfig = systemSettings.customModeConfig || {};
   const design = systemSettings.boardDesign || {};
   const bgColor = design.bgColor || '#F2F4F7';

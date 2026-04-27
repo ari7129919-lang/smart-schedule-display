@@ -150,6 +150,10 @@ body {
   background: #f9fafb;
   border-bottom: 1px solid #d1d5db;
   border-radius: 8px 8px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 2px;
 }
 
 .rich-text-editor .jodit-workplace {
@@ -173,6 +177,7 @@ body {
 .rich-text-editor .jodit-toolbar-button {
   height: 28px;
   width: 28px;
+  flex-shrink: 0;
 }
 
 .rich-text-editor .jodit-toolbar-button__button {
@@ -180,7 +185,12 @@ body {
 }
 
 /* Ensure Jodit editor fits in modal properly */
+.rich-text-editor {
+  max-width: 100%;
+}
+
 .rich-text-editor .jodit-container {
+  max-width: 100%;
   border-radius: 0 0 8px 8px;
   overflow: hidden;
 }
