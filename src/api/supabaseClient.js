@@ -32,6 +32,11 @@ export const supabaseAPI = {
     
     const { data, error } = await qb
     if (error) throw error
+    
+    if (table === 'SystemSettings' && data && data.length > 0) {
+      console.log('Supabase find result - overrideDay:', data[0]?.overrideDay, 'override_day:', data[0]?.override_day);
+    }
+    
     return data || []
   },
 
@@ -81,6 +86,10 @@ export const supabaseAPI = {
       if ('backgroundRotationEnabled' in data) updateData.background_rotation_enabled = data.backgroundRotationEnabled;
     }
     
+    console.log('Supabase update - table:', table, 'id:', id);
+    console.log('Original data overrideDay:', data.overrideDay);
+    console.log('Update data override_day:', updateData.override_day);
+    
     const { data: result, error } = await supabase
       .from(table)
       .update(updateData)
@@ -88,7 +97,12 @@ export const supabaseAPI = {
       .select()
       .single()
     
-    if (error) throw error
+    if (error) {
+      console.error('Supabase update error:', error);
+      throw error;
+    }
+    
+    console.log('Supabase result overrideDay:', result?.overrideDay, 'override_day:', result?.override_day);
     return result
   },
 
