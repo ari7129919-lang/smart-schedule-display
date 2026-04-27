@@ -70,7 +70,7 @@ export default function KickoffMode({ onComplete, screenScale = 1, kickoffConfig
         <>
           <motion.h1
             className="font-light"
-            style={{ fontSize: centerOnly ? `${70 * s}px` : `${90 * s}px`, marginBottom: `${24 * s}px` }}
+            style={{ fontSize: centerOnly ? `${70 * s}px` : `${90 * s}px`, marginBottom: `${24 * s}px`, fontFamily: "'EFT_Hebrew', 'Heebo', sans-serif" }}
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.6 }}
@@ -105,7 +105,7 @@ export default function KickoffMode({ onComplete, screenScale = 1, kickoffConfig
         <>
           <motion.h1
             className="font-light"
-            style={{ fontSize: centerOnly ? `${70 * s}px` : `${90 * s}px`, marginBottom: `${24 * s}px` }}
+            style={{ fontSize: centerOnly ? `${70 * s}px` : `${90 * s}px`, marginBottom: `${24 * s}px`, fontFamily: "'EFT_Hebrew', 'Heebo', sans-serif" }}
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.8 }}

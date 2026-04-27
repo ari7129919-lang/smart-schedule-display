@@ -218,7 +218,12 @@ export default function Admin() {
 
   const handleSaveSettings = () => {
     if (editingSettings) {
-      saveSettingsMutation.mutate(editingSettings);
+      console.log('Saving settings - overrideDay:', editingSettings.overrideDay);
+      saveSettingsMutation.mutate(editingSettings, {
+        onSuccess: (data) => {
+          console.log('Save response - overrideDay:', data?.overrideDay);
+        }
+      });
     }
   };
 

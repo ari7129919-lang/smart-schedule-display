@@ -257,8 +257,8 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
         const [startH, startM] = kickoffTime.split(':').map(Number);
         const kickoffStart = startH * 60 + startM;
         const currentTime = now.getHours() * 60 + now.getMinutes();
-        // Kickoff runs from the set time until 5 minutes after
-        if (currentTime >= kickoffStart && currentTime < kickoffStart + 5) {
+        // Kickoff runs from the set time until 4 minutes after (1 min countdown + 3 min started)
+        if (currentTime >= kickoffStart && currentTime < kickoffStart + 4) {
           setDisplayMode('kickoff');
           return;
         }

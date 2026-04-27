@@ -58,9 +58,32 @@ export const supabaseAPI = {
   },
 
   async update(table, id, data) {
+    // Prepare data with snake_case equivalents for Supabase triggers
+    const updateData = { ...data };
+    
+    // Map camelCase to snake_case for SystemSettings fields
+    if (table === 'SystemSettings') {
+      if ('overrideDay' in data) updateData.override_day = data.overrideDay;
+      if ('overrideMode' in data) updateData.override_mode = data.overrideMode;
+      if ('timerTitle' in data) updateData.timer_title = data.timerTitle;
+      if ('timerFullScreenMinutes' in data) updateData.timer_full_screen_minutes = data.timerFullScreenMinutes;
+      if ('screenProfile' in data) updateData.screen_profile = data.screenProfile;
+      if ('groupRotationSeconds' in data) updateData.group_rotation_seconds = data.groupRotationSeconds;
+      if ('noticeRotationSeconds' in data) updateData.notice_rotation_seconds = data.noticeRotationSeconds;
+      if ('dualNoticeMode' in data) updateData.dual_notice_mode = data.dualNoticeMode;
+      if ('pauseAllSessionAdvance' in data) updateData.pause_all_session_advance = data.pauseAllSessionAdvance;
+      if ('boardDesign' in data) updateData.board_design = data.boardDesign;
+      if ('customModeConfig' in data) updateData.custom_mode_config = data.customModeConfig;
+      if ('tickerText' in data) updateData.ticker_text = data.tickerText;
+      if ('contactInfo' in data) updateData.contact_info = data.contactInfo;
+      if ('operatingHours' in data) updateData.operating_hours = data.operatingHours;
+      if ('fixedRules' in data) updateData.fixed_rules = data.fixedRules;
+      if ('backgroundRotationEnabled' in data) updateData.background_rotation_enabled = data.backgroundRotationEnabled;
+    }
+    
     const { data: result, error } = await supabase
       .from(table)
-      .update(data)
+      .update(updateData)
       .eq('id', id)
       .select()
       .single()

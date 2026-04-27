@@ -100,7 +100,10 @@ app.post('/api/:entity', authMiddleware, async (req, res) => {
 app.put('/api/:entity/:id', authMiddleware, async (req, res) => {
   try {
     const { entity, id } = req.params;
+    console.log(`PUT /api/${entity}/${id} - Request body:`, JSON.stringify(req.body, null, 2));
+    console.log(`overrideDay in request:`, req.body.overrideDay);
     const item = await dbHelpers.update(entity, id, req.body);
+    console.log(`Update result - overrideDay:`, item?.overrideDay);
     
     if (!item) {
       return res.status(404).json({ error: 'Not found' });
