@@ -221,18 +221,17 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [todaySchedule.workshops, tick]);
 
-  // Calculate current circle list based on week
+  // Calculate current circle list based on session number
   const currentCircleNames = useMemo(() => {
     const lists = todaySchedule.internalCircleLists || [];
     if (lists.length === 0) return [];
-    
-    const startDate = todaySchedule.weekStartDate ? new Date(todaySchedule.weekStartDate) : new Date();
-    const now = new Date();
-    const weeksDiff = Math.floor((now - startDate) / (7 * 24 * 60 * 60 * 1000));
-    const index = weeksDiff % lists.length;
-    
+
+    // Rotate based on current session: session 1->group1, 2->group2, 3->group3, 4->group1, etc.
+    const sessionNum = currentWorkshop?.currentSession || 1;
+    const index = (sessionNum - 1) % lists.length;
+
     return lists[index] || [];
-  }, [todaySchedule]);
+  }, [todaySchedule.internalCircleLists, currentWorkshop?.currentSession]);
 
   // Scheduler Engine - re-runs whenever data updates or clock ticks
   useEffect(() => {
