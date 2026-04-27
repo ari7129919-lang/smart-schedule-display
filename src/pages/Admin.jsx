@@ -165,12 +165,11 @@ export default function Admin() {
   useEffect(() => {
     if (systemSettings && Object.keys(systemSettings).length > 0) {
       setEditingSettings(prev => {
-        // Only update if data actually changed
-        if (prev && prev.id === systemSettings.id && 
-            JSON.stringify(prev) === JSON.stringify(systemSettings)) {
-          return prev;
+        // Only initialize once - don't overwrite after user edits
+        if (!prev) {
+          return systemSettings;
         }
-        return systemSettings;
+        return prev;
       });
     }
   }, [systemSettings]);
@@ -425,7 +424,7 @@ export default function Admin() {
             {editingSchedule && (
               <>
                 {/* Day Content Tabs */}
-                <Tabs defaultValue="workshops" className="space-y-4">
+                <Tabs defaultValue="workshops" key={activeDay} className="space-y-4">
                   <TabsList className="bg-white shadow-sm flex-wrap h-auto">
                     <TabsTrigger value="workshops" className="gap-2">
                       <Clock className="w-4 h-4" />
