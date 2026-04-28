@@ -20,6 +20,10 @@ const noticeStyles = `
   .notice-content .ql-align-center { text-align: center !important; }
   .notice-content .ql-align-left { text-align: left !important; }
   .notice-content .ql-align-right { text-align: right !important; }
+  /* Table styles */
+  .notice-content table { width: 100%; border-collapse: collapse; margin: 0.5em 0; }
+  .notice-content table td, .notice-content table th { border: 1px solid #ccc; padding: 8px; text-align: right; }
+  .notice-content table th { background-color: #f5f5f5; font-weight: 600; }
 `;
 
 // PDF container that hides scroll by oversizing + clipping

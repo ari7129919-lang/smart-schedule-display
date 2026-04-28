@@ -68,6 +68,10 @@ async function initDatabase() {
     await addColumnIfNotExists('fixedRules', 'TEXT');
     await addColumnIfNotExists('backgrounds', 'TEXT');
     await addColumnIfNotExists('backgroundRotationEnabled', 'INTEGER DEFAULT 1');
+    await addColumnIfNotExists('congratsCTAEnabled', 'INTEGER DEFAULT 0');
+    await addColumnIfNotExists('congratsCTAText', 'TEXT');
+    await addColumnIfNotExists('congratsCTALink', 'TEXT');
+    await addColumnIfNotExists('congratsRotationSeconds', 'INTEGER DEFAULT 60');
 
     // Day Schedule table
     await dbRun(`

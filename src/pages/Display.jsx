@@ -437,6 +437,10 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
                   <Congratulations 
                     items={todaySchedule.congratulations || []}
                     screenScale={screenScale * blockTextScale}
+                    ctaEnabled={systemSettings.congratsCTAEnabled || false}
+                    ctaText={systemSettings.congratsCTAText || ''}
+                    ctaLink={systemSettings.congratsCTALink || ''}
+                    rotationSeconds={systemSettings.congratsRotationSeconds || 60}
                   />
                 )}
                 {shouldShow('showRules') && (

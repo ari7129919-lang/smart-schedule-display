@@ -173,6 +173,24 @@ body {
   margin: 0.5em 0;
 }
 
+.rich-text-editor .jodit-wysiwyg table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.5em 0;
+}
+
+.rich-text-editor .jodit-wysiwyg table td,
+.rich-text-editor .jodit-wysiwyg table th {
+  border: 1px solid #d1d5db;
+  padding: 8px;
+  text-align: right;
+}
+
+.rich-text-editor .jodit-wysiwyg table th {
+  background-color: #f9fafb;
+  font-weight: 600;
+}
+
 /* Jodit toolbar buttons */
 .rich-text-editor .jodit-toolbar-button {
   height: 28px;

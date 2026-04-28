@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { 
   Settings, Calendar, FileText, Users, Clock, Play, 
   Plus, Trash2, Save, Eye, RefreshCw, Monitor, Timer, ExternalLink, Phone,
-  Palette, Star, Copy
+  Palette, Star, Copy, Gift
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -979,6 +979,10 @@ export default function Admin() {
                     <FileText className="w-4 h-4" />
                     טיקר וכללים
                   </TabsTrigger>
+                  <TabsTrigger value="congrats" className="gap-2">
+                    <Gift className="w-4 h-4" />
+                    ברכות מזל טוב
+                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="display" className="space-y-4">
@@ -1259,6 +1263,89 @@ export default function Admin() {
                           )}
                         </CardContent>
                       </Card>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="congrats" className="space-y-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Gift className="w-5 h-5" />
+                        הגדרות ברכות מזל טוב - בלוק מתחלף
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center gap-3 p-4 bg-green-50 rounded-lg border border-green-200">
+                        <Switch
+                          checked={editingSettings.congratsCTAEnabled || false}
+                          onCheckedChange={v => setEditingSettings({...editingSettings, congratsCTAEnabled: v})}
+                        />
+                        <div>
+                          <Label className="text-green-700 font-medium">הפעל בלוק מתחלף</Label>
+                          <p className="text-sm text-green-600 mt-0.5">הבלוק יתחלף בין ברכות מזל טוב לבין הודעת קריאה לפעולה</p>
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label>טקסט קריאה לפעולה (יוצג כשהבלוק מתחלף)</Label>
+                        <Textarea
+                          value={editingSettings.congratsCTAText || ''}
+                          onChange={e => setEditingSettings({...editingSettings, congratsCTAText: e.target.value})}
+                          placeholder="לדוגמה:\nרוצה להוסיף ברכת מזל טוב?\nשלח פנייה בנדרים פלוס - פנייה למזכירות"
+                          rows={4}
+                        />
+                        <p className="text-xs text-gray-400 mt-1">
+                          💡 ניתן להשתמש בשורות חדשות (Enter) לעיצוב הטקסט
+                        </p>
+                      </div>
+
+                      <div>
+                        <Label>קישור לחיצה (אופציונלי)</Label>
+                        <Input
+                          value={editingSettings.congratsCTALink || ''}
+                          onChange={e => setEditingSettings({...editingSettings, congratsCTALink: e.target.value})}
+                          placeholder="https://nedarim.plus/..."
+                          dir="ltr"
+                        />
+                        <p className="text-xs text-gray-400 mt-1">
+                          כתובת האתר שתיפתח בלחיצה על "לחץ כאן"
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label>זמן החלפה (שניות)</Label>
+                          <Input
+                            type="number"
+                            min="10"
+                            max="600"
+                            value={editingSettings.congratsRotationSeconds || 60}
+                            onChange={e => setEditingSettings({...editingSettings, congratsRotationSeconds: Number(e.target.value)})}
+                          />
+                          <p className="text-xs text-gray-400 mt-1">
+                            כל כמה זמן הבלוק יתחלף (ברירת מחדל: 60 שניות = דקה)
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <h4 className="font-medium text-blue-800 mb-2">תצוגה מקדימה:</h4>
+                        <div className="flex items-center gap-4 text-sm text-blue-700">
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full bg-accent"></div>
+                            <span>ברכות מזל טוב</span>
+                          </div>
+                          <div className="text-blue-400">⇄</div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                            <span>קריאה לפעולה</span>
+                          </div>
+                        </div>
+                        <p className="text-xs text-blue-600 mt-2">
+                          כשהחלפה מופעלת, הבלוק יחליף בין שני המצבים כל {editingSettings.congratsRotationSeconds || 60} שניות
+                        </p>
+                      </div>
                     </CardContent>
                   </Card>
                 </TabsContent>
