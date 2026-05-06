@@ -385,14 +385,18 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
               {/* Right Column */}
               <div className="flex flex-col gap-3 flex-shrink-0" style={{ width: sideWidth, paddingBottom: `${60 * screenScale}px` }}>
                 {shouldShow('showCircle') && !todaySchedule.hideInternalCircle && !currentWorkshop?.hideInternalCircle && (
-                  <InternalCircle 
+                  <InternalCircle
                     names={currentCircleNames}
                     screenScale={screenScale * blockTextScale}
                     displayMode={todaySchedule.circleDisplayMode || 'all'}
+                    highlightBgColor={design.circleHighlightBg || '#8FAE9B'}
+                    highlightTextColor={design.circleHighlightText || '#1B2A4A'}
+                    animationType={design.circleAnimationType || 'pulse'}
+                    animationSpeed={design.circleAnimationSpeed || 'normal'}
                   />
                 )}
                 {shouldShow('showGroups') && !todaySchedule.hideSmallGroups && !currentWorkshop?.hideSmallGroups && (
-                  <SmallGroups 
+                  <SmallGroups
                     groups={todaySchedule.smallGroups || []}
                     rotationSeconds={systemSettings.groupRotationSeconds || 8}
                     screenScale={screenScale * blockTextScale}

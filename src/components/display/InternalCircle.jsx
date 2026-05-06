@@ -2,10 +2,14 @@ import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import LeafIcon from './LeafIcon';
 
-export default function InternalCircle({ 
-  names = [], 
+export default function InternalCircle({
+  names = [],
   screenScale = 1,
-  displayMode = 'all'  // 'all' = scrolling list, 'range_only' = show first & last only
+  displayMode = 'all',
+  highlightBgColor = '#8FAE9B',
+  highlightTextColor = '#1B2A4A',
+  animationType = 'pulse',
+  animationSpeed = 'normal'
 }) {
   const sortedNames = useMemo(() => {
     if (!names || names.length === 0) return [];
@@ -45,10 +49,31 @@ export default function InternalCircle({
     );
   }
 
+  const speedMap = { slow: 2, normal: 1, fast: 0.5 };
+  const speedMultiplier = speedMap[animationSpeed] || 1;
+
+  const getAnimationProps = () => {
+    const base = {
+      transition: { repeat: Infinity, repeatType: 'loop', duration: 1.5 * speedMultiplier }
+    };
+    switch (animationType) {
+      case 'pulse':
+        return { animate: { scale: [1, 1.04, 1], opacity: [1, 0.85, 1] }, ...base };
+      case 'glow':
+        return { animate: { boxShadow: [`0 0 0px ${highlightBgColor}00`, `0 0 20px ${highlightBgColor}CC`, `0 0 0px ${highlightBgColor}00`] }, transition: { ...base.transition, duration: 2 * speedMultiplier } };
+      case 'bounce':
+        return { animate: { y: [0, -6 * screenScale, 0] }, transition: { ...base.transition, duration: 1.2 * speedMultiplier } };
+      default:
+        return {};
+    }
+  };
+
+  const animProps = animationType === 'none' ? {} : getAnimationProps();
+
   // Range-only mode: show first and last name as static display
   if (displayMode === 'range_only') {
     return (
-      <div 
+      <div
         className="bg-white/85 rounded-3xl overflow-hidden flex flex-col"
         style={{ boxShadow: 'var(--shadow-soft)', padding: `${24 * screenScale}px` }}
       >
@@ -59,28 +84,38 @@ export default function InternalCircle({
           </h3>
         </div>
         <div className="flex flex-col gap-3">
-          <div 
-            className="text-center bg-accent/10 rounded-xl"
-            style={{ padding: `${14 * screenScale}px ${16 * screenScale}px` }}
+          <motion.div
+            className="text-center rounded-xl"
+            style={{
+              padding: `${14 * screenScale}px ${16 * screenScale}px`,
+              backgroundColor: highlightBgColor,
+              color: highlightTextColor
+            }}
+            {...animProps}
           >
-            <div className="text-secondary" style={{ fontSize: `${14 * screenScale}px`, marginBottom: `${4 * screenScale}px` }}>
+            <div style={{ fontSize: `${14 * screenScale}px`, marginBottom: `${4 * screenScale}px`, opacity: 0.75 }}>
               ראשון
             </div>
-            <div className="text-primary font-bold" style={{ fontSize: `${30 * screenScale}px` }}>
+            <div className="font-bold" style={{ fontSize: `${30 * screenScale}px` }}>
               {sortedNames[0]}
             </div>
-          </div>
-          <div 
-            className="text-center bg-primary/8 rounded-xl"
-            style={{ padding: `${14 * screenScale}px ${16 * screenScale}px`, backgroundColor: 'rgba(47,69,128,0.06)' }}
+          </motion.div>
+          <motion.div
+            className="text-center rounded-xl"
+            style={{
+              padding: `${14 * screenScale}px ${16 * screenScale}px`,
+              backgroundColor: highlightBgColor,
+              color: highlightTextColor
+            }}
+            {...animProps}
           >
-            <div className="text-secondary" style={{ fontSize: `${14 * screenScale}px`, marginBottom: `${4 * screenScale}px` }}>
+            <div style={{ fontSize: `${14 * screenScale}px`, marginBottom: `${4 * screenScale}px`, opacity: 0.75 }}>
               אחרון
             </div>
-            <div className="text-primary font-bold" style={{ fontSize: `${30 * screenScale}px` }}>
+            <div className="font-bold" style={{ fontSize: `${30 * screenScale}px` }}>
               {sortedNames[sortedNames.length - 1]}
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     );

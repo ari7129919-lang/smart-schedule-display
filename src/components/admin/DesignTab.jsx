@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Save, Palette, Monitor, Type, LayoutGrid, Paintbrush } from 'lucide-react';
+import { Save, Palette, Monitor, Type, LayoutGrid, Paintbrush, Users, Zap } from 'lucide-react';
 
 const BG_PRESETS = [
   { label: 'כחול-אפור (ברירת מחדל)', value: '#F2F4F7' },
@@ -60,6 +60,10 @@ export default function DesignTab({ settings, onChange, onSave, isPending }) {
           <TabsTrigger value="layout" className="gap-2">
             <LayoutGrid className="w-4 h-4" />
             פריסה
+          </TabsTrigger>
+          <TabsTrigger value="circle" className="gap-2">
+            <Users className="w-4 h-4" />
+            מעגל פנימי
           </TabsTrigger>
         </TabsList>
 
@@ -225,6 +229,112 @@ export default function DesignTab({ settings, onChange, onSave, isPending }) {
                     ×{(parseFloat(design.tickerFontScale) || 1.0).toFixed(2)}
                   </span>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Internal Circle Tab */}
+        <TabsContent value="circle" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="w-5 h-5" />
+                הדגשה ואנימציה — מצב "טווח בלבד"
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div>
+                <Label className="font-medium">צבע רקע הדגשה (ראשון + אחרון)</Label>
+                <div className="flex items-center gap-3 mt-2">
+                  <input
+                    type="color"
+                    value={design.circleHighlightBg || '#8FAE9B'}
+                    onChange={e => update('circleHighlightBg', e.target.value)}
+                    className="w-10 h-10 rounded cursor-pointer border"
+                  />
+                  <Input
+                    value={design.circleHighlightBg || ''}
+                    onChange={e => update('circleHighlightBg', e.target.value)}
+                    placeholder="#8FAE9B"
+                    className="w-32 font-mono"
+                    dir="ltr"
+                  />
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <Label className="font-medium">צבע טקסט הדגשה</Label>
+                <div className="flex items-center gap-3 mt-2">
+                  <input
+                    type="color"
+                    value={design.circleHighlightText || '#1B2A4A'}
+                    onChange={e => update('circleHighlightText', e.target.value)}
+                    className="w-10 h-10 rounded cursor-pointer border"
+                  />
+                  <Input
+                    value={design.circleHighlightText || ''}
+                    onChange={e => update('circleHighlightText', e.target.value)}
+                    placeholder="#1B2A4A"
+                    className="w-32 font-mono"
+                    dir="ltr"
+                  />
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <Label className="font-medium">סוג אנימציה</Label>
+                <div className="flex gap-3 mt-2">
+                  {[
+                    { label: 'דופק', value: 'pulse' },
+                    { label: 'זוהר', value: 'glow' },
+                    { label: 'קפיצה', value: 'bounce' },
+                    { label: 'ללא', value: 'none' },
+                  ].map(opt => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => update('circleAnimationType', opt.value)}
+                      className={`flex-1 py-2 px-3 rounded-lg border text-sm font-medium transition-colors ${
+                        (design.circleAnimationType || 'pulse') === opt.value
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <Label className="font-medium">מהירות אנימציה</Label>
+                <div className="flex gap-3 mt-2">
+                  {[
+                    { label: 'איטי', value: 'slow' },
+                    { label: 'רגיל', value: 'normal' },
+                    { label: 'מהיר', value: 'fast' },
+                  ].map(opt => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => update('circleAnimationSpeed', opt.value)}
+                      className={`flex-1 py-2 px-3 rounded-lg border text-sm font-medium transition-colors ${
+                        (design.circleAnimationSpeed || 'normal') === opt.value
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="border-t pt-4 bg-gray-50 rounded-lg p-3">
+                <p className="text-sm text-gray-500">
+                  ההדגשה תופיע רק במצב <strong>"שם ראשון ואחרון בלבד"</strong> של המעגל הפנימי בלוח התצוגה.
+                </p>
               </div>
             </CardContent>
           </Card>
