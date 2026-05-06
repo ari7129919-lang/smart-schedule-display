@@ -138,12 +138,17 @@ export default function InternalCircle({
       </div>
       
       {range && (
-        <div 
-          className="text-accent font-medium mb-3 text-center bg-accent/10 rounded-xl py-2 px-3"
-          style={{ fontSize: `${20 * screenScale}px` }}
+        <motion.div
+          className="font-medium mb-3 text-center rounded-xl py-2 px-3"
+          style={{
+            fontSize: `${20 * screenScale}px`,
+            backgroundColor: highlightBgColor,
+            color: highlightTextColor
+          }}
+          {...animProps}
         >
           {range}
-        </div>
+        </motion.div>
       )}
 
       <div className="flex-1 overflow-hidden relative">

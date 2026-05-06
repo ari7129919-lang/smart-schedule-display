@@ -333,7 +333,7 @@ export default function DesignTab({ settings, onChange, onSave, isPending }) {
 
               <div className="border-t pt-4 bg-gray-50 rounded-lg p-3">
                 <p className="text-sm text-gray-500">
-                  ההדגשה תופיע רק במצב <strong>"שם ראשון ואחרון בלבד"</strong> של המעגל הפנימי בלוח התצוגה.
+                  ההדגשה והאנימציה יחולו על <strong>כרטיס הטווח</strong> (ראשון – אחרון) במעגל הפנימי — בשני המצבים: גלילת כל השמות ושם ראשון ואחרון בלבד.
                 </p>
               </div>
             </CardContent>
