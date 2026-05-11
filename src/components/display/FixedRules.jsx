@@ -21,7 +21,7 @@ export default function FixedRules({
 
   return (
     <div 
-      className="bg-white/85 rounded-3xl overflow-hidden"
+      className="bg-white/85 rounded-3xl overflow-hidden flex flex-col h-full"
       style={{ 
         boxShadow: 'var(--shadow-soft)',
         padding: `${24 * screenScale}px`
@@ -40,7 +40,7 @@ export default function FixedRules({
       {/* Vertical auto-scroll */}
       <div 
         className="overflow-hidden relative"
-        style={{ height: `${180 * screenScale}px` }}
+        style={{ height: `${240 * screenScale}px` }}
       >
         <motion.div
           className="space-y-3"

@@ -184,7 +184,7 @@ export default function Congratulations({
       style={{ 
         boxShadow: 'var(--shadow-soft)',
         padding: `${24 * screenScale}px`,
-        minHeight: `${280 * screenScale}px`,
+        minHeight: `${200 * screenScale}px`,
         perspective: '1000px'
       }}
     >

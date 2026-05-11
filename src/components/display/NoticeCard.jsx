@@ -56,15 +56,41 @@ function ScrollingContent({ children, containerStyle = {}, className = '' }) {
   const [scrollDist, setScrollDist] = useState(0);
 
   useEffect(() => {
+    const contentEl = contentRef.current;
+    const containerEl = containerRef.current;
+
     const check = () => {
-      if (contentRef.current && containerRef.current) {
-        const overflow = contentRef.current.scrollHeight - containerRef.current.clientHeight;
+      if (contentEl && containerEl) {
+        const overflow = contentEl.scrollHeight - containerEl.clientHeight;
         setScrollDist(overflow > 10 ? overflow : 0);
       }
     };
-    // slight delay for render
+
+    // slight delay for initial render
     const t = setTimeout(check, 150);
-    return () => clearTimeout(t);
+
+    // Observe size changes (e.g. images loading)
+    let ro;
+    if (typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(check);
+      if (contentEl) ro.observe(contentEl);
+      if (containerEl) ro.observe(containerEl);
+    }
+
+    // Listen for image loads inside the content
+    const handleImageLoad = () => check();
+    const images = contentEl?.querySelectorAll('img') || [];
+    images.forEach(img => {
+      if (!img.complete) {
+        img.addEventListener('load', handleImageLoad);
+      }
+    });
+
+    return () => {
+      clearTimeout(t);
+      if (ro) ro.disconnect();
+      images.forEach(img => img.removeEventListener('load', handleImageLoad));
+    };
   }, [children]);
 
   const duration = scrollDist > 0 ? Math.max(6, scrollDist / 30) : 0;
@@ -162,7 +188,7 @@ export default function NoticeCard({
       <style>{noticeStyles}</style>
 
       {notice.pdfUrl ? (
-        <div className="flex-1 flex items-center justify-center" style={{ padding: `${16 * screenScale}px` }}>
+        <div className="flex-1 flex items-center justify-center min-h-0" style={{ padding: `${16 * screenScale}px` }}>
           <PdfEmbed 
             url={notice.pdfUrl} 
             style={{ 
@@ -173,13 +199,13 @@ export default function NoticeCard({
           />
         </div>
       ) : notice.imageUrl && !notice.content ? (
-        <div className="flex-1 flex items-center justify-center" style={{ padding: `${16 * screenScale}px` }}>
+        <div className="flex-1 flex items-center justify-center min-h-0" style={{ padding: `${16 * screenScale}px` }}>
           <img
             src={notice.imageUrl}
             alt={notice.title || ''}
             style={{
-              width: '100%',
-              height: '100%',
+              maxWidth: '100%',
+              maxHeight: '100%',
               objectFit: 'contain',
               borderRadius: `${16 * screenScale}px`,
             }}

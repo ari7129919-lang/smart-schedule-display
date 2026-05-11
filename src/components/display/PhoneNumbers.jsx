@@ -23,8 +23,8 @@ export default function PhoneNumbers({ numbers = [], screenScale = 1 }) {
 
   return (
     <div
-      className="bg-white/85 rounded-3xl overflow-hidden flex flex-col"
-      style={{ boxShadow: 'var(--shadow-soft)', padding: `${20 * screenScale}px`, height: '100%' }}
+      className="bg-white/85 rounded-3xl overflow-hidden flex flex-col h-full"
+      style={{ boxShadow: 'var(--shadow-soft)', padding: `${20 * screenScale}px` }}
     >
       {/* Header */}
       <div className="flex items-center gap-2 mb-3" style={{ marginBottom: `${12 * screenScale}px`, flexShrink: 0 }}>
