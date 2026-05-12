@@ -50,26 +50,7 @@ const baseConfig = {
     fontFamily: "'Heebo', sans-serif",
   },
   defaultFontSize: '14px',
-  // Event handler: intercept paste and insert raw HTML directly via Jodit's API
-  // `this` inside a plain function is the Jodit instance
-  events: {
-    paste: function(e) {
-      const cd = e.clipboardData;
-      if (!cd) return;
-      const html = cd.getData('text/html');
-      if (!html) return;
-
-      // Stop Jodit's built-in paste processing completely
-      e.preventDefault();
-      e.stopPropagation();
-
-      // Insert raw HTML using native execCommand (works in any browser/editor)
-      const doc = e.currentTarget?.ownerDocument || document;
-      doc.execCommand('insertHTML', false, html);
-
-      return false;
-    }
-  }
+  // No custom paste event handler — rely on built-in Jodit config above
 };
 
 export default function RichTextEditor({ value, onChange, placeholder }) {

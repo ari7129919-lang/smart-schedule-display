@@ -166,10 +166,9 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
   }, [daySchedules, currentDayKey, systemSettings.overrideDay]);
 
   const todayNotices = useMemo(() => {
-    return notices?.filter(n => 
-      n.active && 
-      (!n.days?.length || n.days.includes(currentDayKey))
-    ) || [];
+    return (notices || [])
+      .filter(n => n.active && (!n.days?.length || n.days.includes(currentDayKey)))
+      .sort((a, b) => (a.priority || 0) - (b.priority || 0));
   }, [notices, currentDayKey]);
 
   // Clock tick every 30 seconds to keep schedule logic alive
