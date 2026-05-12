@@ -1,6 +1,7 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import LeafIcon from './LeafIcon';
+import AnimatedImage from './AnimatedImage';
 
 const noticeStyles = `
   .notice-content { overflow: hidden; }
@@ -24,6 +25,12 @@ const noticeStyles = `
   .notice-content table { width: 100%; border-collapse: collapse; margin: 0.5em 0; }
   .notice-content table td, .notice-content table th { border: 1px solid #ccc; padding: 8px; text-align: right; }
   .notice-content table th { background-color: #f5f5f5; font-weight: 600; }
+  /* Text glow animation */
+  @keyframes textGlow {
+    0%, 100% { text-shadow: 0 0 4px var(--glow-color, #8FAE9B); }
+    50% { text-shadow: 0 0 16px var(--glow-color, #8FAE9B), 0 0 4px var(--glow-color, #8FAE9B); }
+  }
+  .text-glow { animation: textGlow 2s ease-in-out infinite; }
 `;
 
 // PDF container that hides scroll by oversizing + clipping
@@ -115,6 +122,13 @@ function ScrollingContent({ children, containerStyle = {}, className = '' }) {
   );
 }
 
+// Helper to resolve images array with backward compatibility
+function getNoticeImages(notice) {
+  if (notice?.imageUrls && notice.imageUrls.length > 0) return notice.imageUrls;
+  if (notice?.imageUrl) return [notice.imageUrl];
+  return [];
+}
+
 export default function NoticeCard({ 
   notice, 
   screenScale = 1,
@@ -198,18 +212,30 @@ export default function NoticeCard({
             }} 
           />
         </div>
-      ) : notice.imageUrl && !notice.content ? (
+      ) : getNoticeImages(notice).length > 0 && !notice.content ? (
         <div className="flex-1 flex items-center justify-center min-h-0" style={{ padding: `${16 * screenScale}px` }}>
-          <img
-            src={notice.imageUrl}
-            alt={notice.title || ''}
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'contain',
-              borderRadius: `${16 * screenScale}px`,
-            }}
-          />
+          {notice.imageAnimationEnabled ? (
+            <AnimatedImage
+              images={getNoticeImages(notice)}
+              effects={notice.imageAnimationEffects || []}
+              speed={notice.imageAnimationSpeed || 'normal'}
+              glowColor={notice.imageGlowColor || '#8FAE9B'}
+              screenScale={screenScale}
+              alt={notice.title || ''}
+              style={{ width: '100%', height: '100%' }}
+            />
+          ) : (
+            <img
+              src={notice.imageUrl}
+              alt={notice.title || ''}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                borderRadius: `${16 * screenScale}px`,
+              }}
+            />
+          )}
         </div>
       ) : (
         <div className="relative z-10 flex-1 flex flex-col min-h-0" style={{ maxHeight: '100%' }}>
@@ -227,23 +253,36 @@ export default function NoticeCard({
           
           {/* Content — auto-scrolls if overflows */}
           <ScrollingContent>
-            <div 
-              className="text-secondary leading-relaxed notice-content"
-              style={{ 
+            <div
+              className={`text-secondary leading-relaxed notice-content ${notice?.textGlowEnabled ? 'text-glow' : ''}`}
+              style={{
                 fontSize: `${44 * screenScale * noticeContentScale}px`,
                 lineHeight: 1.65,
+                '--glow-color': notice?.textGlowEnabled ? (notice?.imageGlowColor || '#8FAE9B') : undefined,
               }}
               dangerouslySetInnerHTML={{ __html: notice.content }}
             />
 
-            {notice.imageUrl && (
-              <div style={{ marginTop: `${16 * screenScale}px` }}>
-                <img 
-                  src={notice.imageUrl} 
-                  alt="" 
-                  className="w-full h-auto rounded-xl object-cover"
-                  style={{ maxHeight: `${240 * screenScale}px` }}
-                />
+            {getNoticeImages(notice).length > 0 && (
+              <div style={{ marginTop: `${16 * screenScale}px`, maxHeight: `${240 * screenScale}px` }}>
+                {notice.imageAnimationEnabled ? (
+                  <AnimatedImage
+                    images={getNoticeImages(notice)}
+                    effects={notice.imageAnimationEffects || []}
+                    speed={notice.imageAnimationSpeed || 'normal'}
+                    glowColor={notice.imageGlowColor || '#8FAE9B'}
+                    screenScale={screenScale}
+                    alt=""
+                    style={{ width: '100%', height: `${240 * screenScale}px` }}
+                  />
+                ) : (
+                  <img
+                    src={notice.imageUrl}
+                    alt=""
+                    className="w-full h-auto rounded-xl object-cover"
+                    style={{ maxHeight: `${240 * screenScale}px` }}
+                  />
+                )}
               </div>
             )}
 

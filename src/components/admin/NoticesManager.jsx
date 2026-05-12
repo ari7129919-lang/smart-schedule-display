@@ -7,9 +7,17 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { FileText, Plus, Trash2, Save, GripVertical, Maximize2, Minimize2, ChevronDown, ChevronUp } from 'lucide-react';
+import { FileText, Plus, Trash2, Save, GripVertical, Maximize2, Minimize2, ChevronDown, ChevronUp, Image, Zap, Type } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import RichTextEditor from '@/components/admin/RichTextEditor';
+import AnimatedImage from '@/components/display/AnimatedImage';
+
+// Resolve images array with backward compatibility
+function getNoticeImages(notice) {
+  if (notice?.imageUrls && notice.imageUrls.length > 0) return notice.imageUrls;
+  if (notice?.imageUrl) return [notice.imageUrl];
+  return [];
+}
 
 const dayNames = {
   sunday: 'ראשון',
@@ -36,7 +44,16 @@ function NoticePreview({ notice }) {
     .preview-content table { width: 100%; border-collapse: collapse; margin: 0.5em 0; }
     .preview-content table td, .preview-content table th { border: 1px solid #ccc; padding: 8px; text-align: right; }
     .preview-content table th { background-color: #f5f5f5; font-weight: 600; }
+    @keyframes textGlow {
+      0%, 100% { text-shadow: 0 0 4px var(--glow-color, #8FAE9B); }
+      50% { text-shadow: 0 0 16px var(--glow-color, #8FAE9B), 0 0 4px var(--glow-color, #8FAE9B); }
+    }
+    .text-glow { animation: textGlow 2s ease-in-out infinite; }
   `;
+  const images = getNoticeImages(notice);
+  const hasImages = images.length > 0;
+  const isImageOnly = hasImages && !notice?.content;
+
   return (
     <div className="border rounded-xl p-4 bg-white/90" style={{ minHeight: '200px' }}>
       <style>{previewStyles}</style>
@@ -47,13 +64,31 @@ function NoticePreview({ notice }) {
       )}
       {notice?.content && (
         <div
-          className="preview-content text-secondary"
-          style={{ fontSize: '14px', lineHeight: 1.6 }}
+          className={`preview-content text-secondary ${notice?.textGlowEnabled ? 'text-glow' : ''}`}
+          style={{
+            fontSize: '14px',
+            lineHeight: 1.6,
+            '--glow-color': notice?.textGlowEnabled ? (notice?.imageGlowColor || '#8FAE9B') : undefined,
+          }}
           dangerouslySetInnerHTML={{ __html: notice.content }}
         />
       )}
-      {notice?.imageUrl && !notice?.content && (
-        <img src={notice.imageUrl} alt="" className="w-full h-auto rounded-lg object-contain" style={{ maxHeight: '300px' }} />
+      {isImageOnly && (
+        <div style={{ height: '200px' }}>
+          {notice?.imageAnimationEnabled ? (
+            <AnimatedImage
+              images={images}
+              effects={notice.imageAnimationEffects || []}
+              speed={notice.imageAnimationSpeed || 'normal'}
+              glowColor={notice.imageGlowColor || '#8FAE9B'}
+              screenScale={1}
+              alt={notice.title || ''}
+              style={{ width: '100%', height: '100%' }}
+            />
+          ) : (
+            <img src={images[0]} alt="" className="w-full h-full object-contain rounded-lg" />
+          )}
+        </div>
       )}
     </div>
   );
@@ -385,13 +420,26 @@ export default function NoticesManager({ notices, onSave, onDelete, onReorder })
                 )}
               </div>
               <div>
-                <Label>תמונה (לחלופין / בנוסף לטקסט)</Label>
+                <Label className="flex items-center gap-2">
+                  <Image className="w-4 h-4" />
+                  תמונות (לחלופין / בנוסף לטקסט)
+                </Label>
                 <div className="flex gap-2 mt-1 items-center">
                   <Input
-                    value={editingNotice?.imageUrl || ''}
-                    onChange={e => setEditingNotice(prev => prev ? {...prev, imageUrl: e.target.value} : null)}
+                    value=""
                     placeholder="הדבק URL של תמונה..."
                     dir="ltr"
+                    onChange={e => {
+                      const url = e.target.value.trim();
+                      if (!url) return;
+                      setEditingNotice(prev => {
+                        if (!prev) return null;
+                        const urls = prev.imageUrls || [];
+                        if (urls.includes(url)) return prev;
+                        return {...prev, imageUrls: [...urls, url]};
+                      });
+                      e.target.value = '';
+                    }}
                   />
                   <label className="cursor-pointer">
                     <span className="inline-flex items-center gap-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-md text-sm whitespace-nowrap transition-colors">
@@ -400,37 +448,177 @@ export default function NoticesManager({ notices, onSave, onDelete, onReorder })
                     <input
                       type="file"
                       accept="image/*"
+                      multiple
                       className="hidden"
                       onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        if (file.size > 10 * 1024 * 1024) {
-                          alert('הקובץ גדול מדי. מקסימום 10MB');
-                          return;
-                        }
-                        try {
-                          const result = await supabaseAPI.upload(file);
-                          if (result && result.url) {
-                            setEditingNotice(prev => prev ? {...prev, imageUrl: result.url} : null);
-                          } else {
-                            alert('שגיאה בהעלאת הקובץ');
+                        const files = Array.from(e.target.files || []);
+                        if (files.length === 0) return;
+                        const uploadedUrls = [];
+                        for (const file of files) {
+                          if (file.size > 10 * 1024 * 1024) {
+                            alert(`הקובץ ${file.name} גדול מדי. מקסימום 10MB`);
+                            continue;
                           }
-                        } catch (error) {
-                          console.error('Upload error:', error);
-                          alert('שגיאה בהעלאת הקובץ: ' + (error.message || 'בעיית חיבור לשרת'));
+                          try {
+                            const result = await supabaseAPI.upload(file);
+                            if (result && result.url) {
+                              uploadedUrls.push(result.url);
+                            } else {
+                              alert(`שגיאה בהעלאת הקובץ ${file.name}`);
+                            }
+                          } catch (error) {
+                            console.error('Upload error:', error);
+                            alert(`שגיאה בהעלאת הקובץ ${file.name}: ` + (error.message || 'בעיית חיבור לשרת'));
+                          }
+                        }
+                        if (uploadedUrls.length > 0) {
+                          setEditingNotice(prev => {
+                            if (!prev) return null;
+                            const current = prev.imageUrls || [];
+                            return {...prev, imageUrls: [...current, ...uploadedUrls]};
+                          });
                         }
                         e.target.value = '';
                       }}
                     />
                   </label>
                 </div>
-                {editingNotice?.imageUrl && (
-                  <div className="mt-2 flex items-center gap-2">
-                    <img src={editingNotice?.imageUrl} alt="" className="h-16 rounded object-cover border" />
-                    <button onClick={() => setEditingNotice(prev => prev ? {...prev, imageUrl: ''} : null)} className="text-red-400 text-sm hover:text-red-600">הסר</button>
+                {/* Thumbnail gallery */}
+                {(editingNotice?.imageUrls?.length > 0 || editingNotice?.imageUrl) && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {(editingNotice?.imageUrls || (editingNotice?.imageUrl ? [editingNotice.imageUrl] : [])).map((url, idx) => (
+                      <div key={`${url}-${idx}`} className="relative group">
+                        <img src={url} alt="" className="h-16 w-16 rounded object-cover border" />
+                        <button
+                          onClick={() => {
+                            setEditingNotice(prev => {
+                              if (!prev) return null;
+                              const urls = prev.imageUrls || (prev.imageUrl ? [prev.imageUrl] : []);
+                              const newUrls = urls.filter((u, i) => i !== idx);
+                              // If all removed, clear legacy imageUrl too
+                              if (newUrls.length === 0) {
+                                return {...prev, imageUrls: [], imageUrl: ''};
+                              }
+                              return {...prev, imageUrls: newUrls, imageUrl: newUrls[0]};
+                            });
+                          }}
+                          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                        >×</button>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
+
+              {/* Image Effects Panel */}
+              {(editingNotice?.imageUrls?.length > 0 || editingNotice?.imageUrl) && (
+                <div className="border rounded-lg p-4 bg-gray-50/50 space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-amber-500" />
+                    <Label className="font-semibold">אפקטים ואנימציות לתמונה</Label>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={editingNotice?.imageAnimationEnabled || false}
+                      onCheckedChange={v => setEditingNotice(prev => prev ? {...prev, imageAnimationEnabled: v} : null)}
+                    />
+                    <Label className="text-sm">הפעל אנימציה חיה</Label>
+                  </div>
+
+                  {editingNotice?.imageAnimationEnabled && (
+                    <>
+                      <div>
+                        <Label className="text-sm font-medium mb-1 block">בחר אפקטים (ניתן לסמן כמה)</Label>
+                        <div className="flex flex-wrap gap-2">
+                          {[
+                            { label: 'התהפכות', value: 'flip' },
+                            { label: 'זום', value: 'zoom' },
+                            { label: 'דופק', value: 'pulse' },
+                            { label: 'זוהר מסגרת', value: 'glow-border' },
+                          ].map(opt => (
+                            <label key={opt.value} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border cursor-pointer transition-colors ${
+                              (editingNotice?.imageAnimationEffects || []).includes(opt.value)
+                                ? 'bg-blue-50 border-blue-400 text-blue-700'
+                                : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
+                            }`}>
+                              <input
+                                type="checkbox"
+                                className="hidden"
+                                checked={(editingNotice?.imageAnimationEffects || []).includes(opt.value)}
+                                onChange={() => {
+                                  setEditingNotice(prev => {
+                                    if (!prev) return null;
+                                    const current = prev.imageAnimationEffects || [];
+                                    if (current.includes(opt.value)) {
+                                      return {...prev, imageAnimationEffects: current.filter(e => e !== opt.value)};
+                                    } else {
+                                      return {...prev, imageAnimationEffects: [...current, opt.value]};
+                                    }
+                                  });
+                                }}
+                              />
+                              {opt.label}
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="text-sm font-medium mb-1 block">מהירות אנימציה</Label>
+                        <div className="flex gap-2">
+                          {[
+                            { label: 'איטי', value: 'slow' },
+                            { label: 'רגיל', value: 'normal' },
+                            { label: 'מהיר', value: 'fast' },
+                          ].map(opt => (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              onClick={() => setEditingNotice(prev => prev ? {...prev, imageAnimationSpeed: opt.value} : null)}
+                              className={`flex-1 py-1.5 px-2 rounded-md border text-sm font-medium transition-colors ${
+                                (editingNotice?.imageAnimationSpeed || 'normal') === opt.value
+                                  ? 'bg-blue-600 text-white border-blue-600'
+                                  : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                              }`}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="text-sm font-medium mb-1 block">צבע זוהר</Label>
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="color"
+                            value={editingNotice?.imageGlowColor || '#8FAE9B'}
+                            onChange={e => setEditingNotice(prev => prev ? {...prev, imageGlowColor: e.target.value} : null)}
+                            className="w-10 h-10 rounded cursor-pointer border"
+                          />
+                          <Input
+                            value={editingNotice?.imageGlowColor || ''}
+                            onChange={e => setEditingNotice(prev => prev ? {...prev, imageGlowColor: e.target.value} : null)}
+                            placeholder="#8FAE9B"
+                            className="w-32 font-mono"
+                            dir="ltr"
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  <div className="flex items-center gap-2 pt-2 border-t">
+                    <Type className="w-4 h-4" />
+                    <Switch
+                      checked={editingNotice?.textGlowEnabled || false}
+                      onCheckedChange={v => setEditingNotice(prev => prev ? {...prev, textGlowEnabled: v} : null)}
+                    />
+                    <Label className="text-sm">זוהר לטקסט המודעה</Label>
+                  </div>
+                </div>
+              )}
               <div className={`${isFullScreen ? 'grid grid-cols-2 gap-4' : 'grid grid-cols-2 gap-4'}`}>
                 <div>
                   <Label>תאריך יעד (לספירה לאחור)</Label>

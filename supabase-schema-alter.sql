@@ -57,6 +57,14 @@ ALTER TABLE "Notice" ADD COLUMN IF NOT EXISTS "displaySeconds" INTEGER;
 ALTER TABLE "Notice" ADD COLUMN IF NOT EXISTS "targetDate" DATE;
 ALTER TABLE "Notice" ADD COLUMN IF NOT EXISTS "archived" BOOLEAN DEFAULT false;
 
+-- Image animation & slideshow columns
+ALTER TABLE "Notice" ADD COLUMN IF NOT EXISTS "imageUrls" JSONB DEFAULT '[]';
+ALTER TABLE "Notice" ADD COLUMN IF NOT EXISTS "imageAnimationEnabled" BOOLEAN DEFAULT false;
+ALTER TABLE "Notice" ADD COLUMN IF NOT EXISTS "imageAnimationEffects" JSONB DEFAULT '[]';
+ALTER TABLE "Notice" ADD COLUMN IF NOT EXISTS "imageAnimationSpeed" TEXT DEFAULT 'normal';
+ALTER TABLE "Notice" ADD COLUMN IF NOT EXISTS "imageGlowColor" TEXT DEFAULT '#8FAE9B';
+ALTER TABLE "Notice" ADD COLUMN IF NOT EXISTS "textGlowEnabled" BOOLEAN DEFAULT false;
+
 -- ============================================================================
 -- PhoneNumbers - עמודות camelCase נוספות (אם יש צורך)
 -- ============================================================================

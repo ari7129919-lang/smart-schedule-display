@@ -125,6 +125,13 @@ CREATE TABLE IF NOT EXISTS "Notice" (
   "isFullScreen" BOOLEAN DEFAULT false,
   "displaySeconds" INTEGER,
   "targetDate" DATE,
+  "archived" BOOLEAN DEFAULT false,
+  "imageUrls" JSONB DEFAULT '[]',
+  "imageAnimationEnabled" BOOLEAN DEFAULT false,
+  "imageAnimationEffects" JSONB DEFAULT '[]',
+  "imageAnimationSpeed" TEXT DEFAULT 'normal',
+  "imageGlowColor" TEXT DEFAULT '#8FAE9B',
+  "textGlowEnabled" BOOLEAN DEFAULT false,
   -- Timestamps
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
