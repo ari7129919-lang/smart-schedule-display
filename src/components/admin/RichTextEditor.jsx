@@ -8,6 +8,15 @@ const baseConfig = {
   direction: /** @type {const} */ ('rtl'),
   language: 'he',
   toolbarButtonSize: /** @type {const} */ ('small'),
+  // Paste from Word — never ask, always insert raw HTML so inline font-size survives
+  askBeforePasteFromWord: false,
+  processPasteFromWord: false,
+  defaultActionOnPasteFromWord: 'insert_as_html',
+  // Paste from any source — always insert as HTML, never strip inline styles
+  askBeforePasteHTML: false,
+  defaultActionOnPaste: 'insert_as_html',
+  // Allow all inline styles (including font-size, color, etc.)
+  activeButtonsInReadOnly: [],
   buttons: [
     'bold', 'italic', 'underline', 'strikethrough',
     '|',
@@ -40,7 +49,27 @@ const baseConfig = {
   style: {
     fontFamily: "'Heebo', sans-serif",
   },
-  defaultFontSize: '14px'
+  defaultFontSize: '14px',
+  // Event handler: intercept paste and insert raw HTML directly via Jodit's API
+  // `this` inside a plain function is the Jodit instance
+  events: {
+    paste: function(e) {
+      const cd = e.clipboardData;
+      if (!cd) return;
+      const html = cd.getData('text/html');
+      if (!html) return;
+
+      // Stop Jodit's built-in paste processing completely
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Insert raw HTML using native execCommand (works in any browser/editor)
+      const doc = e.currentTarget?.ownerDocument || document;
+      doc.execCommand('insertHTML', false, html);
+
+      return false;
+    }
+  }
 };
 
 export default function RichTextEditor({ value, onChange, placeholder }) {
