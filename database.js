@@ -99,6 +99,7 @@ async function initDatabase() {
         pdfUrl TEXT,
         imageUrl TEXT,
         active INTEGER DEFAULT 1,
+        archived INTEGER DEFAULT 0,
         createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
         updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
       )

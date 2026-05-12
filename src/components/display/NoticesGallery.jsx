@@ -12,7 +12,7 @@ export default function NoticesGallery({
   dualMode = false
 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const activeNotices = notices.filter(n => n.active);
+  const activeNotices = notices.filter(n => n.active && !n.archived);
 
   // Build display slots based on dualMode setting and per-notice layout
   const displaySlots = useMemo(() => {

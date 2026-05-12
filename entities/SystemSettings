@@ -250,7 +250,23 @@
     },
     "backgroundRotationEnabled": {
       "type": "boolean",
-      "description": "\u05d4\u05d0\u05dd \u05dc\u05d4\u05d7\u05dc\u05d9\u05e3 \u05e8\u05e7\u05e2\u05d9\u05dd \u05d0\u05d5\u05d8\u05d5\u05de\u05d8\u05d9\u05ea"
+      "description": "האם להחליף רקעים אוטומטית"
+    },
+    "congratsCTAEnabled": {
+      "type": "boolean",
+      "description": "האם להפעיל בלוק מתחלף למזל טוב"
+    },
+    "congratsCTAText": {
+      "type": "string",
+      "description": "טקסט קריאה לפעולה שיתחלף עם ברכות מזל טוב"
+    },
+    "congratsCTALink": {
+      "type": "string",
+      "description": "קישור לחיצה בבלוק מתחלף"
+    },
+    "congratsRotationSeconds": {
+      "type": "number",
+      "description": "זמן החלפת בלוק מתחלף בשניות"
     }
   },
   "required": [

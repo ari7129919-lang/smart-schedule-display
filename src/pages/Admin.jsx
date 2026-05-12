@@ -14,17 +14,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { 
   Settings, Calendar, FileText, Users, Clock, Play, 
   Plus, Trash2, Save, Eye, RefreshCw, Monitor, Timer, ExternalLink, Phone,
-  Palette, Star, Copy, Gift, GripVertical, Maximize2, Minimize2, ChevronDown, ChevronUp
+  Palette, Star, Copy, Gift
 } from 'lucide-react';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import CustomModePanel from '@/components/display/CustomModePanel';
-import RichTextEditor from '@/components/admin/RichTextEditor';
 import DesignTab from '@/components/admin/DesignTab';
 import SpecialActivitiesTab from '@/components/admin/SpecialActivitiesTab';
 import DisplayPreviewModal from '@/components/admin/DisplayPreviewModal';
 import BackgroundTab from '@/components/admin/BackgroundTab';
+import NoticesManager from '@/components/admin/NoticesManager';
 
 function ActiveTimerDisplay() {
   const [timerEnd, setTimerEnd] = useState(null);
@@ -342,7 +341,7 @@ export default function Admin() {
   const addCongrats = () => {
     setEditingSchedule(prev => ({
       ...prev,
-      congratulations: [...(prev.congratulations || []), { name: '', message: '' }]
+      congratulations: [...(prev.congratulations || []), { name: '', message: '', expiresAt: '' }]
     }));
   };
 
@@ -848,39 +847,59 @@ export default function Admin() {
                       </CardHeader>
                       <CardContent className="space-y-4">
                         {editingSchedule.congratulations?.map((item, idx) => (
-                          <div key={idx} className="flex gap-2 items-start p-3 border rounded-lg bg-gray-50">
-                            <Input
-                              value={item.name || ''}
-                              onChange={e => {
-                                const congrats = [...editingSchedule.congratulations];
-                                congrats[idx] = { ...congrats[idx], name: e.target.value };
-                                setEditingSchedule({...editingSchedule, congratulations: congrats});
-                              }}
-                              placeholder="שם"
-                              className="w-1/3"
-                            />
-                            <Input
-                              value={item.message || ''}
-                              onChange={e => {
-                                const congrats = [...editingSchedule.congratulations];
-                                congrats[idx] = { ...congrats[idx], message: e.target.value };
-                                setEditingSchedule({...editingSchedule, congratulations: congrats});
-                              }}
-                              placeholder="הודעה (אופציונלי)"
-                              className="flex-1"
-                            />
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                setEditingSchedule({
-                                  ...editingSchedule,
-                                  congratulations: editingSchedule.congratulations.filter((_, i) => i !== idx)
-                                });
-                              }}
-                            >
-                              <Trash2 className="w-4 h-4 text-red-500" />
-                            </Button>
+                          <div key={idx} className="flex flex-col gap-2 p-3 border rounded-lg bg-gray-50">
+                            <div className="flex gap-2 items-start">
+                              <Input
+                                value={item.name || ''}
+                                onChange={e => {
+                                  const congrats = [...editingSchedule.congratulations];
+                                  congrats[idx] = { ...congrats[idx], name: e.target.value };
+                                  setEditingSchedule({...editingSchedule, congratulations: congrats});
+                                }}
+                                placeholder="שם"
+                                className="w-1/3"
+                              />
+                              <Input
+                                value={item.message || ''}
+                                onChange={e => {
+                                  const congrats = [...editingSchedule.congratulations];
+                                  congrats[idx] = { ...congrats[idx], message: e.target.value };
+                                  setEditingSchedule({...editingSchedule, congratulations: congrats});
+                                }}
+                                placeholder="הודעה (אופציונלי)"
+                                className="flex-1"
+                              />
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setEditingSchedule({
+                                    ...editingSchedule,
+                                    congratulations: editingSchedule.congratulations.filter((_, i) => i !== idx)
+                                  });
+                                }}
+                              >
+                                <Trash2 className="w-4 h-4 text-red-500" />
+                              </Button>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Label className="text-xs text-gray-500 whitespace-nowrap">תאריך פג תוקף:</Label>
+                              <Input
+                                type="date"
+                                value={item.expiresAt || ''}
+                                onChange={e => {
+                                  const congrats = [...editingSchedule.congratulations];
+                                  congrats[idx] = { ...congrats[idx], expiresAt: e.target.value };
+                                  setEditingSchedule({...editingSchedule, congratulations: congrats});
+                                }}
+                                className="w-40 text-sm"
+                              />
+                              {item.expiresAt && (
+                                <span className="text-xs text-blue-600">
+                                  יורד אוטומטית ב-{new Date(item.expiresAt).toLocaleDateString('he-IL')}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         ))}
                         {(!editingSchedule.congratulations || editingSchedule.congratulations.length === 0) && (
@@ -959,7 +978,7 @@ export default function Admin() {
 
           {/* Notices */}
           <TabsContent value="notices" className="space-y-6">
-            <NoticesManager 
+            <NoticesManager
               notices={[...notices].sort((a, b) => (a.priority || 0) - (b.priority || 0))}
               onSave={saveNoticeMutation.mutate}
               onDelete={deleteNoticeMutation.mutate}
@@ -1627,468 +1646,3 @@ function PhoneNumbersManager({ phones, onSave, onDelete }) {
   );
 }
 
-function NoticePreview({ notice }) {
-  const previewStyles = `
-    .preview-content { direction: rtl; text-align: right; }
-    .preview-content p { margin: 0.3em 0; }
-    .preview-content h1 { font-size: 1.5em; font-weight: 700; margin: 0.35em 0; }
-    .preview-content h2 { font-size: 1.25em; font-weight: 700; margin: 0.35em 0; }
-    .preview-content h3 { font-size: 1.1em; font-weight: 600; margin: 0.25em 0; }
-    .preview-content ul, .preview-content ol { margin: 0.3em 0; padding-right: 1.5em; }
-    .preview-content li { margin: 0.2em 0; }
-    .preview-content strong { font-weight: 700; }
-    .preview-content * { max-width: 100%; overflow-wrap: break-word; word-break: break-word; }
-    .preview-content table { width: 100%; border-collapse: collapse; margin: 0.5em 0; }
-    .preview-content table td, .preview-content table th { border: 1px solid #ccc; padding: 8px; text-align: right; }
-    .preview-content table th { background-color: #f5f5f5; font-weight: 600; }
-  `;
-  return (
-    <div className="border rounded-xl p-4 bg-white/90" style={{ minHeight: '200px' }}>
-      <style>{previewStyles}</style>
-      {notice?.title && (
-        <h3 className="font-bold text-primary mb-2" style={{ fontSize: '20px', lineHeight: 1.3 }}>
-          {notice.title}
-        </h3>
-      )}
-      {notice?.content && (
-        <div
-          className="preview-content text-secondary"
-          style={{ fontSize: '14px', lineHeight: 1.6 }}
-          dangerouslySetInnerHTML={{ __html: notice.content }}
-        />
-      )}
-      {notice?.imageUrl && !notice?.content && (
-        <img src={notice.imageUrl} alt="" className="w-full h-auto rounded-lg object-contain" style={{ maxHeight: '300px' }} />
-      )}
-    </div>
-  );
-}
-
-function NoticesManager({ notices, onSave, onDelete, onReorder }) {
-  const [editingNotice, setEditingNotice] = useState(null);
-  const [showPreview, setShowPreview] = useState(false);
-  const [isFullScreen, setIsFullScreen] = useState(false);
-
-  const handleNew = () => {
-    setEditingNotice({
-      title: '',
-      content: '',
-      active: true,
-      days: [],
-      priority: notices.length + 1
-    });
-    setShowPreview(false);
-    setIsFullScreen(false);
-  };
-
-  const handleSave = () => {
-    if (editingNotice) {
-      onSave(editingNotice);
-      setEditingNotice(null);
-      setShowPreview(false);
-      setIsFullScreen(false);
-    }
-  };
-
-  const handleDragEnd = (result) => {
-    if (!result.destination) return;
-    const sourceIndex = result.source.index;
-    const destIndex = result.destination.index;
-    if (sourceIndex === destIndex) return;
-
-    const reordered = Array.from(notices);
-    const [moved] = reordered.splice(sourceIndex, 1);
-    reordered.splice(destIndex, 0, moved);
-
-    if (onReorder) {
-      onReorder(reordered);
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5" />
-            מודעות
-          </CardTitle>
-          <Button onClick={handleNew} className="gap-2">
-            <Plus className="w-4 h-4" />
-            מודעה חדשה
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <DragDropContext onDragEnd={handleDragEnd}>
-            <Droppable droppableId="notices-list">
-              {(droppableProvided) => (
-                <div
-                  ref={droppableProvided.innerRef}
-                  {...droppableProvided.droppableProps}
-                  className="space-y-3"
-                >
-                  {notices.map((notice, index) => (
-                    <Draggable key={notice.id} draggableId={String(notice.id)} index={index}>
-                      {(draggableProvided, snapshot) => (
-                        <div
-                          ref={draggableProvided.innerRef}
-                          {...draggableProvided.draggableProps}
-                          className={`p-4 border rounded-lg flex items-center justify-between hover:bg-gray-50 transition-colors ${
-                            snapshot.isDragging ? 'bg-blue-50 border-blue-300 shadow-lg' : ''
-                          }`}
-                        >
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
-                            {/* Drag handle */}
-                            <div
-                              {...draggableProvided.dragHandleProps}
-                              className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600"
-                              title="גרור לשינוי סדר"
-                            >
-                              <GripVertical className="w-5 h-5" />
-                            </div>
-                            {/* Quick active toggle */}
-                            <button
-                              onClick={() => onSave({ ...notice, active: !notice.active })}
-                              className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${
-                                notice.active
-                                  ? 'bg-green-100 text-green-700 border-green-300 hover:bg-red-50 hover:text-red-600 hover:border-red-300'
-                                  : 'bg-gray-100 text-gray-500 border-gray-300 hover:bg-green-50 hover:text-green-600 hover:border-green-300'
-                              }`}
-                              title={notice.active ? 'לחץ להסתיר' : 'לחץ להציג'}
-                            >
-                              {notice.active ? '● פעיל' : '○ כבוי'}
-                            </button>
-                            <div className="min-w-0">
-                              <h4 className="font-medium truncate">{notice.title}</h4>
-                              {notice.days?.length > 0 && (
-                                <p className="text-xs text-blue-600 mt-0.5">
-                                  ימים: {notice.days.map(d => dayNames[d]).join(', ')}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setEditingNotice(notice);
-                                setShowPreview(false);
-                                setIsFullScreen(false);
-                              }}
-                            >
-                              ערוך
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => onDelete(notice.id)}
-                            >
-                              <Trash2 className="w-4 h-4 text-red-500" />
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {droppableProvided.placeholder}
-                  {notices.length === 0 && (
-                    <p className="text-center text-gray-500 py-8">אין מודעות</p>
-                  )}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
-        </CardContent>
-      </Card>
-
-      <Dialog open={!!editingNotice} onOpenChange={(open) => {
-        if (!open) {
-          setEditingNotice(null);
-          setShowPreview(false);
-          setIsFullScreen(false);
-        }
-      }}>
-        <DialogContent
-          className={`${
-            isFullScreen
-              ? 'max-w-full w-screen h-screen max-h-screen p-0 gap-0 overflow-hidden'
-              : 'max-w-2xl max-h-[90vh] overflow-y-auto'
-          }`}
-          style={isFullScreen ? { borderRadius: 0 } : undefined}
-        >
-          <DialogHeader className={isFullScreen ? 'px-6 pt-4 pb-2 border-b shrink-0' : ''}>
-            <div className="flex items-center justify-between">
-              <DialogTitle>{editingNotice?.id ? 'עריכת מודעה' : 'מודעה חדשה'}</DialogTitle>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="gap-1"
-                  onClick={() => setShowPreview(p => !p)}
-                >
-                  {showPreview ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                  תצוגה מקדימה
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="gap-1"
-                  onClick={() => setIsFullScreen(f => !f)}
-                >
-                  {isFullScreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-                  {isFullScreen ? 'חלון קטן' : 'מסך מלא'}
-                </Button>
-              </div>
-            </div>
-          </DialogHeader>
-
-          {/* Fullscreen: 2-column split. Normal: single column */}
-          <div className={`${isFullScreen ? 'flex-1 flex overflow-hidden' : ''}`}>
-            {/* Editor column */}
-            <div className={`${isFullScreen ? 'flex-1 overflow-y-auto p-6' : 'space-y-4 py-4 px-4'}`}>
-              <div>
-                <Label>כותרת</Label>
-                <Input
-                  value={editingNotice?.title || ''}
-                  onChange={e => setEditingNotice(prev => prev ? {...prev, title: e.target.value} : null)}
-                />
-              </div>
-              <div>
-                <Label>תוכן המודעה</Label>
-                <RichTextEditor
-                  value={editingNotice?.content || ''}
-                  onChange={v => setEditingNotice(prev => prev ? {...prev, content: v} : null)}
-                  placeholder="תוכן המודעה..."
-                />
-              </div>
-              <div>
-                <Label>קובץ PDF (לחלופין במקום טקסט)</Label>
-                <div className="flex gap-2 mt-1 items-center">
-                  <Input
-                    value={editingNotice?.pdfUrl || ''}
-                    onChange={e => setEditingNotice(prev => prev ? {...prev, pdfUrl: e.target.value} : null)}
-                    placeholder="הדבק URL של PDF..."
-                    dir="ltr"
-                  />
-                  <label className="cursor-pointer">
-                    <span className="inline-flex items-center gap-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-md text-sm whitespace-nowrap transition-colors">
-                      📎 העלה PDF
-                    </span>
-                    <input
-                      type="file"
-                      accept="application/pdf"
-                      className="hidden"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        if (file.size > 10 * 1024 * 1024) {
-                          alert('הקובץ גדול מדי. מקסימום 10MB');
-                          return;
-                        }
-                        try {
-                          const result = await supabaseAPI.upload(file);
-                          if (result && result.url) {
-                            setEditingNotice(prev => prev ? {...prev, pdfUrl: result.url} : null);
-                          } else {
-                            alert('שגיאה בהעלאת הקובץ');
-                          }
-                        } catch (error) {
-                          console.error('Upload error:', error);
-                          alert('שגיאה בהעלאת הקובץ: ' + (error.message || 'בעיית חיבור לשרת'));
-                        }
-                        e.target.value = '';
-                      }}
-                    />
-                  </label>
-                </div>
-                {editingNotice?.pdfUrl && (
-                  <div className="mt-2 flex items-center gap-2">
-                    <span className="text-sm text-green-600">✅ PDF מחובר</span>
-                    <button onClick={() => setEditingNotice(prev => prev ? {...prev, pdfUrl: ''} : null)} className="text-red-400 text-sm hover:text-red-600">הסר</button>
-                  </div>
-                )}
-              </div>
-              <div>
-                <Label>תמונה (לחלופין / בנוסף לטקסט)</Label>
-                <div className="flex gap-2 mt-1 items-center">
-                  <Input
-                    value={editingNotice?.imageUrl || ''}
-                    onChange={e => setEditingNotice(prev => prev ? {...prev, imageUrl: e.target.value} : null)}
-                    placeholder="הדבק URL של תמונה..."
-                    dir="ltr"
-                  />
-                  <label className="cursor-pointer">
-                    <span className="inline-flex items-center gap-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-md text-sm whitespace-nowrap transition-colors">
-                      🖼️ העלה תמונה
-                    </span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        if (file.size > 10 * 1024 * 1024) {
-                          alert('הקובץ גדול מדי. מקסימום 10MB');
-                          return;
-                        }
-                        try {
-                          const result = await supabaseAPI.upload(file);
-                          if (result && result.url) {
-                            setEditingNotice(prev => prev ? {...prev, imageUrl: result.url} : null);
-                          } else {
-                            alert('שגיאה בהעלאת הקובץ');
-                          }
-                        } catch (error) {
-                          console.error('Upload error:', error);
-                          alert('שגיאה בהעלאת הקובץ: ' + (error.message || 'בעיית חיבור לשרת'));
-                        }
-                        e.target.value = '';
-                      }}
-                    />
-                  </label>
-                </div>
-                {editingNotice?.imageUrl && (
-                  <div className="mt-2 flex items-center gap-2">
-                    <img src={editingNotice?.imageUrl} alt="" className="h-16 rounded object-cover border" />
-                    <button onClick={() => setEditingNotice(prev => prev ? {...prev, imageUrl: ''} : null)} className="text-red-400 text-sm hover:text-red-600">הסר</button>
-                  </div>
-                )}
-              </div>
-              <div className={`${isFullScreen ? 'grid grid-cols-2 gap-4' : 'grid grid-cols-2 gap-4'}`}>
-                <div>
-                  <Label>תאריך יעד (לספירה לאחור)</Label>
-                  <Input
-                    type="date"
-                    value={editingNotice?.targetDate || ''}
-                    onChange={e => setEditingNotice(prev => prev ? {...prev, targetDate: e.target.value} : null)}
-                  />
-                </div>
-                <div>
-                  <Label>זמן הצגה (שניות) — ריק = ברירת מחדל מערכת</Label>
-                  <Input
-                    type="number"
-                    min="3"
-                    max="300"
-                    value={editingNotice?.displaySeconds || ''}
-                    onChange={e => setEditingNotice(prev => prev ? {...prev, displaySeconds: e.target.value ? Number(e.target.value) : null} : null)}
-                    placeholder="לדוגמה: 30"
-                  />
-                </div>
-              </div>
-              <div>
-                <Label>ימים להצגה (ריק = כל הימים)</Label>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {dayOrder.map(day => (
-                    <Badge
-                      key={day}
-                      variant={(editingNotice?.days || []).includes(day) ? 'default' : 'outline'}
-                      className="cursor-pointer"
-                      onClick={() => {
-                        setEditingNotice(prev => {
-                          if (!prev) return null;
-                          const days = prev.days || [];
-                          if (days.includes(day)) {
-                            return {...prev, days: days.filter(d => d !== day)};
-                          } else {
-                            return {...prev, days: [...days, day]};
-                          }
-                        });
-                      }}
-                    >
-                      {dayNames[day]}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="mb-2 block">סידור תצוגה</Label>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setEditingNotice(prev => prev ? {...prev, layout: 'single'} : null)}
-                      className={`flex-1 py-2 px-3 border rounded-md text-sm transition-colors ${
-                        (!editingNotice?.layout || editingNotice?.layout === 'single')
-                          ? 'bg-blue-50 border-blue-500 text-blue-700'
-                          : 'bg-white border-gray-300 hover:bg-gray-50'
-                      }`}
-                    >
-                      מודעה אחת
-                    </button>
-                    <button
-                      onClick={() => setEditingNotice(prev => prev ? {...prev, layout: 'dual'} : null)}
-                      className={`flex-1 py-2 px-3 border rounded-md text-sm transition-colors ${
-                        editingNotice?.layout === 'dual'
-                          ? 'bg-blue-50 border-blue-500 text-blue-700'
-                          : 'bg-white border-gray-300 hover:bg-gray-50'
-                      }`}
-                    >
-                      שתי מודעות צד-בצד
-                    </button>
-                  </div>
-                  <p className="text-xs text-gray-400 mt-1">
-                    {editingNotice?.layout === 'dual'
-                      ? 'המודעה תוצג במחצית הגודל לצד מודעה אחרת'
-                      : 'מודעה בגודל מלא'}
-                  </p>
-                </div>
-                <div>
-                  <Label className="mb-2 block">מצב מודעה</Label>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        checked={editingNotice?.active}
-                        onCheckedChange={v => setEditingNotice(prev => prev ? {...prev, active: v} : null)}
-                      />
-                      <Label className="text-sm">מודעה פעילה</Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        checked={editingNotice?.isFullScreen}
-                        onCheckedChange={v => setEditingNotice(prev => prev ? {...prev, isFullScreen: v} : null)}
-                      />
-                      <Label className="text-sm">הצג על כל המסך</Label>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Preview in normal mode (collapsible below editor) */}
-              {!isFullScreen && showPreview && (
-                <div className="border-t pt-4 mt-4">
-                  <Label className="mb-2 block text-blue-600">תצוגה מקדימה</Label>
-                  <NoticePreview notice={editingNotice} />
-                </div>
-              )}
-            </div>
-
-            {/* Preview column in fullscreen mode */}
-            {isFullScreen && (
-              <div className="w-[45%] border-r bg-gray-50 p-6 overflow-y-auto flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-gray-700">תצוגה מקדימה</h3>
-                </div>
-                <NoticePreview notice={editingNotice} />
-              </div>
-            )}
-          </div>
-
-          <DialogFooter className={`gap-2 ${isFullScreen ? 'px-6 py-4 border-t shrink-0' : ''}`}>
-            <Button variant="outline" onClick={() => {
-              setEditingNotice(null);
-              setShowPreview(false);
-              setIsFullScreen(false);
-            }}>
-              ביטול
-            </Button>
-            <Button onClick={handleSave} className="gap-2">
-              <Save className="w-4 h-4" />
-              שמור
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-}

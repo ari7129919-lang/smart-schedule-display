@@ -28,6 +28,14 @@ CREATE TABLE IF NOT EXISTS "SystemSettings" (
   ticker_text TEXT,
   contact_info TEXT,
   operating_hours TEXT,
+  congrats_cta_enabled BOOLEAN DEFAULT false,
+  "congratsCTAEnabled" BOOLEAN DEFAULT false,
+  congrats_cta_text TEXT,
+  "congratsCTAText" TEXT,
+  congrats_cta_link TEXT,
+  "congratsCTALink" TEXT,
+  congrats_rotation_seconds INTEGER DEFAULT 60,
+  "congratsRotationSeconds" INTEGER DEFAULT 60,
   fixed_rules JSONB DEFAULT '[]',
   backgrounds JSONB DEFAULT '[]',
   background_rotation_enabled BOOLEAN DEFAULT true,
@@ -96,6 +104,7 @@ CREATE TABLE IF NOT EXISTS "Notice" (
   is_full_screen BOOLEAN DEFAULT false,
   isFullScreen BOOLEAN DEFAULT false,
   layout TEXT DEFAULT 'single',
+  archived BOOLEAN DEFAULT false,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );

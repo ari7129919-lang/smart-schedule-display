@@ -27,12 +27,19 @@ export default function Congratulations({
     return () => clearInterval(interval);
   }, [ctaEnabled, ctaText, rotationSeconds]);
 
-  // Remove duplicates based on name
+  // Remove duplicates and filter expired items
   const uniqueItems = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const seen = new Set();
     return items.filter(item => {
       if (seen.has(item.name)) return false;
       seen.add(item.name);
+      if (item.expiresAt) {
+        const expires = new Date(item.expiresAt);
+        expires.setHours(0, 0, 0, 0);
+        if (today > expires) return false;
+      }
       return true;
     });
   }, [items]);
@@ -153,22 +160,30 @@ export default function Congratulations({
           }}
         >
           {duplicatedItems.map((item, idx) => (
-            <div 
+            <div
               key={idx}
               className="bg-accent/5 rounded-xl p-3 border-r-4 border-accent"
             >
-              <div 
+              <div
                 className="text-primary font-medium"
                 style={{ fontSize: `${22 * screenScale}px` }}
               >
                 {item.name}
               </div>
               {item.message && (
-                <div 
+                <div
                   className="text-secondary mt-1"
                   style={{ fontSize: `${18 * screenScale}px` }}
                 >
                   {item.message}
+                </div>
+              )}
+              {item.expiresAt && (
+                <div
+                  className="text-amber-600 mt-1 font-medium"
+                  style={{ fontSize: `${14 * screenScale}px` }}
+                >
+                  פג תוקף: {new Date(item.expiresAt).toLocaleDateString('he-IL')}
                 </div>
               )}
             </div>

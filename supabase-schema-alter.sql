@@ -26,6 +26,10 @@ ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "breakConfig" JSONB DEFAUL
 ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "motzeiConfig" JSONB DEFAULT '{}';
 ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "backgroundRotationEnabled" BOOLEAN DEFAULT true;
 ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "backgrounds" JSONB DEFAULT '[]';
+ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "congratsCTAEnabled" BOOLEAN DEFAULT false;
+ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "congratsCTAText" TEXT;
+ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "congratsCTALink" TEXT;
+ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "congratsRotationSeconds" INTEGER DEFAULT 60;
 
 -- ============================================================================
 -- DaySchedule - עמודות camelCase נוספות
@@ -51,6 +55,7 @@ ALTER TABLE "Notice" ADD COLUMN IF NOT EXISTS "imageUrl" TEXT;
 ALTER TABLE "Notice" ADD COLUMN IF NOT EXISTS "isFullScreen" BOOLEAN DEFAULT false;
 ALTER TABLE "Notice" ADD COLUMN IF NOT EXISTS "displaySeconds" INTEGER;
 ALTER TABLE "Notice" ADD COLUMN IF NOT EXISTS "targetDate" DATE;
+ALTER TABLE "Notice" ADD COLUMN IF NOT EXISTS "archived" BOOLEAN DEFAULT false;
 
 -- ============================================================================
 -- PhoneNumbers - עמודות camelCase נוספות (אם יש צורך)
