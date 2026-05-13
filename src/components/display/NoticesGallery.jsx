@@ -150,21 +150,21 @@ export default function NoticesGallery({
       {displaySlots.length > 1 && (
         <div className="flex-shrink-0" style={{ paddingBottom: `${6 * screenScale}px`, paddingLeft: `${8 * screenScale}px`, paddingRight: `${8 * screenScale}px` }}>
           <div
-            className="rounded-full overflow-hidden flex"
+            className="rounded-full overflow-hidden"
             style={{
               height: `${10 * screenScale}px`,
-              backgroundColor: 'rgba(24, 35, 60, 0.25)',
-              boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.18)',
-              border: '1px solid rgba(255,255,255,0.35)',
+              direction: 'rtl',
+              backgroundColor: '#ffffff',
+              border: '2px solid #18233c',
+              boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.12)',
             }}
           >
             <div
               className="h-full rounded-full"
               style={{
                 width: `${progress * 100}%`,
-                backgroundColor: progress < 0.2 ? '#ef4444' : 'var(--accent)',
+                backgroundColor: progress < 0.2 ? '#ef4444' : '#18233c',
                 transition: progress > 0 ? 'width 80ms linear, background-color 300ms ease' : 'width 200ms ease-out, background-color 300ms ease',
-                boxShadow: '0 0 6px rgba(143, 174, 155, 0.5)',
               }}
             />
           </div>
