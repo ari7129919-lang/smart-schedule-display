@@ -64,6 +64,7 @@ ALTER TABLE "Notice" ADD COLUMN IF NOT EXISTS "imageAnimationEffects" JSONB DEFA
 ALTER TABLE "Notice" ADD COLUMN IF NOT EXISTS "imageAnimationSpeed" TEXT DEFAULT 'normal';
 ALTER TABLE "Notice" ADD COLUMN IF NOT EXISTS "imageGlowColor" TEXT DEFAULT '#8FAE9B';
 ALTER TABLE "Notice" ADD COLUMN IF NOT EXISTS "textGlowEnabled" BOOLEAN DEFAULT false;
+ALTER TABLE "Notice" ADD COLUMN IF NOT EXISTS "videoUrl" TEXT;
 
 -- ============================================================================
 -- PhoneNumbers - עמודות camelCase נוספות (אם יש צורך)

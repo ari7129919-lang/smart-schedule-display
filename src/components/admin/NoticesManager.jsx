@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { FileText, Plus, Trash2, Save, GripVertical, Maximize2, Minimize2, ChevronDown, ChevronUp, Image, Zap, Type } from 'lucide-react';
+import { FileText, Plus, Trash2, Save, GripVertical, Maximize2, Minimize2, ChevronDown, ChevronUp, Image, Zap, Type, Video } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import RichTextEditor from '@/components/admin/RichTextEditor';
 import AnimatedImage from '@/components/display/AnimatedImage';
@@ -73,7 +73,30 @@ function NoticePreview({ notice }) {
           dangerouslySetInnerHTML={{ __html: notice.content }}
         />
       )}
-      {isImageOnly && (
+      {notice?.videoUrl && !notice?.content && (
+        <div style={{ height: '200px' }}>
+          <video
+            src={notice.videoUrl}
+            className="w-full h-full object-contain rounded-lg"
+            controls
+            muted
+            preload="metadata"
+          />
+        </div>
+      )}
+      {notice?.content && notice?.videoUrl && (
+        <div className="mt-2" style={{ maxHeight: '150px' }}>
+          <video
+            src={notice.videoUrl}
+            className="w-full h-full object-contain rounded-lg"
+            controls
+            muted
+            preload="metadata"
+            style={{ maxHeight: '150px' }}
+          />
+        </div>
+      )}
+      {isImageOnly && !notice?.videoUrl && (
         <div style={{ height: '200px' }}>
           {notice?.imageAnimationEnabled ? (
             <AnimatedImage
@@ -506,6 +529,67 @@ export default function NoticesManager({ notices, onSave, onDelete, onReorder })
                         >×</button>
                       </div>
                     ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <Label className="flex items-center gap-2">
+                  <Video className="w-4 h-4" />
+                  סרטון / וידאו (לחלופין)
+                </Label>
+                <div className="flex gap-2 mt-1 items-center">
+                  <Input
+                    value={editingNotice?.videoUrl || ''}
+                    onChange={e => setEditingNotice(prev => prev ? {...prev, videoUrl: e.target.value} : null)}
+                    placeholder="הדבק URL של סרטון..."
+                    dir="ltr"
+                  />
+                  <label className="cursor-pointer">
+                    <span className="inline-flex items-center gap-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-md text-sm whitespace-nowrap transition-colors">
+                      🎬 העלה סרטון
+                    </span>
+                    <input
+                      type="file"
+                      accept="video/mp4,video/webm,video/ogg"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        if (file.size > 50 * 1024 * 1024) {
+                          alert('הקובץ גדול מדי. מקסימום 50MB');
+                          return;
+                        }
+                        try {
+                          const result = await supabaseAPI.upload(file);
+                          if (result && result.url) {
+                            setEditingNotice(prev => prev ? {...prev, videoUrl: result.url} : null);
+                          } else {
+                            alert('שגיאה בהעלאת הקובץ');
+                          }
+                        } catch (error) {
+                          console.error('Upload error:', error);
+                          alert('שגיאה בהעלאת הקובץ: ' + (error.message || 'בעיית חיבור לשרת'));
+                        }
+                        e.target.value = '';
+                      }}
+                    />
+                  </label>
+                </div>
+                {editingNotice?.videoUrl && (
+                  <div className="mt-2">
+                    <video
+                      src={editingNotice.videoUrl}
+                      className="h-24 rounded object-cover border"
+                      controls
+                      muted
+                      preload="metadata"
+                      style={{ maxWidth: '200px' }}
+                    />
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-sm text-green-600">✅ סרטון מחובר</span>
+                      <button onClick={() => setEditingNotice(prev => prev ? {...prev, videoUrl: ''} : null)} className="text-red-400 text-sm hover:text-red-600">הסר</button>
+                    </div>
                   </div>
                 )}
               </div>

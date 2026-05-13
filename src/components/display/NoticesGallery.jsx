@@ -49,14 +49,27 @@ export default function NoticesGallery({
     setCurrentIndex(0);
   }, [notices, dualMode]);
 
-  // Auto-rotation timer
+  // Countdown progress state
+  const [progress, setProgress] = useState(1);
+
+  // Auto-rotation timer + progress countdown
   useEffect(() => {
     if (displaySlots.length <= 1) return;
 
     const currentSlot = displaySlots[currentIndex];
-    // Use the first notice's displaySeconds if set
     const firstNotice = currentSlot.notices[0];
-    const delay = (firstNotice?.displaySeconds > 0 ? firstNotice.displaySeconds : rotationSeconds) * 1000;
+    const durationSeconds = firstNotice?.displaySeconds > 0 ? firstNotice.displaySeconds : rotationSeconds;
+    const delay = durationSeconds * 1000;
+    setProgress(1);
+
+    // Progress tick every ~50ms for smooth animation
+    const tickMs = 50;
+    const interval = setInterval(() => {
+      setProgress(prev => {
+        const next = prev - tickMs / delay;
+        return next <= 0 ? 0 : next;
+      });
+    }, tickMs);
 
     const timeout = setTimeout(() => {
       setCurrentIndex(prev => {
@@ -65,7 +78,10 @@ export default function NoticesGallery({
       });
     }, delay);
 
-    return () => clearTimeout(timeout);
+    return () => {
+      clearTimeout(timeout);
+      clearInterval(interval);
+    };
   }, [displaySlots, currentIndex, rotationSeconds, dualMode]);
 
   if (activeNotices.length === 0) {
@@ -130,7 +146,32 @@ export default function NoticesGallery({
         </AnimatePresence>
       </div>
 
-      {/* Progress indicator */}
+      {/* Time remaining progress bar */}
+      {displaySlots.length > 1 && (
+        <div className="flex-shrink-0" style={{ paddingBottom: `${6 * screenScale}px`, paddingLeft: `${8 * screenScale}px`, paddingRight: `${8 * screenScale}px` }}>
+          <div
+            className="rounded-full overflow-hidden flex"
+            style={{
+              height: `${10 * screenScale}px`,
+              backgroundColor: 'rgba(24, 35, 60, 0.25)',
+              boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.18)',
+              border: '1px solid rgba(255,255,255,0.35)',
+            }}
+          >
+            <div
+              className="h-full rounded-full"
+              style={{
+                width: `${progress * 100}%`,
+                backgroundColor: progress < 0.2 ? '#ef4444' : 'var(--accent)',
+                transition: progress > 0 ? 'width 80ms linear, background-color 300ms ease' : 'width 200ms ease-out, background-color 300ms ease',
+                boxShadow: '0 0 6px rgba(143, 174, 155, 0.5)',
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Dot + counter indicator */}
       {displaySlots.length > 1 && (
         <div className="flex items-center justify-center gap-3 flex-shrink-0 pb-1">
           <div className="flex gap-1.5 items-center">

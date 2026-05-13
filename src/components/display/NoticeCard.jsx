@@ -192,7 +192,7 @@ export default function NoticeCard({
         boxShadow: 'var(--shadow-soft)',
         overflow: 'hidden',
         backgroundColor: `rgba(255,255,255,${cardOpacity / 100})`,
-        padding: (notice.pdfUrl || notice.imageUrl && !notice.content) ? 0 : `${36 * screenScale}px`,
+        padding: (notice.pdfUrl || (notice.videoUrl && !notice.content) || (getNoticeImages(notice).length > 0 && !notice.content)) ? 0 : `${36 * screenScale}px`,
       }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -203,13 +203,30 @@ export default function NoticeCard({
 
       {notice.pdfUrl ? (
         <div className="flex-1 flex items-center justify-center min-h-0" style={{ padding: `${16 * screenScale}px` }}>
-          <PdfEmbed 
-            url={notice.pdfUrl} 
-            style={{ 
-              width: '100%', 
+          <PdfEmbed
+            url={notice.pdfUrl}
+            style={{
+              width: '100%',
               height: '100%',
               borderRadius: `${16 * screenScale}px`,
-            }} 
+            }}
+          />
+        </div>
+      ) : notice.videoUrl && !notice.content ? (
+        <div className="flex-1 flex items-center justify-center min-h-0" style={{ padding: `${16 * screenScale}px` }}>
+          <video
+            src={notice.videoUrl}
+            autoPlay
+            loop
+            muted
+            playsInline
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain',
+              borderRadius: `${16 * screenScale}px`,
+              display: 'block',
+            }}
           />
         </div>
       ) : getNoticeImages(notice).length > 0 && !notice.content ? (
@@ -263,9 +280,19 @@ export default function NoticeCard({
               dangerouslySetInnerHTML={{ __html: notice.content }}
             />
 
-            {getNoticeImages(notice).length > 0 && (
+            {(notice.videoUrl || getNoticeImages(notice).length > 0) && (
               <div style={{ marginTop: `${16 * screenScale}px`, maxHeight: `${240 * screenScale}px` }}>
-                {notice.imageAnimationEnabled ? (
+                {notice.videoUrl ? (
+                  <video
+                    src={notice.videoUrl}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className="w-full h-full rounded-xl object-cover"
+                    style={{ maxHeight: `${240 * screenScale}px`, display: 'block' }}
+                  />
+                ) : notice.imageAnimationEnabled ? (
                   <AnimatedImage
                     images={getNoticeImages(notice)}
                     effects={notice.imageAnimationEffects || []}

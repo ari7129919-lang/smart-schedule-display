@@ -132,6 +132,7 @@ CREATE TABLE IF NOT EXISTS "Notice" (
   "imageAnimationSpeed" TEXT DEFAULT 'normal',
   "imageGlowColor" TEXT DEFAULT '#8FAE9B',
   "textGlowEnabled" BOOLEAN DEFAULT false,
+  "videoUrl" TEXT,
   -- Timestamps
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
