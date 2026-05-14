@@ -12,6 +12,7 @@ import NoticesGallery from '@/components/display/NoticesGallery';
 import Congratulations from '@/components/display/Congratulations';
 import FixedRules from '@/components/display/FixedRules';
 import Ticker from '@/components/display/Ticker';
+import ScrollingTicker from '@/components/display/ScrollingTicker';
 import KickoffMode from '@/components/display/KickoffMode';
 import BreakMode from '@/components/display/BreakMode';
 import MotzeiMode from '@/components/display/MotzeiMode';
@@ -137,6 +138,12 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
   const { data: phoneNumbers = [] } = useQuery({
     queryKey: ['phoneNumbers'],
     queryFn: () => supabaseAPI.find('PhoneNumbers'),
+    refetchInterval: 20000
+  });
+
+  const { data: tickerItems = [] } = useQuery({
+    queryKey: ['tickerItems'],
+    queryFn: () => supabaseAPI.find('TickerItem'),
     refetchInterval: 20000
   });
 
@@ -365,7 +372,7 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
             className="flex-1 relative z-10 overflow-hidden"
             style={{ 
               padding: `${20 * screenScale}px`,
-              paddingBottom: `${70 * screenScale}px`
+              paddingBottom: `${(70 + 60 + 20) * screenScale}px`
             }}
           >
             {/* Custom message full screen */}
@@ -462,6 +469,11 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
             </div>
           </main>
 
+          <ScrollingTicker 
+            items={tickerItems}
+            screenScale={screenScale * tickerFontScale}
+            tickerEnabled={systemSettings.tickerEnabled ?? true}
+          />
           {shouldShow('showTicker') && (
             <Ticker 
               text={systemSettings.tickerText || `מח ולב | ${systemSettings.contactInfo || '072-2351290'} | ${systemSettings.operatingHours || 'ראשון-חמישי'}`}

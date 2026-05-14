@@ -84,6 +84,7 @@ export const supabaseAPI = {
       if ('operatingHours' in data) updateData.operating_hours = data.operatingHours;
       if ('fixedRules' in data) updateData.fixed_rules = data.fixedRules;
       if ('backgroundRotationEnabled' in data) updateData.background_rotation_enabled = data.backgroundRotationEnabled;
+      if ('tickerEnabled' in data) updateData.ticker_enabled = data.tickerEnabled;
     }
     
     console.log('Supabase update - table:', table, 'id:', id);

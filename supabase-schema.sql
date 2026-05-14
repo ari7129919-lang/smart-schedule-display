@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS "SystemSettings" (
   screen_scale TEXT DEFAULT '32',
   auto_refresh BOOLEAN DEFAULT true,
   board_design JSONB DEFAULT '{}',
+  ticker_enabled BOOLEAN DEFAULT true,
   dual_notice_mode BOOLEAN DEFAULT false,
   pause_all_session_advance BOOLEAN DEFAULT false,
   screen_profile TEXT DEFAULT '50',
@@ -148,7 +149,32 @@ DROP INDEX IF EXISTS idx_phone_numbers_active;
 CREATE INDEX idx_phone_numbers_active ON "PhoneNumbers"(active);
 
 -- ============================================================================
--- 5. Create Storage Bucket for Files (Images/PDFs)
+-- 5. Ticker Items Table
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS "TickerItem" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  text TEXT NOT NULL,
+  active BOOLEAN DEFAULT true,
+  archived BOOLEAN DEFAULT false,
+  priority INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+ALTER TABLE "TickerItem" ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all access" ON "TickerItem";
+CREATE POLICY "Allow all access" ON "TickerItem"
+  FOR ALL USING (true) WITH CHECK (true);
+
+DROP INDEX IF EXISTS idx_ticker_item_active;
+CREATE INDEX idx_ticker_item_active ON "TickerItem"(active);
+
+DROP TRIGGER IF EXISTS update_ticker_item_updated_at ON "TickerItem";
+CREATE TRIGGER update_ticker_item_updated_at BEFORE UPDATE ON "TickerItem"
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================================================
+-- 7. Create Storage Bucket for Files (Images/PDFs)
 -- ============================================================================
 -- This creates a public bucket for file uploads
 INSERT INTO storage.buckets (id, name, public) 
@@ -161,7 +187,7 @@ CREATE POLICY "Allow public access" ON storage.objects
   FOR ALL USING (bucket_id = 'files') WITH CHECK (bucket_id = 'files');
 
 -- ============================================================================
--- 6. Sample Data (Optional - for testing)
+-- 7. Sample Data (Optional - for testing)
 -- ============================================================================
 
 -- Insert default system settings
@@ -185,7 +211,7 @@ INSERT INTO "PhoneNumbers" (label, number, category, active) VALUES
 ON CONFLICT DO NOTHING;
 
 -- ============================================================================
--- 7. Function to auto-update updated_at
+-- 8. Function to auto-update updated_at
 -- ============================================================================
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$

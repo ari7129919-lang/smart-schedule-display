@@ -24,6 +24,7 @@ import SpecialActivitiesTab from '@/components/admin/SpecialActivitiesTab';
 import DisplayPreviewModal from '@/components/admin/DisplayPreviewModal';
 import BackgroundTab from '@/components/admin/BackgroundTab';
 import NoticesManager from '@/components/admin/NoticesManager';
+import TickerManager from '@/components/admin/TickerManager';
 
 function ActiveTimerDisplay() {
   const [timerEnd, setTimerEnd] = useState(null);
@@ -135,6 +136,11 @@ export default function Admin() {
     queryFn: () => supabaseAPI.find('PhoneNumbers')
   });
 
+  const { data: tickerItems = [], isLoading: loadingTickerItems } = useQuery({
+    queryKey: ['tickerItems'],
+    queryFn: () => supabaseAPI.find('TickerItem')
+  });
+
   const savePhoneMutation = useMutation({
     mutationFn: (data) => {
       if (data.id) return supabaseAPI.update('PhoneNumbers', data.id, data);
@@ -224,6 +230,35 @@ export default function Admin() {
       return updates;
     },
     onSuccess: () => queryClient.invalidateQueries(['notices'])
+  });
+
+  const saveTickerItemMutation = useMutation({
+    mutationFn: (data) => {
+      if (data.id) {
+        return supabaseAPI.update('TickerItem', data.id, data);
+      }
+      return supabaseAPI.create('TickerItem', data);
+    },
+    onSuccess: () => queryClient.invalidateQueries(['tickerItems'])
+  });
+
+  const deleteTickerItemMutation = useMutation({
+    mutationFn: (id) => supabaseAPI.delete('TickerItem', id),
+    onSuccess: () => queryClient.invalidateQueries(['tickerItems'])
+  });
+
+  const reorderTickerItemsMutation = useMutation({
+    mutationFn: async (reorderedItems) => {
+      const updates = reorderedItems.map((item, index) => ({
+        id: item.id,
+        priority: index + 1
+      }));
+      await Promise.all(
+        updates.map(u => supabaseAPI.update('TickerItem', u.id, { priority: u.priority }))
+      );
+      return updates;
+    },
+    onSuccess: () => queryClient.invalidateQueries(['tickerItems'])
   });
 
   const handleSaveSchedule = () => {
@@ -978,12 +1013,42 @@ export default function Admin() {
 
           {/* Notices */}
           <TabsContent value="notices" className="space-y-6">
-            <NoticesManager
-              notices={[...notices].sort((a, b) => (a.priority || 0) - (b.priority || 0))}
-              onSave={saveNoticeMutation.mutate}
-              onDelete={deleteNoticeMutation.mutate}
-              onReorder={reorderNoticesMutation.mutate}
-            />
+            <Tabs defaultValue="notices-list" className="space-y-6">
+              <TabsList className="bg-white shadow-sm">
+                <TabsTrigger value="notices-list" className="gap-2">
+                  <FileText className="w-4 h-4" />
+                  מודעות
+                </TabsTrigger>
+                <TabsTrigger value="ticker" className="gap-2">
+                  <Monitor className="w-4 h-4" />
+                  אינסרט
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="notices-list" className="space-y-6">
+                <NoticesManager
+                  notices={[...notices].sort((a, b) => (a.priority || 0) - (b.priority || 0))}
+                  onSave={saveNoticeMutation.mutate}
+                  onDelete={deleteNoticeMutation.mutate}
+                  onReorder={reorderNoticesMutation.mutate}
+                />
+              </TabsContent>
+              <TabsContent value="ticker" className="space-y-6">
+                <TickerManager
+                  items={[...tickerItems].sort((a, b) => (a.priority || 0) - (b.priority || 0))}
+                  onSave={saveTickerItemMutation.mutate}
+                  onDelete={deleteTickerItemMutation.mutate}
+                  onReorder={reorderTickerItemsMutation.mutate}
+                  tickerEnabled={systemSettings.tickerEnabled ?? true}
+                  onToggleEnabled={(enabled) => {
+                    if (editingSettings) {
+                      const updated = { ...editingSettings, tickerEnabled: enabled };
+                      setEditingSettings(updated);
+                      saveSettingsMutation.mutate(updated);
+                    }
+                  }}
+                />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
 
           {/* Phone Numbers */}

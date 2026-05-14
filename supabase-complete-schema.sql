@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS "SystemSettings" (
   fixed_rules JSONB DEFAULT '[]',
   backgrounds JSONB DEFAULT '[]',
   background_rotation_enabled BOOLEAN DEFAULT true,
+  ticker_enabled BOOLEAN DEFAULT true,
   -- Camel case columns (for React compatibility)
   "dualNoticeMode" BOOLEAN DEFAULT false,
   "pauseAllSessionAdvance" BOOLEAN DEFAULT false,
@@ -169,7 +170,32 @@ DROP INDEX IF EXISTS idx_phone_numbers_active;
 CREATE INDEX idx_phone_numbers_active ON "PhoneNumbers"(active);
 
 -- ============================================================================
--- 5. Storage Bucket for Files
+-- 5. Ticker Items Table
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS "TickerItem" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  text TEXT NOT NULL,
+  active BOOLEAN DEFAULT true,
+  archived BOOLEAN DEFAULT false,
+  priority INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+ALTER TABLE "TickerItem" ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all access" ON "TickerItem";
+CREATE POLICY "Allow all access" ON "TickerItem"
+  FOR ALL USING (true) WITH CHECK (true);
+
+DROP INDEX IF EXISTS idx_ticker_item_active;
+CREATE INDEX idx_ticker_item_active ON "TickerItem"(active);
+
+DROP TRIGGER IF EXISTS update_ticker_item_updated_at ON "TickerItem";
+CREATE TRIGGER update_ticker_item_updated_at BEFORE UPDATE ON "TickerItem"
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================================================
+-- 6. Storage Bucket for Files
 -- ============================================================================
 INSERT INTO storage.buckets (id, name, public) 
 VALUES ('files', 'files', true)
