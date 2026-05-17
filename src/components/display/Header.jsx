@@ -63,6 +63,8 @@ export default function Header({
   screenScale = 1,
   showProgress = true,
   hideSessionText = false,
+  hideProgressDots = false,
+  noSessionLimit = false,
   timerEndTime = null,
   timerTitle = '',
   workshopName = '',
@@ -274,28 +276,32 @@ export default function Header({
                     letterSpacing: '0.01em',
                   }}
                 >
-                  מפגש {currentSession} מתוך {totalSessions}
+                  {noSessionLimit
+                    ? `מפגש מספר ${currentSession}`
+                    : `מפגש ${currentSession} מתוך ${totalSessions}`}
                 </div>
               )}
 
-              {/* Progress dots only */}
-              <div className="flex items-center flex-wrap justify-center" style={{ gap: `${6 * screenScale}px`, marginTop: `${10 * screenScale}px` }}>
-                {dots.map((dot) => (
-                  <div
-                    key={dot.index}
-                    className="rounded-full"
-                    style={{
-                      width: `${dot.filled ? 20 * screenScale : 14 * screenScale}px`,
-                      height: `${dot.filled ? 20 * screenScale : 14 * screenScale}px`,
-                      border: `${2.5 * screenScale}px solid ${primary}`,
-                      backgroundColor: dot.filled ? primary : 'transparent',
-                      opacity: dot.filled ? 1 : 0.35,
-                      boxShadow: dot.filled ? `0 0 6px rgba(47,69,128,0.5)` : 'none',
-                      transition: 'all 0.3s ease',
-                    }}
-                  />
-                ))}
-              </div>
+              {/* Progress dots — hidden when hideProgressDots is true */}
+              {!hideProgressDots && (
+                <div className="flex items-center flex-wrap justify-center" style={{ gap: `${6 * screenScale}px`, marginTop: `${10 * screenScale}px` }}>
+                  {dots.map((dot) => (
+                    <div
+                      key={dot.index}
+                      className="rounded-full"
+                      style={{
+                        width: `${dot.filled ? 20 * screenScale : 14 * screenScale}px`,
+                        height: `${dot.filled ? 20 * screenScale : 14 * screenScale}px`,
+                        border: `${2.5 * screenScale}px solid ${primary}`,
+                        backgroundColor: dot.filled ? primary : 'transparent',
+                        opacity: dot.filled ? 1 : 0.35,
+                        boxShadow: dot.filled ? `0 0 6px rgba(47,69,128,0.5)` : 'none',
+                        transition: 'all 0.3s ease',
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
             </>
           )}
         </div>

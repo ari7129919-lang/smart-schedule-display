@@ -172,12 +172,6 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
     return daySchedules?.find(d => d.dayOfWeek === targetDay) || {};
   }, [daySchedules, currentDayKey, systemSettings.overrideDay]);
 
-  const todayNotices = useMemo(() => {
-    return (notices || [])
-      .filter(n => n.active && (!n.days?.length || n.days.includes(currentDayKey)))
-      .sort((a, b) => (a.priority || 0) - (b.priority || 0));
-  }, [notices, currentDayKey]);
-
   // Clock tick every 30 seconds to keep schedule logic alive
   const [tick, setTick] = useState(0);
   useEffect(() => {
@@ -206,7 +200,8 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
       
       const weeksPassed = Math.floor(msSinceStart / (7 * 24 * 60 * 60 * 1000));
       const baseSession = w.baseSession || w.currentSession || 1;
-      const autoSession = Math.min(baseSession + weeksPassed, w.totalSessions || 12);
+      const rawSession = baseSession + weeksPassed;
+      const autoSession = w.noSessionLimit ? rawSession : Math.min(rawSession, w.totalSessions || 12);
       return { ...w, currentSession: autoSession };
     });
   }, [todaySchedule, systemSettings.pauseAllSessionAdvance]);
@@ -224,8 +219,23 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
       const end = endH * 60 + endM;
       return currentTime >= start && currentTime <= end;
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [todaySchedule.workshops, tick]);
+  }, [workshopsWithAutoSession, tick]);
+
+  const todayNotices = useMemo(() => {
+    return (notices || [])
+      .filter(n => {
+        if (!n.active) return false;
+        // Day filter
+        if (n.days?.length > 0 && !n.days.includes(currentDayKey)) return false;
+        // Workshop filter: if workshopNames is set, only show when current workshop matches
+        if (n.workshopNames?.length > 0) {
+          const currentName = currentWorkshop?.name;
+          if (!currentName || !n.workshopNames.includes(currentName)) return false;
+        }
+        return true;
+      })
+      .sort((a, b) => (a.priority || 0) - (b.priority || 0));
+  }, [notices, currentDayKey, currentWorkshop?.name]);
 
   // Calculate current circle list based on session number
   const currentCircleNames = useMemo(() => {
@@ -360,6 +370,8 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
               screenScale={screenScale}
               showProgress={displayMode !== 'custom' || customConfig.showProgress !== false}
               hideSessionText={currentWorkshop?.hideSessionText || false}
+              hideProgressDots={currentWorkshop?.hideProgressDots || false}
+              noSessionLimit={currentWorkshop?.noSessionLimit || false}
               timerEndTime={timerEndTime}
               timerTitle={systemSettings.timerTitle || ''}
               workshopName={currentWorkshop?.name || ''}

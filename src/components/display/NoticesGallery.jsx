@@ -97,8 +97,9 @@ export default function NoticesGallery({
     );
   }
 
-  const currentSlot = displaySlots[currentIndex];
-  const isDual = currentSlot.type === 'dual';
+  const safeIndex = displaySlots.length > 0 ? Math.min(currentIndex, displaySlots.length - 1) : 0;
+  const currentSlot = displaySlots[safeIndex];
+  const isDual = currentSlot?.type === 'dual';
   const notice1 = currentSlot.notices[0];
   const notice2 = isDual ? currentSlot.notices[1] : null;
 

@@ -117,11 +117,12 @@ function NoticePreview({ notice }) {
   );
 }
 
-export default function NoticesManager({ notices, onSave, onDelete, onReorder }) {
+export default function NoticesManager({ notices, daySchedules = [], onSave, onDelete, onReorder }) {
   const [editingNotice, setEditingNotice] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [noticeTab, setNoticeTab] = useState('active');
+  const [showWorkshopDialog, setShowWorkshopDialog] = useState(false);
 
   const activeNotices = notices.filter(n => !n.archived);
   const archivedNotices = notices.filter(n => n.archived);
@@ -134,6 +135,7 @@ export default function NoticesManager({ notices, onSave, onDelete, onReorder })
       active: true,
       archived: false,
       days: [],
+      workshopNames: [],
       priority: activeNotices.length + 1
     });
     setShowPreview(false);
@@ -162,6 +164,53 @@ export default function NoticesManager({ notices, onSave, onDelete, onReorder })
     if (onReorder) {
       onReorder(reordered);
     }
+  };
+
+  const getWorkshopsForSelectedDays = () => {
+    if (!editingNotice?.days?.length) return [];
+    const workshops = [];
+    const seen = new Set();
+    editingNotice.days.forEach(day => {
+      const schedule = daySchedules.find(d => d.dayOfWeek === day);
+      if (schedule?.workshops?.length) {
+        schedule.workshops.forEach(w => {
+          if (w.name && !seen.has(w.name)) {
+            seen.add(w.name);
+            workshops.push({ name: w.name, day });
+          }
+        });
+      }
+    });
+    return workshops;
+  };
+
+  const selectedWorkshops = editingNotice?.workshopNames || [];
+  const availableWorkshops = getWorkshopsForSelectedDays();
+
+  const toggleWorkshop = (name) => {
+    setEditingNotice(prev => {
+      if (!prev) return null;
+      const names = prev.workshopNames || [];
+      if (names.includes(name)) {
+        return { ...prev, workshopNames: names.filter(n => n !== name) };
+      }
+      return { ...prev, workshopNames: [...names, name] };
+    });
+  };
+
+  const selectAllWorkshops = () => {
+    setEditingNotice(prev => {
+      if (!prev) return null;
+      const allNames = availableWorkshops.map(w => w.name);
+      return { ...prev, workshopNames: allNames };
+    });
+  };
+
+  const clearAllWorkshops = () => {
+    setEditingNotice(prev => {
+      if (!prev) return null;
+      return { ...prev, workshopNames: [] };
+    });
   };
 
   return (
@@ -749,6 +798,41 @@ export default function NoticesManager({ notices, onSave, onDelete, onReorder })
                   ))}
                 </div>
               </div>
+
+              {/* Workshop filter */}
+              <div>
+                <Label>סדנאות להצגה (ריק = כל הסדנאות)</Label>
+                {availableWorkshops.length === 0 ? (
+                  <p className="text-sm text-gray-400 mt-2">בחר ימים כדי לבחור סדנאות ספציפיות</p>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowWorkshopDialog(true)}
+                      >
+                        בחר סדנאות
+                      </Button>
+                      {selectedWorkshops.length > 0 && (
+                        <span className="text-sm text-blue-600">
+                          נבחרו {selectedWorkshops.length} מתוך {availableWorkshops.length} סדנאות
+                        </span>
+                      )}
+                    </div>
+                    {selectedWorkshops.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {selectedWorkshops.map(name => (
+                          <Badge key={name} variant="secondary" className="text-xs">
+                            {name}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="mb-2 block">סידור תצוגה</Label>
@@ -830,6 +914,61 @@ export default function NoticesManager({ notices, onSave, onDelete, onReorder })
             <Button onClick={handleSave} className="gap-2">
               <Save className="w-4 h-4" />
               שמור
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Workshop Selection Dialog */}
+      <Dialog open={showWorkshopDialog} onOpenChange={setShowWorkshopDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>בחר סדנאות להצגה</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            {availableWorkshops.length === 0 ? (
+              <p className="text-center text-gray-500 py-4">אין סדנאות זמינות לימים שנבחרו</p>
+            ) : (
+              <>
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={selectAllWorkshops}>
+                    בחר הכל
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" onClick={clearAllWorkshops}>
+                    נקה הכל
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  {editingNotice?.days?.map(day => {
+                    const dayWorkshops = availableWorkshops.filter(w => w.day === day);
+                    if (dayWorkshops.length === 0) return null;
+                    return (
+                      <div key={day} className="border rounded-lg p-3">
+                        <div className="font-medium text-sm text-gray-700 mb-2">
+                          {dayNames[day]}
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {dayWorkshops.map(w => (
+                            <Badge
+                              key={w.name}
+                              variant={selectedWorkshops.includes(w.name) ? 'default' : 'outline'}
+                              className="cursor-pointer"
+                              onClick={() => toggleWorkshop(w.name)}
+                            >
+                              {selectedWorkshops.includes(w.name) ? '✓ ' : ''}{w.name}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setShowWorkshopDialog(false)}>
+              סגור
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -208,12 +208,18 @@ export default function Admin() {
       }
       return supabaseAPI.create('Notice', data);
     },
-    onSuccess: () => queryClient.invalidateQueries(['notices'])
+    onSuccess: () => {
+      queryClient.invalidateQueries(['notices']);
+      handleRefreshDisplay();
+    }
   });
 
   const deleteNoticeMutation = useMutation({
     mutationFn: (id) => supabaseAPI.delete('Notice', id),
-    onSuccess: () => queryClient.invalidateQueries(['notices'])
+    onSuccess: () => {
+      queryClient.invalidateQueries(['notices']);
+      handleRefreshDisplay();
+    }
   });
 
   const reorderNoticesMutation = useMutation({
@@ -229,7 +235,10 @@ export default function Admin() {
       );
       return updates;
     },
-    onSuccess: () => queryClient.invalidateQueries(['notices'])
+    onSuccess: () => {
+      queryClient.invalidateQueries(['notices']);
+      handleRefreshDisplay();
+    }
   });
 
   const saveTickerItemMutation = useMutation({
@@ -313,9 +322,11 @@ export default function Admin() {
         const msSinceStart = now - weekStart;
         const weeksPassed = Math.floor(msSinceStart / (7 * 24 * 60 * 60 * 1000));
         const baseSession = w.baseSession || 1;
-        newSession = Math.min(baseSession + weeksPassed, w.totalSessions || 12);
+        const rawSession = baseSession + weeksPassed;
+        newSession = w.noSessionLimit ? rawSession : Math.min(rawSession, w.totalSessions || 12);
       } else {
-        newSession = Math.min((w.currentSession || 0) + 1, w.totalSessions || 12);
+        const nextSession = (w.currentSession || 0) + 1;
+        newSession = w.noSessionLimit ? nextSession : Math.min(nextSession, w.totalSessions || 12);
       }
       
       return { ...w, currentSession: newSession };
@@ -561,44 +572,35 @@ export default function Admin() {
                                   onChange={e => updateWorkshop(idx, 'endTime', e.target.value)}
                                 />
                               </div>
-                              <div>
-                                <Label>מספר מפגשים בסה"כ</Label>
-                                <Input
-                                  type="number"
-                                  min="1"
-                                  max="52"
-                                  value={workshop.totalSessions || 12}
-                                  onChange={e => updateWorkshop(idx, 'totalSessions', Number(e.target.value))}
-                                />
-                              </div>
-                              <div>
-                                <Label>מפגש נוכחי (מתוך {workshop.totalSessions || 12})</Label>
-                                <Input
-                                  type="number"
-                                  min="1"
-                                  max={workshop.totalSessions || 12}
-                                  value={workshop.currentSession || 1}
-                                  onChange={e => updateWorkshop(idx, 'currentSession', Number(e.target.value))}
-                                />
-                                {/* Show auto-calculated session based on weekStartDate */}
-                                {(() => {
-                                  const weekStart = editingSchedule.weekStartDate ? new Date(editingSchedule.weekStartDate) : null;
-                                  const globalPause = systemSettings.pauseAllSessionAdvance;
-                                  const dayPause = editingSchedule.pauseAllSessionAdvance;
-                                  if (!weekStart || globalPause || dayPause || workshop.pauseSessionAdvance) return null;
-                                  const now = new Date();
-                                  const msSinceStart = now - weekStart;
-                                  if (msSinceStart < 0) return null;
-                                  const weeksPassed = Math.floor(msSinceStart / (7 * 24 * 60 * 60 * 1000));
-                                  const base = workshop.baseSession || workshop.currentSession || 1;
-                                  const auto = Math.min(base + weeksPassed, workshop.totalSessions || 12);
-                                  return (
-                                    <p className="text-xs text-blue-600 mt-1 font-medium">
-                                      📺 מוצג בתצוגה: מפגש {auto}
-                                    </p>
-                                  );
-                                })()}
-                              </div>
+
+                              {/* totalSessions - hidden when noSessionLimit */}
+                              {!workshop.noSessionLimit && (
+                                <div>
+                                  <Label>מספר מפגשים בסה"כ</Label>
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    max="52"
+                                    value={workshop.totalSessions || 12}
+                                    onChange={e => updateWorkshop(idx, 'totalSessions', Number(e.target.value))}
+                                  />
+                                </div>
+                              )}
+
+                              {/* currentSession - shown only when NOT noSessionLimit */}
+                              {!workshop.noSessionLimit && (
+                                <div>
+                                  <Label>מפגש נוכחי (מתוך {workshop.totalSessions || 12})</Label>
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    max={workshop.totalSessions || 12}
+                                    value={workshop.currentSession || 1}
+                                    onChange={e => updateWorkshop(idx, 'currentSession', Number(e.target.value))}
+                                  />
+                                </div>
+                              )}
+
                               <div className="flex items-center gap-2 pt-6">
                                 <Switch
                                   checked={workshop.kickoffEnabled}
@@ -648,18 +650,59 @@ export default function Admin() {
                                 />
                                 <Label>הסתר טקסט מפגש (הצג רק פס התקדמות)</Label>
                               </div>
-                              <div>
-                                <Label>מפגש בסיס (למיספור אוטומטי)</Label>
-                                <Input
-                                  type="number"
-                                  min="1"
-                                  max={workshop.totalSessions || 12}
-                                  value={workshop.baseSession || workshop.currentSession || 1}
-                                  onChange={e => updateWorkshop(idx, 'baseSession', Number(e.target.value))}
-                                  placeholder="מפגש התחלתי"
+                              <div className="flex items-center gap-2 pt-6">
+                                <Switch
+                                  checked={workshop.hideProgressDots === true}
+                                  onCheckedChange={v => updateWorkshop(idx, 'hideProgressDots', v)}
                                 />
-                                <p className="text-xs text-gray-400 mt-1">המפגש שממנו מתחיל המיספור (בשבוע הראשון)</p>
+                                <Label>הסתר פס התקדמות (הצג רק מספר מפגש)</Label>
                               </div>
+                              <div className="flex items-center gap-2 pt-6">
+                                <Switch
+                                  checked={workshop.noSessionLimit === true}
+                                  onCheckedChange={v => updateWorkshop(idx, 'noSessionLimit', v)}
+                                />
+                                <Label className="text-blue-600 font-medium">סדנא ללא מגבלת מפגשים (מונה שבועי)</Label>
+                              </div>
+
+                              {/* noSessionLimit session field - spans full width */}
+                              {workshop.noSessionLimit && (() => {
+                                const weekStart = editingSchedule.weekStartDate ? new Date(editingSchedule.weekStartDate) : null;
+                                const now = new Date();
+                                let weeksPassed = 0;
+                                if (weekStart) {
+                                  const ms = now - weekStart;
+                                  if (ms > 0) weeksPassed = Math.floor(ms / (7 * 24 * 60 * 60 * 1000));
+                                }
+                                const displaySession = (workshop.baseSession || 1) + weeksPassed;
+                                return (
+                                  <div className="col-span-2 md:col-span-4 border border-blue-200 rounded-lg p-4 bg-blue-50/50 space-y-3">
+                                    <div className="flex items-center gap-2">
+                                      <Label className="text-blue-700 font-semibold">מספר מפגש נוכחי</Label>
+                                      <span className="text-xs text-blue-500">(המספר שיוצג בלוח התצוגה)</span>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                      <Input
+                                        type="number"
+                                        min="1"
+                                        value={displaySession}
+                                        onChange={e => {
+                                          const targetDisplay = Number(e.target.value);
+                                          const newBase = Math.max(1, targetDisplay - weeksPassed);
+                                          updateWorkshop(idx, 'baseSession', newBase);
+                                        }}
+                                        className="w-32"
+                                      />
+                                      <div className="text-sm text-blue-700 font-bold">
+                                        📺 בלוח תצוגה: מפגש מספר {displaySession}
+                                      </div>
+                                    </div>
+                                    <p className="text-xs text-gray-500">
+                                      המספר מתקדם ב-1 כל שבוע. {weeksPassed > 0 ? `עברו ${weeksPassed} שבועות מתאריך תחילת השבוע (${editingSchedule.weekStartDate}).` : 'השבוע הראשון מתאריך תחילת השבוע.'}
+                                    </p>
+                                  </div>
+                                );
+                              })()}
                             </div>
                           </div>
                         ))}
@@ -1027,6 +1070,7 @@ export default function Admin() {
               <TabsContent value="notices-list" className="space-y-6">
                 <NoticesManager
                   notices={[...notices].sort((a, b) => (a.priority || 0) - (b.priority || 0))}
+                  daySchedules={daySchedules || []}
                   onSave={saveNoticeMutation.mutate}
                   onDelete={deleteNoticeMutation.mutate}
                   onReorder={reorderNoticesMutation.mutate}
