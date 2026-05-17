@@ -321,7 +321,7 @@ export default function Admin() {
         // Calculate how many weeks have passed since weekStartDate
         const msSinceStart = now - weekStart;
         const weeksPassed = Math.floor(msSinceStart / (7 * 24 * 60 * 60 * 1000));
-        const baseSession = w.baseSession || 1;
+        const baseSession = w.baseSession ?? w.currentSession ?? 1;
         const rawSession = baseSession + weeksPassed;
         newSession = w.noSessionLimit ? rawSession : Math.min(rawSession, w.totalSessions || 12);
       } else {
@@ -588,18 +588,41 @@ export default function Admin() {
                               )}
 
                               {/* currentSession - shown only when NOT noSessionLimit */}
-                              {!workshop.noSessionLimit && (
-                                <div>
-                                  <Label>מפגש נוכחי (מתוך {workshop.totalSessions || 12})</Label>
-                                  <Input
-                                    type="number"
-                                    min="1"
-                                    max={workshop.totalSessions || 12}
-                                    value={workshop.currentSession || 1}
-                                    onChange={e => updateWorkshop(idx, 'currentSession', Number(e.target.value))}
-                                  />
-                                </div>
-                              )}
+                              {!workshop.noSessionLimit && (() => {
+                                const weekStart = editingSchedule.weekStartDate ? new Date(editingSchedule.weekStartDate) : null;
+                                const now = new Date();
+                                let weeksPassed = 0;
+                                if (weekStart) {
+                                  const ms = now - weekStart;
+                                  if (ms > 0) weeksPassed = Math.floor(ms / (7 * 24 * 60 * 60 * 1000));
+                                }
+                                const displaySession = Math.min(
+                                  ((workshop.baseSession ?? workshop.currentSession ?? 1) + weeksPassed),
+                                  workshop.totalSessions || 12
+                                );
+                                return (
+                                  <div className="col-span-2 md:col-span-1">
+                                    <Label>מפגש נוכחי (מתוך {workshop.totalSessions || 12})</Label>
+                                    <Input
+                                      type="number"
+                                      min="1"
+                                      max={workshop.totalSessions || 12}
+                                      value={displaySession}
+                                      onChange={e => {
+                                        const targetDisplay = Number(e.target.value);
+                                        if (weekStart) {
+                                          const newBase = targetDisplay - weeksPassed;
+                                          updateWorkshop(idx, 'baseSession', newBase);
+                                        }
+                                        updateWorkshop(idx, 'currentSession', targetDisplay);
+                                      }}
+                                    />
+                                    <p className="text-xs text-blue-600 mt-1 font-medium">
+                                      📺 מוצג בתצוגה: מפגש {displaySession}
+                                    </p>
+                                  </div>
+                                );
+                              })()}
 
                               <div className="flex items-center gap-2 pt-6">
                                 <Switch
@@ -674,7 +697,7 @@ export default function Admin() {
                                   const ms = now - weekStart;
                                   if (ms > 0) weeksPassed = Math.floor(ms / (7 * 24 * 60 * 60 * 1000));
                                 }
-                                const displaySession = (workshop.baseSession || 1) + weeksPassed;
+                                const displaySession = (workshop.baseSession ?? workshop.currentSession ?? 1) + weeksPassed;
                                 return (
                                   <div className="col-span-2 md:col-span-4 border border-blue-200 rounded-lg p-4 bg-blue-50/50 space-y-3">
                                     <div className="flex items-center gap-2">
@@ -688,8 +711,9 @@ export default function Admin() {
                                         value={displaySession}
                                         onChange={e => {
                                           const targetDisplay = Number(e.target.value);
-                                          const newBase = Math.max(1, targetDisplay - weeksPassed);
+                                          const newBase = targetDisplay - weeksPassed;
                                           updateWorkshop(idx, 'baseSession', newBase);
+                                          updateWorkshop(idx, 'currentSession', targetDisplay);
                                         }}
                                         className="w-32"
                                       />

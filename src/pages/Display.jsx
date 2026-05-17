@@ -199,7 +199,7 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
       if (msSinceStart < 0) return w; // hasn't started yet
       
       const weeksPassed = Math.floor(msSinceStart / (7 * 24 * 60 * 60 * 1000));
-      const baseSession = w.baseSession || w.currentSession || 1;
+      const baseSession = w.baseSession ?? w.currentSession ?? 1;
       const rawSession = baseSession + weeksPassed;
       const autoSession = w.noSessionLimit ? rawSession : Math.min(rawSession, w.totalSessions || 12);
       return { ...w, currentSession: autoSession };
