@@ -422,7 +422,7 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
                 )}
                 {shouldShow('showDutyPerson') && (
                   <DutyPerson 
-                    name={todaySchedule.dutyPerson}
+                    name={currentWorkshop?.dutyPerson || todaySchedule.dutyPerson}
                     screenScale={screenScale * blockTextScale}
                   />
                 )}

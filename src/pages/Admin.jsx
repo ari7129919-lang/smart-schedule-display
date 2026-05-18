@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { 
   Settings, Calendar, FileText, Users, Clock, Play, 
   Plus, Trash2, Save, Eye, RefreshCw, Monitor, Timer, ExternalLink, Phone,
-  Palette, Star, Copy, Gift
+  Palette, Star, Copy, Gift, Pencil
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -114,6 +114,8 @@ export default function Admin() {
   const [editingSettings, setEditingSettings] = useState(null);
   const [showCustomPanel, setShowCustomPanel] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [editingWorkshopIndex, setEditingWorkshopIndex] = useState(null);
+  const [deleteWorkshopIndex, setDeleteWorkshopIndex] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: daySchedules = [], isLoading: loadingSchedules } = useQuery({
@@ -535,206 +537,297 @@ export default function Admin() {
                         </div>
                       </CardHeader>
                       <CardContent className="space-y-4">
-                        {editingSchedule.workshops?.map((workshop, idx) => (
-                          <div key={idx} className="p-4 border rounded-lg space-y-4 bg-gray-50">
-                            <div className="flex items-center justify-between">
-                              <Badge variant="secondary">סדנא {idx + 1}</Badge>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => removeWorkshop(idx)}
-                              >
-                                <Trash2 className="w-4 h-4 text-red-500" />
-                              </Button>
-                            </div>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                              <div>
-                                <Label>שם הסדנא</Label>
-                                <Input
-                                  value={workshop.name || ''}
-                                  onChange={e => updateWorkshop(idx, 'name', e.target.value)}
-                                  placeholder="שם הסדנא"
-                                />
-                              </div>
-                              <div>
-                                <Label>שעת התחלה</Label>
-                                <Input
-                                  type="time"
-                                  value={workshop.startTime || ''}
-                                  onChange={e => updateWorkshop(idx, 'startTime', e.target.value)}
-                                />
-                              </div>
-                              <div>
-                                <Label>שעת סיום</Label>
-                                <Input
-                                  type="time"
-                                  value={workshop.endTime || ''}
-                                  onChange={e => updateWorkshop(idx, 'endTime', e.target.value)}
-                                />
-                              </div>
-
-                              {/* totalSessions - hidden when noSessionLimit */}
-                              {!workshop.noSessionLimit && (
-                                <div>
-                                  <Label>מספר מפגשים בסה"כ</Label>
-                                  <Input
-                                    type="number"
-                                    min="1"
-                                    max="52"
-                                    value={workshop.totalSessions || 12}
-                                    onChange={e => updateWorkshop(idx, 'totalSessions', Number(e.target.value))}
-                                  />
-                                </div>
-                              )}
-
-                              {/* currentSession - shown only when NOT noSessionLimit */}
-                              {!workshop.noSessionLimit && (() => {
-                                const weekStart = editingSchedule.weekStartDate ? new Date(editingSchedule.weekStartDate) : null;
-                                const now = new Date();
-                                let weeksPassed = 0;
-                                if (weekStart) {
-                                  const ms = now - weekStart;
-                                  if (ms > 0) weeksPassed = Math.floor(ms / (7 * 24 * 60 * 60 * 1000));
-                                }
-                                const displaySession = Math.min(
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {editingSchedule.workshops?.map((workshop, idx) => {
+                            const weekStart = editingSchedule.weekStartDate ? new Date(editingSchedule.weekStartDate) : null;
+                            const now = new Date();
+                            let weeksPassed = 0;
+                            if (weekStart) {
+                              const ms = now - weekStart;
+                              if (ms > 0) weeksPassed = Math.floor(ms / (7 * 24 * 60 * 60 * 1000));
+                            }
+                            const displaySession = workshop.noSessionLimit
+                              ? (workshop.baseSession ?? workshop.currentSession ?? 1) + weeksPassed
+                              : Math.min(
                                   ((workshop.baseSession ?? workshop.currentSession ?? 1) + weeksPassed),
                                   workshop.totalSessions || 12
                                 );
-                                return (
-                                  <div className="col-span-2 md:col-span-1">
-                                    <Label>מפגש נוכחי (מתוך {workshop.totalSessions || 12})</Label>
-                                    <Input
-                                      type="number"
-                                      min="1"
-                                      max={workshop.totalSessions || 12}
-                                      value={displaySession}
-                                      onChange={e => {
-                                        const targetDisplay = Number(e.target.value);
-                                        if (weekStart) {
-                                          const newBase = targetDisplay - weeksPassed;
-                                          updateWorkshop(idx, 'baseSession', newBase);
-                                        }
-                                        updateWorkshop(idx, 'currentSession', targetDisplay);
-                                      }}
-                                    />
-                                    <p className="text-xs text-blue-600 mt-1 font-medium">
-                                      📺 מוצג בתצוגה: מפגש {displaySession}
-                                    </p>
-                                  </div>
-                                );
-                              })()}
-
-                              <div className="flex items-center gap-2 pt-6">
-                                <Switch
-                                  checked={workshop.kickoffEnabled}
-                                  onCheckedChange={v => updateWorkshop(idx, 'kickoffEnabled', v)}
-                                />
-                                <Label>הפעל Kickoff</Label>
-                              </div>
-                              {workshop.kickoffEnabled && (
-                                <div className="pt-2">
-                                  <Label className="text-sm text-gray-600 mb-1 block">זמן הפעלת Kickoff</Label>
-                                  <Input
-                                    type="time"
-                                    value={workshop.kickoffStartTime || ''}
-                                    onChange={e => updateWorkshop(idx, 'kickoffStartTime', e.target.value)}
-                                    placeholder="בחר זמן"
-                                  />
-                                  <p className="text-xs text-gray-400 mt-1">
-                                    ה-Kickoff יופעל בזמן זה (לא תלוי בזמן תחילת הסדנא)
+                            return (
+                              <div
+                                key={idx}
+                                onClick={() => setEditingWorkshopIndex(idx)}
+                                className="border rounded-xl p-4 bg-white hover:shadow-md hover:border-blue-300 transition-all cursor-pointer space-y-3"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <Badge variant="secondary">סדנא {idx + 1}</Badge>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={e => { e.stopPropagation(); setDeleteWorkshopIndex(idx); }}
+                                  >
+                                    <Trash2 className="w-4 h-4 text-red-500" />
+                                  </Button>
+                                </div>
+                                <div className="space-y-1">
+                                  <h3 className="font-bold text-lg">{workshop.name || 'סדנא ללא שם'}</h3>
+                                  <p className="text-sm text-gray-500 flex items-center gap-1">
+                                    <Clock className="w-3.5 h-3.5" />
+                                    {workshop.startTime || '--:--'} - {workshop.endTime || '--:--'}
                                   </p>
                                 </div>
-                              )}
-                              <div className="flex items-center gap-2 pt-6">
-                                <Switch
-                                  checked={workshop.hideSmallGroups !== true}
-                                  onCheckedChange={v => updateWorkshop(idx, 'hideSmallGroups', !v)}
-                                />
-                                <Label>הצג קבוצות קטנות</Label>
+                                {workshop.dutyPerson && (
+                                  <p className="text-sm text-gray-600 flex items-center gap-1">
+                                    <Users className="w-3.5 h-3.5" />
+                                    {workshop.dutyPerson}
+                                  </p>
+                                )}
+                                <div className="text-sm font-medium text-blue-700 bg-blue-50 rounded-lg px-3 py-2">
+                                  {workshop.noSessionLimit
+                                    ? `📺 מפגש מספר ${displaySession}`
+                                    : `📺 מפגש ${displaySession} מתוך ${workshop.totalSessions || 12}`}
+                                </div>
+                                {workshop.kickoffEnabled && workshop.kickoffStartTime && (
+                                  <p className="text-xs text-gray-500 flex items-center gap-1">
+                                    <Play className="w-3 h-3" />
+                                    Kickoff: {workshop.kickoffStartTime}
+                                  </p>
+                                )}
+                                <div className="flex flex-wrap gap-1 pt-1">
+                                  {workshop.hideSmallGroups !== true && (
+                                    <span className="text-xs px-2 py-0.5 bg-green-100 rounded-full text-green-700">קבוצות קטנות</span>
+                                  )}
+                                  {workshop.hideInternalCircle !== true && (
+                                    <span className="text-xs px-2 py-0.5 bg-green-100 rounded-full text-green-700">מעגל פנימי</span>
+                                  )}
+                                  {workshop.pauseSessionAdvance && (
+                                    <span className="text-xs px-2 py-0.5 bg-orange-100 rounded-full text-orange-600">מיספור מושהה</span>
+                                  )}
+                                  {workshop.noSessionLimit && (
+                                    <span className="text-xs px-2 py-0.5 bg-blue-100 rounded-full text-blue-600">מונה שבועי</span>
+                                  )}
+                                  {workshop.hideSessionText && (
+                                    <span className="text-xs px-2 py-0.5 bg-gray-100 rounded-full text-gray-500">ללא טקסט</span>
+                                  )}
+                                  {workshop.hideProgressDots && (
+                                    <span className="text-xs px-2 py-0.5 bg-gray-100 rounded-full text-gray-500">ללא פס</span>
+                                  )}
+                                </div>
+                                <div className="text-xs text-gray-400 pt-2 border-t text-center flex items-center justify-center gap-1">
+                                  <Pencil className="w-3 h-3" />
+                                  לחץ לעריכה
+                                </div>
                               </div>
-                              <div className="flex items-center gap-2 pt-6">
-                                <Switch
-                                  checked={workshop.hideInternalCircle !== true}
-                                  onCheckedChange={v => updateWorkshop(idx, 'hideInternalCircle', !v)}
-                                />
-                                <Label>הצג מעגל פנימי</Label>
-                              </div>
-                              <div className="flex items-center gap-2 pt-6">
-                                <Switch
-                                  checked={workshop.pauseSessionAdvance === true}
-                                  onCheckedChange={v => updateWorkshop(idx, 'pauseSessionAdvance', v)}
-                                />
-                                <Label className="text-orange-600 font-medium">⏸ השהה מיספור מפגשים</Label>
-                              </div>
-                              <div className="flex items-center gap-2 pt-6">
-                                <Switch
-                                  checked={workshop.hideSessionText === true}
-                                  onCheckedChange={v => updateWorkshop(idx, 'hideSessionText', v)}
-                                />
-                                <Label>הסתר טקסט מפגש (הצג רק פס התקדמות)</Label>
-                              </div>
-                              <div className="flex items-center gap-2 pt-6">
-                                <Switch
-                                  checked={workshop.hideProgressDots === true}
-                                  onCheckedChange={v => updateWorkshop(idx, 'hideProgressDots', v)}
-                                />
-                                <Label>הסתר פס התקדמות (הצג רק מספר מפגש)</Label>
-                              </div>
-                              <div className="flex items-center gap-2 pt-6">
-                                <Switch
-                                  checked={workshop.noSessionLimit === true}
-                                  onCheckedChange={v => updateWorkshop(idx, 'noSessionLimit', v)}
-                                />
-                                <Label className="text-blue-600 font-medium">סדנא ללא מגבלת מפגשים (מונה שבועי)</Label>
-                              </div>
-
-                              {/* noSessionLimit session field - spans full width */}
-                              {workshop.noSessionLimit && (() => {
-                                const weekStart = editingSchedule.weekStartDate ? new Date(editingSchedule.weekStartDate) : null;
-                                const now = new Date();
-                                let weeksPassed = 0;
-                                if (weekStart) {
-                                  const ms = now - weekStart;
-                                  if (ms > 0) weeksPassed = Math.floor(ms / (7 * 24 * 60 * 60 * 1000));
-                                }
-                                const displaySession = (workshop.baseSession ?? workshop.currentSession ?? 1) + weeksPassed;
-                                return (
-                                  <div className="col-span-2 md:col-span-4 border border-blue-200 rounded-lg p-4 bg-blue-50/50 space-y-3">
-                                    <div className="flex items-center gap-2">
-                                      <Label className="text-blue-700 font-semibold">מספר מפגש נוכחי</Label>
-                                      <span className="text-xs text-blue-500">(המספר שיוצג בלוח התצוגה)</span>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                      <Input
-                                        type="number"
-                                        min="1"
-                                        value={displaySession}
-                                        onChange={e => {
-                                          const targetDisplay = Number(e.target.value);
-                                          const newBase = targetDisplay - weeksPassed;
-                                          updateWorkshop(idx, 'baseSession', newBase);
-                                          updateWorkshop(idx, 'currentSession', targetDisplay);
-                                        }}
-                                        className="w-32"
-                                      />
-                                      <div className="text-sm text-blue-700 font-bold">
-                                        📺 בלוח תצוגה: מפגש מספר {displaySession}
-                                      </div>
-                                    </div>
-                                    <p className="text-xs text-gray-500">
-                                      המספר מתקדם ב-1 כל שבוע. {weeksPassed > 0 ? `עברו ${weeksPassed} שבועות מתאריך תחילת השבוע (${editingSchedule.weekStartDate}).` : 'השבוע הראשון מתאריך תחילת השבוע.'}
-                                    </p>
-                                  </div>
-                                );
-                              })()}
-                            </div>
-                          </div>
-                        ))}
+                            );
+                          })}
+                        </div>
                         {(!editingSchedule.workshops || editingSchedule.workshops.length === 0) && (
                           <p className="text-gray-500 text-center py-8">אין סדנאות מוגדרות ליום זה</p>
                         )}
                       </CardContent>
                     </Card>
+
+                    {/* Workshop Edit Dialog */}
+                    <Dialog open={editingWorkshopIndex !== null} onOpenChange={open => !open && setEditingWorkshopIndex(null)}>
+                      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle>
+                            {editingWorkshopIndex !== null ? `עריכת סדנא: ${editingSchedule.workshops[editingWorkshopIndex]?.name || 'סדנא ללא שם'}` : 'עריכת סדנא'}
+                          </DialogTitle>
+                        </DialogHeader>
+                        {editingWorkshopIndex !== null && (() => {
+                          const workshop = editingSchedule.workshops[editingWorkshopIndex];
+                          const idx = editingWorkshopIndex;
+                          const weekStart = editingSchedule.weekStartDate ? new Date(editingSchedule.weekStartDate) : null;
+                          const now = new Date();
+                          let weeksPassed = 0;
+                          if (weekStart) {
+                            const ms = now - weekStart;
+                            if (ms > 0) weeksPassed = Math.floor(ms / (7 * 24 * 60 * 60 * 1000));
+                          }
+                          const displaySession = workshop.noSessionLimit
+                            ? (workshop.baseSession ?? workshop.currentSession ?? 1) + weeksPassed
+                            : Math.min(
+                                ((workshop.baseSession ?? workshop.currentSession ?? 1) + weeksPassed),
+                                workshop.totalSessions || 12
+                              );
+                          return (
+                            <div className="space-y-6 py-4">
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <Label>שם הסדנא</Label>
+                                  <Input
+                                    value={workshop.name || ''}
+                                    onChange={e => updateWorkshop(idx, 'name', e.target.value)}
+                                    placeholder="שם הסדנא"
+                                  />
+                                </div>
+                                <div>
+                                  <Label>אחראי שותפים</Label>
+                                  <Input
+                                    value={workshop.dutyPerson || ''}
+                                    onChange={e => updateWorkshop(idx, 'dutyPerson', e.target.value)}
+                                    placeholder="שם האחראי לסדנא זו"
+                                  />
+                                </div>
+                                <div>
+                                  <Label>שעת התחלה</Label>
+                                  <Input
+                                    type="time"
+                                    value={workshop.startTime || ''}
+                                    onChange={e => updateWorkshop(idx, 'startTime', e.target.value)}
+                                  />
+                                </div>
+                                <div>
+                                  <Label>שעת סיום</Label>
+                                  <Input
+                                    type="time"
+                                    value={workshop.endTime || ''}
+                                    onChange={e => updateWorkshop(idx, 'endTime', e.target.value)}
+                                  />
+                                </div>
+                                {!workshop.noSessionLimit && (
+                                  <>
+                                    <div>
+                                      <Label>מספר מפגשים בסה"כ</Label>
+                                      <Input
+                                        type="number"
+                                        min="1"
+                                        max="52"
+                                        value={workshop.totalSessions || 12}
+                                        onChange={e => updateWorkshop(idx, 'totalSessions', Number(e.target.value))}
+                                      />
+                                    </div>
+                                    <div>
+                                      <Label>מפגש נוכחי (מתוך {workshop.totalSessions || 12})</Label>
+                                      <Input
+                                        type="number"
+                                        min="1"
+                                        max={workshop.totalSessions || 12}
+                                        value={displaySession}
+                                        onChange={e => {
+                                          const targetDisplay = Number(e.target.value);
+                                          if (weekStart) {
+                                            const newBase = targetDisplay - weeksPassed;
+                                            updateWorkshop(idx, 'baseSession', newBase);
+                                          }
+                                          updateWorkshop(idx, 'currentSession', targetDisplay);
+                                        }}
+                                      />
+                                      <p className="text-xs text-blue-600 mt-1 font-medium">
+                                        📺 מוצג בתצוגה: מפגש {displaySession}
+                                      </p>
+                                    </div>
+                                  </>
+                                )}
+                                <div className="flex items-center gap-2 pt-2">
+                                  <Switch
+                                    checked={workshop.kickoffEnabled}
+                                    onCheckedChange={v => updateWorkshop(idx, 'kickoffEnabled', v)}
+                                  />
+                                  <Label>הפעל Kickoff</Label>
+                                </div>
+                                {workshop.kickoffEnabled && (
+                                  <div>
+                                    <Label>זמן הפעלת Kickoff</Label>
+                                    <Input
+                                      type="time"
+                                      value={workshop.kickoffStartTime || ''}
+                                      onChange={e => updateWorkshop(idx, 'kickoffStartTime', e.target.value)}
+                                    />
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="border-t pt-4 space-y-3">
+                                <h4 className="font-semibold text-sm text-gray-700">הגדרות תצוגה</h4>
+                                <div className="grid grid-cols-2 gap-3">
+                                  <div className="flex items-center gap-2">
+                                    <Switch checked={workshop.hideSmallGroups !== true} onCheckedChange={v => updateWorkshop(idx, 'hideSmallGroups', !v)} />
+                                    <Label className="text-sm">הצג קבוצות קטנות</Label>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Switch checked={workshop.hideInternalCircle !== true} onCheckedChange={v => updateWorkshop(idx, 'hideInternalCircle', !v)} />
+                                    <Label className="text-sm">הצג מעגל פנימי</Label>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Switch checked={workshop.pauseSessionAdvance === true} onCheckedChange={v => updateWorkshop(idx, 'pauseSessionAdvance', v)} />
+                                    <Label className="text-sm text-orange-600">השהה מיספור</Label>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Switch checked={workshop.hideSessionText === true} onCheckedChange={v => updateWorkshop(idx, 'hideSessionText', v)} />
+                                    <Label className="text-sm">הסתר טקסט מפגש</Label>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Switch checked={workshop.hideProgressDots === true} onCheckedChange={v => updateWorkshop(idx, 'hideProgressDots', v)} />
+                                    <Label className="text-sm">הסתר פס התקדמות</Label>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Switch checked={workshop.noSessionLimit === true} onCheckedChange={v => updateWorkshop(idx, 'noSessionLimit', v)} />
+                                    <Label className="text-sm text-blue-600">מונה שבועי (ללא מגבלה)</Label>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {workshop.noSessionLimit && (
+                                <div className="border border-blue-200 rounded-lg p-4 bg-blue-50/50 space-y-3">
+                                  <Label className="text-blue-700 font-semibold">מספר מפגש נוכחי (מתקדם שבועית)</Label>
+                                  <div className="flex items-center gap-3">
+                                    <Input
+                                      type="number"
+                                      min="1"
+                                      value={displaySession}
+                                      onChange={e => {
+                                        const targetDisplay = Number(e.target.value);
+                                        const newBase = targetDisplay - weeksPassed;
+                                        updateWorkshop(idx, 'baseSession', newBase);
+                                        updateWorkshop(idx, 'currentSession', targetDisplay);
+                                      }}
+                                      className="w-32"
+                                    />
+                                    <div className="text-sm text-blue-700 font-bold">
+                                      📺 בלוח תצוגה: מפגש מספר {displaySession}
+                                    </div>
+                                  </div>
+                                  <p className="text-xs text-gray-500">
+                                    המספר מתקדם ב-1 כל שבוע. {weeksPassed > 0 ? `עברו ${weeksPassed} שבועות מתאריך תחילת השבוע.` : 'השבוע הראשון מתאריך תחילת השבוע.'}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
+                        <DialogFooter>
+                          <Button onClick={() => setEditingWorkshopIndex(null)}>סגור</Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+
+                    {/* Delete Workshop Confirmation Dialog */}
+                    <Dialog open={deleteWorkshopIndex !== null} onOpenChange={open => !open && setDeleteWorkshopIndex(null)}>
+                      <DialogContent className="max-w-sm">
+                        <DialogHeader>
+                          <DialogTitle>אישור מחיקה</DialogTitle>
+                        </DialogHeader>
+                        <p className="text-sm text-gray-600 py-2">
+                          האם אתה בטוח שברצונך למחוק את הסדנא <strong>{deleteWorkshopIndex !== null ? editingSchedule.workshops[deleteWorkshopIndex]?.name || 'ללא שם' : ''}</strong>?
+                        </p>
+                        <DialogFooter className="flex gap-2">
+                          <Button variant="outline" onClick={() => setDeleteWorkshopIndex(null)}>ביטול</Button>
+                          <Button
+                            variant="destructive"
+                            onClick={() => {
+                              if (deleteWorkshopIndex !== null) {
+                                removeWorkshop(deleteWorkshopIndex);
+                                setDeleteWorkshopIndex(null);
+                              }
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4 mr-1" />
+                            מחק סדנא
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
                   </TabsContent>
 
                   {/* Internal Circle Tab */}
