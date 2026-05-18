@@ -243,7 +243,7 @@ export default function NoticeCard({
             />
           ) : (
             <img
-              src={notice.imageUrl}
+              src={getNoticeImages(notice)[0]}
               alt={notice.title || ''}
               style={{
                 width: '100%',
@@ -304,7 +304,7 @@ export default function NoticeCard({
                   />
                 ) : (
                   <img
-                    src={notice.imageUrl}
+                    src={getNoticeImages(notice)[0]}
                     alt=""
                     className="w-full h-auto rounded-xl object-cover"
                     style={{ maxHeight: `${240 * screenScale}px` }}
