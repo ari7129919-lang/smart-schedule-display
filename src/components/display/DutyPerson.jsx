@@ -7,13 +7,13 @@ export default function DutyPerson({
 }) {
   return (
     <div 
-      className="bg-white/85 rounded-3xl p-6"
+      className="board-card p-6"
       style={{ 
         boxShadow: 'var(--shadow-soft)',
         padding: `${24 * screenScale}px`
       }}
     >
-      <div className="flex items-center gap-2 mb-3">
+      <div className="board-section-title flex items-center gap-2 mb-3">
         <LeafIcon single size={20 * screenScale} color="#7A86A8" />
         <h3 
           className="text-primary font-medium"

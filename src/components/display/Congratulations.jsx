@@ -110,7 +110,7 @@ export default function Congratulations({
       exit={{ opacity: 0 }}
       className="h-full flex flex-col"
     >
-      <div className="flex items-center gap-2 mb-4">
+      <div className="board-section-title flex items-center gap-2 mb-4">
         <LeafIcon single size={20 * screenScale} color="#8FAE9B" />
         <h3 
           className="text-primary font-medium"
@@ -135,7 +135,7 @@ export default function Congratulations({
       className="h-full flex flex-col"
       style={{ perspective: '1000px' }}
     >
-      <div className="flex items-center gap-2 mb-4">
+      <div className="board-section-title flex items-center gap-2 mb-4">
         <LeafIcon single size={20 * screenScale} color="#8FAE9B" />
         <h3 
           className="text-primary font-medium"
@@ -195,7 +195,7 @@ export default function Congratulations({
 
   return (
     <div 
-      className="bg-white/85 rounded-3xl overflow-hidden"
+      className="board-card overflow-hidden"
       style={{ 
         boxShadow: 'var(--shadow-soft)',
         padding: `${24 * screenScale}px`,

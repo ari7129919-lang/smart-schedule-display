@@ -1,6 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import LeafIcon from './LeafIcon';
 
 // Hebrew number conversion
 const hebrewNumerals = {
@@ -115,10 +114,8 @@ export default function Header({
     }));
   }, [currentSession, totalSessions]);
 
-  const primary = '#2F4580';
-  const bg = '#E8ECF2';
-  const border = '#7A8FBF';
-  const capsuleBg = '#DDE3ED';
+  const primary = '#FFFFFF';
+  const bg = 'var(--board-navy, #1A2B4C)';
 
   const sideWidth = Math.round(220 * screenScale);
   const timerColWidth = Math.round(190 * screenScale);
@@ -142,7 +139,7 @@ export default function Header({
         className="flex flex-col items-center justify-center flex-shrink-0 text-center"
         style={{ width: `${sideWidth}px` }}
       >
-        <div style={{ fontSize: `${14 * screenScale * clockFontScale}px`, color: primary, opacity: 0.5, marginBottom: `${2 * screenScale}px` }}>
+        <div style={{ fontSize: `${14 * screenScale * clockFontScale}px`, color: primary, opacity: 0.74, marginBottom: `${2 * screenScale}px` }}>
           בס"ד
         </div>
         <div
@@ -152,7 +149,7 @@ export default function Header({
             color: primary,
             lineHeight: 1,
             letterSpacing: '0.02em',
-            textShadow: `0 2px 12px rgba(47,69,128,0.25)`,
+            textShadow: 'none',
           }}
         >
           {clockTime}
@@ -192,12 +189,12 @@ export default function Header({
             style={{
               background: isTimerWarning
                 ? 'rgba(192,57,43,0.12)'
-                : 'rgba(47,69,128,0.10)',
-              border: `${2 * screenScale}px solid ${isTimerWarning ? 'rgba(192,57,43,0.5)' : 'rgba(47,69,128,0.3)'}`,
+                : 'rgba(255,255,255,0.10)',
+              border: `${2 * screenScale}px solid ${isTimerWarning ? 'rgba(255,120,110,0.7)' : 'rgba(255,255,255,0.34)'}`,
               padding: `${8 * screenScale}px ${16 * screenScale}px`,
               boxShadow: isTimerWarning
                 ? `0 0 20px rgba(192,57,43,0.3)`
-                : `0 0 12px rgba(47,69,128,0.2)`,
+                : 'none',
             }}
             animate={{ scale: [1, 1.04, 1] }}
             transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
@@ -205,13 +202,13 @@ export default function Header({
             {timerTitle && (
               <div style={{
                 fontSize: `${26 * screenScale}px`,
-                color: isTimerWarning ? '#C0392B' : primary,
+                color: isTimerWarning ? '#FFB4AB' : primary,
                 fontWeight: 900,
                 marginBottom: `${6 * screenScale}px`,
                 letterSpacing: '0.02em',
                 textShadow: isTimerWarning
                   ? `0 0 14px rgba(192,57,43,0.5)`
-                  : `0 0 10px rgba(47,69,128,0.35)`,
+                  : 'none',
               }}>
                 {timerTitle}
               </div>
@@ -220,12 +217,12 @@ export default function Header({
               className="font-black tabular-nums"
               style={{
                 fontSize: `${68 * screenScale}px`,
-                color: isTimerWarning ? '#C0392B' : primary,
+                color: isTimerWarning ? '#FFB4AB' : primary,
                 lineHeight: 1,
                 letterSpacing: '0.04em',
                 textShadow: isTimerWarning
                   ? `0 0 20px rgba(192,57,43,0.6)`
-                  : `0 0 12px rgba(47,69,128,0.4)`,
+                  : 'none',
               }}
             >
               {String(timerMinutes).padStart(2, '0')}:{String(timerSeconds).padStart(2, '0')}
@@ -238,9 +235,9 @@ export default function Header({
       <div className="flex-1 flex items-center justify-center min-w-0">
         <div
           style={{
-            background: capsuleBg,
-            border: `${2 * screenScale}px solid ${border}`,
-            borderRadius: `${20 * screenScale}px ${20 * screenScale}px ${40 * screenScale}px ${40 * screenScale}px`,
+            background: 'transparent',
+            border: 'none',
+            borderRadius: 0,
             padding: `${14 * screenScale}px ${40 * screenScale}px ${18 * screenScale}px`,
             display: 'flex',
             flexDirection: 'column',
@@ -295,7 +292,7 @@ export default function Header({
                         border: `${2.5 * screenScale}px solid ${primary}`,
                         backgroundColor: dot.filled ? primary : 'transparent',
                         opacity: dot.filled ? 1 : 0.35,
-                        boxShadow: dot.filled ? `0 0 6px rgba(47,69,128,0.5)` : 'none',
+                        boxShadow: 'none',
                         transition: 'all 0.3s ease',
                       }}
                     />
@@ -312,37 +309,16 @@ export default function Header({
         className="flex flex-col items-center justify-center flex-shrink-0"
         style={{ width: `${sideWidth}px` }}
       >
-        <div style={{ position: 'relative', display: 'inline-block', borderRadius: '8px' }}>
-          <motion.img
-            src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/699472baee00632b405a28ce/2a3c4349f_.png"
+        <div className="flex items-center justify-center" style={{ height: `${logoHeight}px`, width: '100%' }}>
+          <img
+            src="/moach-lev-logo-transparent.png"
             alt="מח ולב"
             style={{
-              height: `${logoHeight}px`,
-              width: 'auto',
+              width: `${205 * screenScale}px`,
+              height: 'auto',
               display: 'block',
-              mixBlendMode: 'multiply',
+              objectFit: 'contain'
             }}
-            animate={{
-              filter: [
-                'brightness(1) drop-shadow(0 2px 4px rgba(47,69,128,0.1))',
-                'brightness(1.08) drop-shadow(0 4px 12px rgba(47,69,128,0.3))',
-                'brightness(1) drop-shadow(0 2px 4px rgba(47,69,128,0.1))',
-              ]
-            }}
-            transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
-          />
-          {/* Shimmer light bar */}
-          <motion.div
-            style={{
-              position: 'absolute',
-              top: 0,
-              bottom: 0,
-              width: '35%',
-              background: 'linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.65) 50%, transparent 70%)',
-              pointerEvents: 'none',
-            }}
-            animate={{ left: ['-40%', '130%'] }}
-            transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut', repeatDelay: 2.5 }}
           />
         </div>
       </div>

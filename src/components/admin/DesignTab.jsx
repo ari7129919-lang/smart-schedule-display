@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Save, Palette, Monitor, Type, LayoutGrid, Paintbrush, Users, Zap } from 'lucide-react';
 
 const BG_PRESETS = [
+  { label: 'פנינה רשמי', value: '#F4F5F7' },
   { label: 'כחול-אפור (ברירת מחדל)', value: '#F2F4F7' },
   { label: 'לבן', value: '#FFFFFF' },
   { label: 'שמנת חם', value: '#FAF8F4' },
@@ -16,6 +17,7 @@ const BG_PRESETS = [
 ];
 
 const PRIMARY_PRESETS = [
+  { label: 'נייבי רשמי', value: '#1A2B4C' },
   { label: 'כחול (ברירת מחדל)', value: '#2F4580' },
   { label: 'כחול-אפור', value: '#2F3E55' },
   { label: 'ירוק כהה', value: '#2D6A4F' },
@@ -43,7 +45,28 @@ function ColorSwatch({ label, value, selected, onClick }) {
 export default function DesignTab({ settings, onChange, onSave, isPending }) {
   const design = settings.boardDesign || {};
 
-  const update = (key, value) => onChange({ ...settings, boardDesign: { ...design, [key]: value } });
+  const update = (key, value) => onChange({
+    ...settings,
+    boardDesign: {
+      ...design,
+      [key]: value,
+      ...(['bgColor', 'primaryColor'].includes(key) ? { themePreset: 'custom' } : {})
+    }
+  });
+  const applyFormalPreset = () => onChange({
+    ...settings,
+    boardDesign: {
+      ...design,
+      themePreset: 'formal_anchor',
+      bgColor: '#F4F5F7',
+      primaryColor: '#1A2B4C',
+      headerColor: '#1A2B4C',
+      footerColor: '#1A2B4C',
+      accentColor: '#E6F4F4',
+      cardOpacity: 100,
+      sideColumnWidth: '22'
+    }
+  });
 
   return (
     <div className="space-y-4">
@@ -69,6 +92,19 @@ export default function DesignTab({ settings, onChange, onSave, isPending }) {
 
         {/* Colors Tab */}
         <TabsContent value="colors" className="space-y-4">
+          <Card className="border-[#D4E5E6] bg-[#F7FBFB]">
+            <CardHeader>
+              <CardTitle>ערכת עיצוב רשמית - מוח ולב</CardTitle>
+            </CardHeader>
+            <CardContent className="flex items-center justify-between gap-4">
+              <p className="text-sm text-gray-600">
+                רקע פנינה, פסי נייבי, כרטיסים לבנים וכותרות טורקיז לפי האפיון המאושר.
+              </p>
+              <Button type="button" onClick={applyFormalPreset} className="shrink-0 bg-[#1A2B4C] hover:bg-[#13213A]">
+                החל ערכת עיצוב
+              </Button>
+            </CardContent>
+          </Card>
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -86,14 +122,14 @@ export default function DesignTab({ settings, onChange, onSave, isPending }) {
                 <Label className="whitespace-nowrap">צבע מותאם:</Label>
                 <input
                   type="color"
-                  value={design.bgColor || '#F2F4F7'}
+                  value={design.bgColor || '#F4F5F7'}
                   onChange={e => update('bgColor', e.target.value)}
                   className="w-10 h-10 rounded cursor-pointer border"
                 />
                 <Input
                   value={design.bgColor || ''}
                   onChange={e => update('bgColor', e.target.value)}
-                  placeholder="#F2F4F7"
+                  placeholder="#F4F5F7"
                   className="w-32 font-mono"
                   dir="ltr"
                 />
@@ -115,14 +151,14 @@ export default function DesignTab({ settings, onChange, onSave, isPending }) {
                 <Label className="whitespace-nowrap">צבע מותאם:</Label>
                 <input
                   type="color"
-                  value={design.primaryColor || '#2F4580'}
+                  value={design.primaryColor || '#1A2B4C'}
                   onChange={e => update('primaryColor', e.target.value)}
                   className="w-10 h-10 rounded cursor-pointer border"
                 />
                 <Input
                   value={design.primaryColor || ''}
                   onChange={e => update('primaryColor', e.target.value)}
-                  placeholder="#2F4580"
+                  placeholder="#1A2B4C"
                   className="w-32 font-mono"
                   dir="ltr"
                 />
@@ -355,12 +391,12 @@ export default function DesignTab({ settings, onChange, onSave, isPending }) {
                 <div className="flex items-center gap-3 mt-2">
                   <input
                     type="range" min="12" max="32" step="1"
-                    value={parseInt(design.sideColumnWidth) || 20}
+                    value={parseInt(design.sideColumnWidth) || 22}
                     onChange={e => update('sideColumnWidth', e.target.value)}
                     className="flex-1"
                   />
                   <span className="font-mono font-bold w-14 text-center text-blue-700 bg-blue-50 px-2 py-1 rounded">
-                    {design.sideColumnWidth || 20}%
+                    {design.sideColumnWidth || 22}%
                   </span>
                 </div>
                 <p className="text-xs text-gray-400 mt-1">עמודת מרכז (מודעות) תגדל/תקטן בהתאם</p>
@@ -371,12 +407,12 @@ export default function DesignTab({ settings, onChange, onSave, isPending }) {
                 <div className="flex items-center gap-3 mt-2">
                   <input
                     type="range" min="50" max="100" step="1"
-                    value={parseInt(design.cardOpacity) || 88}
+                    value={parseInt(design.cardOpacity) || 100}
                     onChange={e => update('cardOpacity', parseInt(e.target.value))}
                     className="flex-1"
                   />
                   <span className="font-mono font-bold w-14 text-center text-blue-700 bg-blue-50 px-2 py-1 rounded">
-                    {design.cardOpacity || 88}%
+                    {design.cardOpacity || 100}%
                   </span>
                 </div>
               </div>

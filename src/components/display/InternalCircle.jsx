@@ -33,10 +33,10 @@ export default function InternalCircle({
   if (sortedNames.length === 0) {
     return (
       <div 
-        className="bg-white/85 rounded-3xl flex-1 overflow-hidden flex flex-col"
+        className="board-card flex-1 overflow-hidden flex flex-col"
         style={{ boxShadow: 'var(--shadow-soft)', padding: `${24 * screenScale}px` }}
       >
-        <div className="flex items-center gap-2 mb-3">
+        <div className="board-section-title flex items-center gap-2 mb-3">
           <LeafIcon single size={20 * screenScale} color="#7A86A8" />
           <h3 className="text-primary font-semibold" style={{ fontSize: `${26 * screenScale}px` }}>
             מעגל פנימי – ותיקים
@@ -74,10 +74,10 @@ export default function InternalCircle({
   if (displayMode === 'range_only') {
     return (
       <div
-        className="bg-white/85 rounded-3xl overflow-hidden flex flex-col"
+        className="board-card overflow-hidden flex flex-col"
         style={{ boxShadow: 'var(--shadow-soft)', padding: `${24 * screenScale}px` }}
       >
-        <div className="flex items-center gap-2 mb-4">
+        <div className="board-section-title flex items-center gap-2 mb-4">
           <LeafIcon single size={20 * screenScale} color="#7A86A8" />
           <h3 className="text-primary font-semibold" style={{ fontSize: `${26 * screenScale}px` }}>
             מעגל פנימי – ותיקים
@@ -124,13 +124,13 @@ export default function InternalCircle({
   // Full scroll mode (default)
   return (
     <div 
-      className="bg-white/85 rounded-3xl flex-1 overflow-hidden flex flex-col"
+      className="board-card flex-1 overflow-hidden flex flex-col"
       style={{ 
         boxShadow: 'var(--shadow-soft)',
         padding: `${24 * screenScale}px`
       }}
     >
-      <div className="flex items-center gap-2 mb-3">
+      <div className="board-section-title flex items-center gap-2 mb-3">
         <LeafIcon single size={20 * screenScale} color="#7A86A8" />
         <h3 className="text-primary font-semibold" style={{ fontSize: `${26 * screenScale}px` }}>
           מעגל פנימי – ותיקים

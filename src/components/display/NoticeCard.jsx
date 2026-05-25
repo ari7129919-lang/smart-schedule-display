@@ -133,7 +133,6 @@ export default function NoticeCard({
   notice, 
   screenScale = 1,
   isFullScreen = false,
-  cardOpacity = 88,
   noticeFontScale = 1.0,
   noticeContentScale = 1.0
 }) {
@@ -187,11 +186,11 @@ export default function NoticeCard({
   // Card view
   return (
     <motion.div 
-      className="rounded-3xl h-full relative flex flex-col"
+      className="board-card h-full relative flex flex-col"
       style={{ 
         boxShadow: 'var(--shadow-soft)',
         overflow: 'hidden',
-        backgroundColor: `rgba(255,255,255,${cardOpacity / 100})`,
+        backgroundColor: '#FFFFFF',
         padding: (notice.pdfUrl || (notice.videoUrl && !notice.content) || (getNoticeImages(notice).length > 0 && !notice.content)) ? 0 : `${36 * screenScale}px`,
       }}
       initial={{ opacity: 0 }}

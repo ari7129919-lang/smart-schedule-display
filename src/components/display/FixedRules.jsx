@@ -21,13 +21,13 @@ export default function FixedRules({
 
   return (
     <div 
-      className="bg-white/85 rounded-3xl overflow-hidden flex flex-col h-full"
+      className="board-card overflow-hidden flex flex-col h-full"
       style={{ 
         boxShadow: 'var(--shadow-soft)',
         padding: `${24 * screenScale}px`
       }}
     >
-      <div className="flex items-center gap-2 mb-4">
+      <div className="board-section-title flex items-center gap-2 mb-4">
         <LeafIcon single size={20 * screenScale} color="#6C7C94" />
         <h3 
           className="text-primary font-medium"

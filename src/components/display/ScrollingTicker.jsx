@@ -4,19 +4,20 @@ import { motion } from 'framer-motion';
 export default function ScrollingTicker({ 
   items = [], 
   screenScale = 1,
-  tickerEnabled = true
+  tickerEnabled = true,
+  fallbackText = ''
 }) {
   const activeItems = useMemo(() => {
-    return items.filter(item => item.active && !item.archived).sort((a, b) => (a.priority || 0) - (b.priority || 0));
-  }, [items]);
+    const enabledItems = items.filter(item => item.active && !item.archived).sort((a, b) => (a.priority || 0) - (b.priority || 0));
+    return enabledItems.length > 0 ? enabledItems : (fallbackText ? [{ text: fallbackText, active: true }] : []);
+  }, [items, fallbackText]);
 
-  // Don't render if disabled or no active items
   if (!tickerEnabled || activeItems.length === 0) {
     return null;
   }
 
-  const fontSize = `${28 * screenScale}px`;
-  const tickerHeight = `${60 * screenScale}px`;
+  const fontSize = `${30 * screenScale}px`;
+  const tickerHeight = `${80 * screenScale}px`;
   const separatorSize = `${24 * screenScale}px`;
 
   // Build a single segment row with all items separated by large dots
@@ -56,11 +57,11 @@ export default function ScrollingTicker({
     <div 
       className="fixed left-0 right-0 overflow-hidden"
       style={{ 
-        bottom: `${80 * screenScale}px`, // sits above the existing ticker (80px tall)
+        bottom: 0,
         height: tickerHeight,
-        backgroundColor: 'rgba(26, 38, 64, 0.92)',
-        borderBottom: '1px solid rgba(255,255,255,0.08)',
-        zIndex: 40,
+        backgroundColor: 'var(--board-footer, #1A2B4C)',
+        borderTop: '2px solid rgba(255,255,255,0.08)',
+        zIndex: 50,
       }}
     >
       <div className="h-full flex items-center">

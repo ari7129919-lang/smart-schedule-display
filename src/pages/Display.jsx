@@ -1,17 +1,15 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabaseAPI } from '@/api/supabaseClient';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence } from 'framer-motion';
 
 import Header from '@/components/display/Header';
-import BackgroundLeaves from '@/components/display/BackgroundLeaves';
 import InternalCircle from '@/components/display/InternalCircle';
 import SmallGroups from '@/components/display/SmallGroups';
 import DutyPerson from '@/components/display/DutyPerson';
 import NoticesGallery from '@/components/display/NoticesGallery';
 import Congratulations from '@/components/display/Congratulations';
 import FixedRules from '@/components/display/FixedRules';
-import Ticker from '@/components/display/Ticker';
 import ScrollingTicker from '@/components/display/ScrollingTicker';
 import KickoffMode from '@/components/display/KickoffMode';
 import BreakMode from '@/components/display/BreakMode';
@@ -153,13 +151,16 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
   const screenScale = previewMode ? 0.20 : (screenScales[systemSettings.screenProfile] || 1);
   const customConfig = systemSettings.customModeConfig || {};
   const design = systemSettings.boardDesign || {};
-  const bgColor = design.bgColor || '#F2F4F7';
-  const primaryColor = design.primaryColor || '#2F4580';
-  const sideWidth = design.sideColumnWidth ? `${design.sideColumnWidth}%` : '25%';
+  const isCustomTheme = design.themePreset === 'custom';
+  const bgColor = isCustomTheme ? (design.bgColor || '#F4F5F7') : '#F4F5F7';
+  const primaryColor = isCustomTheme ? (design.primaryColor || '#1A2B4C') : '#1A2B4C';
+  const headerColor = isCustomTheme ? (design.headerColor || '#1A2B4C') : '#1A2B4C';
+  const footerColor = isCustomTheme ? (design.footerColor || '#1A2B4C') : '#1A2B4C';
+  const accentColor = isCustomTheme ? (design.accentColor || '#E6F4F4') : '#E6F4F4';
+  const sideWidth = design.sideColumnWidth ? `${design.sideColumnWidth}%` : '22%';
   const centerWidth = design.sideColumnWidth ? `${100 - 2 * parseInt(design.sideColumnWidth)}%` : '50%';
   const noticeFontScale = parseFloat(design.noticeFontScale) || 1.0;
   const noticeContentScale = parseFloat(design.noticeContentScale) || 1.0;
-  const cardOpacity = parseInt(design.cardOpacity) || 88;
   const clockFontScale = parseFloat(design.clockFontScale) || 1.0;
   const headerTitleScale = parseFloat(design.headerTitleScale) || 1.0;
   const blockTextScale = parseFloat(design.blockTextScale) || 1.0;
@@ -301,14 +302,15 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
   };
 
   const [currentBg, setCurrentBg] = useState(null);
-  const isFullBg = currentBg && currentBg.type !== 'none' && (currentBg.displayMode || 'full') === 'full';
+  const isFullBg = isCustomTheme && currentBg && currentBg.type !== 'none' && (currentBg.displayMode || 'full') === 'full';
 
   return (
     <div 
       className={previewMode ? "absolute inset-0 w-full h-full overflow-hidden" : "fixed inset-0 w-full h-full overflow-hidden"}
       style={{ 
         backgroundColor: isFullBg ? 'transparent' : bgColor,
-        fontFamily: "'EFT_Hebrew', 'Heebo', 'system-ui', sans-serif"
+        fontFamily: "'EFT_Hebrew', 'Heebo', 'system-ui', sans-serif",
+        '--display-scale': screenScale
       }}
       dir="rtl"
     >
@@ -316,13 +318,20 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
       <style>{`
         :root {
           --primary: ${primaryColor};
-          --secondary: #6C7C94;
-          --leaf: #7A86A8;
+          --secondary: #333333;
+          --leaf: #5FAFA8;
           --bg: ${bgColor};
           --neutral: #D6DCE5;
-          --accent: #8FAE9B;
-          --radius-lg: 24px;
-          --shadow-soft: 0 8px 30px rgba(47,62,85,0.08);
+          --accent: #5FAFA8;
+          --board-navy: ${headerColor};
+          --board-footer: ${footerColor};
+          --board-section-bg: ${accentColor};
+          --board-accent-strong: #5FAFA8;
+          --board-card: #FFFFFF;
+          --board-text: #333333;
+          --board-shadow: 0 2px 6px rgba(0,0,0,0.08);
+          --radius-lg: 4px;
+          --shadow-soft: var(--board-shadow);
         }
         .text-primary { color: var(--primary); }
         .text-secondary { color: var(--secondary); }
@@ -335,15 +344,7 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
       `}</style>
 
       {/* Custom background layer — below everything */}
-      <BackgroundLayer settings={systemSettings} onCurrentBgChange={setCurrentBg} />
-
-      {!isFullBg && <BackgroundLeaves 
-        extraLeaves={
-          (displayMode === 'normal' || displayMode === 'custom') &&
-          (todaySchedule.hideInternalCircle || currentWorkshop?.hideInternalCircle || !currentCircleNames.length) &&
-          (todaySchedule.hideSmallGroups || currentWorkshop?.hideSmallGroups || !todaySchedule.smallGroups?.length)
-        }
-      />}
+      {isCustomTheme && <BackgroundLayer settings={systemSettings} onCurrentBgChange={setCurrentBg} />}
 
       <AnimatePresence mode="wait">
         {displayMode === 'break' && (
@@ -383,8 +384,8 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
           <main 
             className="flex-1 relative z-10 overflow-hidden"
             style={{ 
-              padding: `${20 * screenScale}px`,
-              paddingBottom: `${(70 + 60 + 20) * screenScale}px`
+              padding: `${24 * screenScale}px`,
+              paddingBottom: `${(80 + 24) * screenScale}px`
             }}
           >
             {/* Custom message full screen */}
@@ -399,9 +400,9 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
               </div>
             )}
 
-            <div className="flex gap-6 h-full">
+            <div className="flex h-full" style={{ gap: `${24 * screenScale}px` }}>
               {/* Right Column */}
-              <div className="flex flex-col gap-3 flex-shrink-0" style={{ width: sideWidth, paddingBottom: `${60 * screenScale}px` }}>
+              <div className="flex flex-col flex-shrink-0" style={{ width: sideWidth, gap: `${24 * screenScale}px` }}>
                 {shouldShow('showCircle') && !todaySchedule.hideInternalCircle && !currentWorkshop?.hideInternalCircle && (
                   <InternalCircle
                     names={currentCircleNames}
@@ -445,7 +446,6 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
                     notices={todayNotices}
                     rotationSeconds={systemSettings.noticeRotationSeconds || 20}
                     screenScale={screenScale * noticeFontScale}
-                    cardOpacity={cardOpacity}
                     noticeFontScale={noticeFontScale}
                     noticeContentScale={noticeContentScale}
                     dualMode={systemSettings.dualNoticeMode || false}
@@ -454,7 +454,7 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
               </div>
 
               {/* Left Column */}
-              <div className="flex flex-col gap-3 flex-shrink-0" style={{ width: sideWidth, paddingBottom: `${60 * screenScale}px` }}>
+              <div className="flex flex-col flex-shrink-0" style={{ width: sideWidth, gap: `${24 * screenScale}px` }}>
                 {shouldShow('showCongrats') && (
                   <Congratulations 
                     items={todaySchedule.congratulations || []}
@@ -484,14 +484,9 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
           <ScrollingTicker 
             items={tickerItems}
             screenScale={screenScale * tickerFontScale}
-            tickerEnabled={systemSettings.tickerEnabled ?? true}
+            tickerEnabled={shouldShow('showTicker') && (systemSettings.tickerEnabled ?? true)}
+            fallbackText={systemSettings.tickerText || `מח ולב | ${systemSettings.contactInfo || '072-2351290'} | ${systemSettings.operatingHours || 'ראשון-חמישי'}`}
           />
-          {shouldShow('showTicker') && (
-            <Ticker 
-              text={systemSettings.tickerText || `מח ולב | ${systemSettings.contactInfo || '072-2351290'} | ${systemSettings.operatingHours || 'ראשון-חמישי'}`}
-              screenScale={screenScale * tickerFontScale}
-            />
-          )}
         </div>
       )}
     </div>

@@ -31,7 +31,7 @@ export default function SmallGroups({
   if (!currentGroup) {
     return (
       <div 
-        className="bg-white/85 rounded-3xl p-6"
+        className="board-card p-6"
         style={{ 
           boxShadow: 'var(--shadow-soft)',
           padding: `${24 * screenScale}px`
@@ -44,13 +44,14 @@ export default function SmallGroups({
 
   return (
     <div 
-      className="bg-white/85 rounded-3xl p-6"
+      className="board-card p-6 flex flex-col overflow-hidden flex-shrink-0"
       style={{ 
         boxShadow: 'var(--shadow-soft)',
-        padding: `${24 * screenScale}px`
+        padding: `${24 * screenScale}px`,
+        height: `${300 * screenScale}px`
       }}
     >
-      <div className="flex items-center justify-between mb-4">
+      <div className="board-section-title flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <LeafIcon single size={20 * screenScale} color="#7A86A8" />
           <h3 
@@ -68,38 +69,47 @@ export default function SmallGroups({
         </div>
       </div>
 
-      <AnimatePresence mode="sync">
-        <motion.div
-          key={currentIndex}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.8, ease: 'easeInOut' }}
-          className="space-y-2"
-        >
-          <div 
-            className="text-primary font-medium mb-3"
-            style={{ fontSize: `${24 * screenScale}px` }}
+      <div className="relative flex-1 min-h-0 overflow-hidden">
+        <AnimatePresence mode="sync">
+          <motion.div
+            key={currentIndex}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.8, ease: 'easeInOut' }}
+            className="absolute inset-0"
           >
-            {currentGroup.name}
-          </div>
-          <div className="space-y-1">
-            {currentGroup.members?.map((member, idx) => (
-              <div 
-                key={idx}
-                className="flex items-center gap-2 text-secondary"
-                style={{ fontSize: `${20 * screenScale}px` }}
-              >
-                <span 
-                  className="inline-block rounded-full bg-primary flex-shrink-0"
-                  style={{ width: `${6 * screenScale}px`, height: `${6 * screenScale}px` }}
-                />
-                {member}
-              </div>
-            ))}
-          </div>
-        </motion.div>
-      </AnimatePresence>
+            <div 
+              className="text-primary font-medium mb-3"
+              style={{ fontSize: `${24 * screenScale}px` }}
+            >
+              {currentGroup.name}
+            </div>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: currentGroup.members?.length > 7 ? 'repeat(2, minmax(0, 1fr))' : '1fr',
+                columnGap: `${16 * screenScale}px`,
+                rowGap: `${4 * screenScale}px`
+              }}
+            >
+              {currentGroup.members?.map((member, idx) => (
+                <div 
+                  key={idx}
+                  className="flex items-center gap-2 text-secondary min-w-0"
+                  style={{ fontSize: `${19 * screenScale}px`, lineHeight: 1.25 }}
+                >
+                  <span 
+                    className="inline-block rounded-full bg-primary flex-shrink-0"
+                    style={{ width: `${6 * screenScale}px`, height: `${6 * screenScale}px` }}
+                  />
+                  <span className="truncate">{member}</span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </div>
     </div>
   );
 }

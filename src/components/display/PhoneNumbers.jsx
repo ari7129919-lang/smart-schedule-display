@@ -23,11 +23,11 @@ export default function PhoneNumbers({ numbers = [], screenScale = 1 }) {
 
   return (
     <div
-      className="bg-white/85 rounded-3xl overflow-hidden flex flex-col h-full"
-      style={{ boxShadow: 'var(--shadow-soft)', padding: `${20 * screenScale}px` }}
+      className="board-card overflow-hidden flex flex-col h-full"
+      style={{ boxShadow: 'var(--shadow-soft)', padding: `${24 * screenScale}px` }}
     >
       {/* Header */}
-      <div className="flex items-center gap-2 mb-3" style={{ marginBottom: `${12 * screenScale}px`, flexShrink: 0 }}>
+      <div className="board-section-title flex items-center gap-2 mb-3" style={{ marginBottom: `${12 * screenScale}px`, flexShrink: 0 }}>
         <Phone size={18 * screenScale} style={{ color: '#6C7C94', flexShrink: 0 }} />
         <h3
           className="text-primary font-semibold"

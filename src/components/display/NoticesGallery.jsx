@@ -90,7 +90,7 @@ export default function NoticesGallery({
   if (activeNotices.length === 0) {
     return (
       <div 
-        className="h-full flex items-center justify-center bg-white/85 rounded-3xl"
+        className="board-card h-full flex items-center justify-center"
         style={{ boxShadow: 'var(--shadow-soft)' }}
       >
         <p className="text-secondary" style={{ fontSize: `${24 * screenScale}px` }}>
@@ -104,7 +104,7 @@ export default function NoticesGallery({
   const currentSlot = displaySlots[safeIndex];
   if (!currentSlot) {
     return (
-      <div className="h-full flex items-center justify-center bg-white/85 rounded-3xl"
+      <div className="board-card h-full flex items-center justify-center"
         style={{ boxShadow: 'var(--shadow-soft)' }}>
         <p className="text-secondary" style={{ fontSize: `${24 * screenScale}px` }}>טוען מודעות...</p>
       </div>
