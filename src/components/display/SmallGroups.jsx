@@ -9,17 +9,24 @@ export default function SmallGroups({
 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  // Reset index when groups array itself changes (not just length)
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [groups]);
+
   useEffect(() => {
     if (groups.length <= 1) return;
-    
+
     const interval = setInterval(() => {
       setCurrentIndex(prev => (prev + 1) % groups.length);
     }, rotationSeconds * 1000);
 
     return () => clearInterval(interval);
-  }, [groups.length, rotationSeconds]);
+  }, [groups, groups.length, rotationSeconds]);
 
-  const currentGroup = groups[currentIndex];
+  // Clamp index in case groups shrank between renders
+  const safeIndex = groups.length > 0 ? Math.min(currentIndex, groups.length - 1) : 0;
+  const currentGroup = groups[safeIndex];
 
   if (!currentGroup) {
     return (
@@ -61,7 +68,7 @@ export default function SmallGroups({
         </div>
       </div>
 
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="sync">
         <motion.div
           key={currentIndex}
           initial={{ opacity: 0, y: 10 }}

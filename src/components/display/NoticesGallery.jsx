@@ -56,7 +56,10 @@ export default function NoticesGallery({
   useEffect(() => {
     if (displaySlots.length <= 1) return;
 
-    const currentSlot = displaySlots[currentIndex];
+    // Defensive: clamp index since currentIndex may be stale after rapid notice changes
+    const safeEffectIndex = Math.min(currentIndex, displaySlots.length - 1);
+    const currentSlot = displaySlots[safeEffectIndex];
+    if (!currentSlot) return;
     const firstNotice = currentSlot.notices[0];
     const durationSeconds = firstNotice?.displaySeconds > 0 ? firstNotice.displaySeconds : rotationSeconds;
     const delay = durationSeconds * 1000;
@@ -99,7 +102,15 @@ export default function NoticesGallery({
 
   const safeIndex = displaySlots.length > 0 ? Math.min(currentIndex, displaySlots.length - 1) : 0;
   const currentSlot = displaySlots[safeIndex];
-  const isDual = currentSlot?.type === 'dual';
+  if (!currentSlot) {
+    return (
+      <div className="h-full flex items-center justify-center bg-white/85 rounded-3xl"
+        style={{ boxShadow: 'var(--shadow-soft)' }}>
+        <p className="text-secondary" style={{ fontSize: `${24 * screenScale}px` }}>טוען מודעות...</p>
+      </div>
+    );
+  }
+  const isDual = currentSlot.type === 'dual';
   const notice1 = currentSlot.notices[0];
   const notice2 = isDual ? currentSlot.notices[1] : null;
 
@@ -110,7 +121,7 @@ export default function NoticesGallery({
   return (
     <div className="h-full flex flex-col gap-2">
       <div className="flex-1 relative min-h-0">
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="sync">
           {isDual ? (
             // Dual mode - two notices stacked vertically (top/bottom)
             <div key={`dual-${currentIndex}`} className="flex flex-col gap-4 flex-1 min-h-0 h-full">
