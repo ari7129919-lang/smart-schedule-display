@@ -78,13 +78,13 @@ export default function Header({
   // Live clock
   const [clockTime, setClockTime] = useState(() => {
     const now = new Date();
-    return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
   });
 
   useEffect(() => {
     const tick = () => {
       const now = new Date();
-      setClockTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+      setClockTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`);
     };
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
@@ -115,29 +115,33 @@ export default function Header({
   }, [currentSession, totalSessions]);
 
   const primary = '#FFFFFF';
-  const bg = 'var(--board-navy, #1A2B4C)';
+  const bg = 'linear-gradient(90deg, #667EAB 0%, #546D9C 22%, #435C89 42%, #354C78 50%, #435C89 58%, #546D9C 78%, #667EAB 100%)';
 
-  const sideWidth = Math.round(220 * screenScale);
+  const sideWidth = Math.round(280 * screenScale);
   const timerColWidth = Math.round(190 * screenScale);
   // Logo height must never be clipped — header min-height is driven by logo + padding
   const logoHeight = Math.round(150 * screenScale);
+  const logoWidth = Math.round(285 * screenScale);
   const headerMinHeight = logoHeight + Math.round(28 * screenScale);
 
   return (
     <div
-      className="relative w-full flex-shrink-0 flex items-center"
+      className="relative w-full flex-shrink-0"
       style={{
         minHeight: `${headerMinHeight}px`,
         zIndex: 20,
-        backgroundColor: bg,
-        padding: `${12 * screenScale}px ${24 * screenScale}px`,
-        gap: `${12 * screenScale}px`,
+        background: bg,
       }}
     >
       {/* RIGHT — Clock + Day + Hebrew date */}
       <div
-        className="flex flex-col items-center justify-center flex-shrink-0 text-center"
-        style={{ width: `${sideWidth}px` }}
+        className="absolute flex flex-col items-center justify-center text-center"
+        style={{
+          width: `${sideWidth}px`,
+          right: `${32 * screenScale}px`,
+          top: '50%',
+          transform: 'translateY(-50%)'
+        }}
       >
         <div style={{ fontSize: `${14 * screenScale * clockFontScale}px`, color: primary, opacity: 0.74, marginBottom: `${2 * screenScale}px` }}>
           בס"ד
@@ -145,10 +149,10 @@ export default function Header({
         <div
           className="font-black tabular-nums"
           style={{
-            fontSize: `${88 * screenScale * clockFontScale}px`,
+            fontSize: `${66 * screenScale * clockFontScale}px`,
             color: primary,
             lineHeight: 1,
-            letterSpacing: '0.02em',
+            letterSpacing: '0.01em',
             textShadow: 'none',
           }}
         >
@@ -157,7 +161,7 @@ export default function Header({
         <div
           className="font-bold"
           style={{
-            fontSize: `${26 * screenScale * clockFontScale}px`,
+            fontSize: `${30 * screenScale * clockFontScale}px`,
             color: primary,
             marginTop: `${4 * screenScale}px`,
             lineHeight: 1,
@@ -168,7 +172,7 @@ export default function Header({
         <div
           className="font-semibold"
           style={{
-            fontSize: `${20 * screenScale * clockFontScale}px`,
+            fontSize: `${24 * screenScale * clockFontScale}px`,
             color: primary,
             opacity: 0.85,
             marginTop: `${3 * screenScale}px`,
@@ -180,8 +184,13 @@ export default function Header({
 
       {/* INNER-RIGHT — Timer zone (always reserved, shown when active) */}
       <div
-        className="flex-shrink-0 flex flex-col items-center justify-center text-center"
-        style={{ width: `${timerColWidth}px` }}
+        className="absolute flex flex-col items-center justify-center text-center"
+        style={{
+          width: `${timerColWidth}px`,
+          right: `${(32 * screenScale) + sideWidth + (16 * screenScale)}px`,
+          top: '50%',
+          transform: 'translateY(-50%)'
+        }}
       >
         {timerRemaining > 0 && (
           <motion.div
@@ -232,7 +241,10 @@ export default function Header({
       </div>
 
       {/* CENTER — Capsule with workshop name + progress */}
-      <div className="flex-1 flex items-center justify-center min-w-0">
+      <div
+        className="absolute inset-0 flex items-center justify-center min-w-0"
+        style={{ pointerEvents: 'none' }}
+      >
         <div
           style={{
             background: 'transparent',
@@ -306,15 +318,20 @@ export default function Header({
 
       {/* LEFT — Logo with framer-motion heartbeat */}
       <div
-        className="flex flex-col items-center justify-center flex-shrink-0"
-        style={{ width: `${sideWidth}px` }}
+        className="absolute flex items-center justify-center"
+        style={{
+          width: `${logoWidth}px`,
+          left: `${42 * screenScale}px`,
+          top: '50%',
+          transform: 'translateY(-50%)'
+        }}
       >
         <div className="flex items-center justify-center" style={{ height: `${logoHeight}px`, width: '100%' }}>
           <img
             src="/moach-lev-logo-transparent.png"
             alt="מח ולב"
             style={{
-              width: `${205 * screenScale}px`,
+              width: `${logoWidth}px`,
               height: 'auto',
               display: 'block',
               objectFit: 'contain'

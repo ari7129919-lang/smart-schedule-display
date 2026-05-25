@@ -18,6 +18,7 @@ export default function PhoneNumbers({ numbers = [], screenScale = 1 }) {
   // Only animate if content overflows
   const shouldAnimate = totalHeight > containerHeight;
   const scrollDuration = Math.max(active.length * 3, 10); // at least 10 seconds
+  const displayedPhones = shouldAnimate ? [...active, ...active] : active;
 
   if (active.length === 0) return null;
 
@@ -56,9 +57,9 @@ export default function PhoneNumbers({ numbers = [], screenScale = 1 }) {
             repeatType: 'loop'
           } : {}}
         >
-          {active.map((phone, idx) => (
+          {displayedPhones.map((phone, idx) => (
             <div
-              key={phone.id || idx}
+              key={`${phone.id || phone.number || idx}-${idx}`}
               style={{
                 padding: `${10 * screenScale}px ${14 * screenScale}px`,
                 background: 'rgba(47,62,85,0.05)',

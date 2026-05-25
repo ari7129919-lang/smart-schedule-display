@@ -51,8 +51,16 @@ export default function ScrollingTicker({
     </span>
   );
 
-  // RTL continuous scroll: animate x from 0% to -50%
-  // We duplicate content 4x to ensure seamless looping
+  const TickerSequence = () => (
+    <div
+      className="flex items-center justify-around flex-shrink-0"
+      style={{ minWidth: '100vw' }}
+    >
+      {[0, 1, 2, 3].map(i => <SegmentRow key={i} />)}
+    </div>
+  );
+
+  // Two identical viewport-covering sequences keep content on screen at all times.
   return (
     <div 
       className="fixed left-0 right-0 overflow-hidden"
@@ -76,7 +84,8 @@ export default function ScrollingTicker({
             repeatType: 'loop',
           }}
         >
-          {[0, 1, 2, 3, 4, 5, 6, 7].map(i => <SegmentRow key={i} />)}
+          <TickerSequence />
+          <TickerSequence />
         </motion.div>
       </div>
     </div>
