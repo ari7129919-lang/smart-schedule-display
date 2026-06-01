@@ -35,6 +35,31 @@ const screenScales = {
   '60': 1.25
 };
 
+const KICKOFF_COUNTDOWN_SECONDS = 60;
+const KICKOFF_STARTED_SECONDS = 180;
+const KICKOFF_TOTAL_SECONDS = KICKOFF_COUNTDOWN_SECONDS + KICKOFF_STARTED_SECONDS;
+
+const parseTimeToSeconds = (time) => {
+  if (!time) return null;
+  const [hours, minutes] = time.split(':').map(Number);
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
+  return (hours * 60 + minutes) * 60;
+};
+
+const getSecondsSinceMidnight = (date) => (
+  date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds()
+);
+
+const getKickoffWindow = (workshop) => {
+  if (!workshop?.kickoffEnabled) return null;
+  const kickoffStart = parseTimeToSeconds(workshop.kickoffStartTime || workshop.startTime);
+  if (kickoffStart === null) return null;
+  return {
+    start: kickoffStart,
+    end: kickoffStart + KICKOFF_TOTAL_SECONDS,
+  };
+};
+
 export default function Display({ previewMode = false, fitToScreen = false }) {
   const [displayMode, setDisplayMode] = useState('normal');
   const [breakDuration, setBreakDuration] = useState(10);
@@ -210,17 +235,26 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
   // Get current workshop based on time
   const currentWorkshop = useMemo(() => {
     const now = new Date();
-    const currentTime = now.getHours() * 60 + now.getMinutes();
+    const currentTime = getSecondsSinceMidnight(now);
     
     return workshopsWithAutoSession.find(w => {
       if (!w.startTime || !w.endTime) return false;
-      const [startH, startM] = w.startTime.split(':').map(Number);
-      const [endH, endM] = w.endTime.split(':').map(Number);
-      const start = startH * 60 + startM;
-      const end = endH * 60 + endM;
-      return currentTime >= start && currentTime <= end;
+      const start = parseTimeToSeconds(w.startTime);
+      const end = parseTimeToSeconds(w.endTime);
+      const kickoffWindow = getKickoffWindow(w);
+      const isDuringWorkshop = start !== null && end !== null && currentTime >= start && currentTime <= end;
+      const isDuringKickoff = kickoffWindow && currentTime >= kickoffWindow.start && currentTime < kickoffWindow.end;
+      return isDuringWorkshop || isDuringKickoff;
     });
   }, [workshopsWithAutoSession, tick]);
+
+  const kickoffElapsedSeconds = useMemo(() => {
+    const now = new Date();
+    const currentTime = getSecondsSinceMidnight(now);
+    const kickoffWindow = getKickoffWindow(currentWorkshop);
+    if (!kickoffWindow || currentTime < kickoffWindow.start || currentTime >= kickoffWindow.end) return null;
+    return currentTime - kickoffWindow.start;
+  }, [currentWorkshop, tick]);
 
   const todayNotices = useMemo(() => {
     return (notices || [])
@@ -267,23 +301,13 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
     }
 
     // Check for kickoff timing
-    if (currentWorkshop?.kickoffEnabled) {
-      // Use kickoffStartTime if set, otherwise fallback to startTime
-      const kickoffTime = currentWorkshop.kickoffStartTime || currentWorkshop.startTime;
-      if (kickoffTime) {
-        const [startH, startM] = kickoffTime.split(':').map(Number);
-        const kickoffStart = startH * 60 + startM;
-        const currentTime = now.getHours() * 60 + now.getMinutes();
-        // Kickoff runs from the set time until 4 minutes after (1 min countdown + 3 min started)
-        if (currentTime >= kickoffStart && currentTime < kickoffStart + 4) {
-          setDisplayMode('kickoff');
-          return;
-        }
-      }
+    if (kickoffElapsedSeconds !== null) {
+      setDisplayMode('kickoff');
+      return;
     }
 
     setDisplayMode('normal');
-  }, [systemSettings, currentWorkshop, tick]);
+  }, [systemSettings, kickoffElapsedSeconds, tick]);
 
   const handleKickoffComplete = useCallback(() => {
     setDisplayMode('normal');
@@ -438,6 +462,7 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
                     screenScale={screenScale}
                     onComplete={handleKickoffComplete}
                     kickoffConfig={systemSettings.kickoffConfig || {}}
+                    elapsedSeconds={kickoffElapsedSeconds || 0}
                     centerOnly={true}
                   />
                 )}

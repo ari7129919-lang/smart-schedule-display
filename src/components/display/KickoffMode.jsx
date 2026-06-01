@@ -4,15 +4,35 @@ import LuxuryClock from './LuxuryClock';
 
 const LEAF_IMG = 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/699472baee00632b405a28ce/4c0c22833_Asset.png';
 
-export default function KickoffMode({ onComplete, screenScale = 1, kickoffConfig = {}, centerOnly = false }) {
+const COUNTDOWN_SECONDS = 60;
+const STARTED_SECONDS = 180;
+
+const getInitialState = (elapsedSeconds) => {
+  const elapsed = Math.max(0, Math.floor(elapsedSeconds || 0));
+  if (elapsed < COUNTDOWN_SECONDS) {
+    return {
+      phase: 'countdown',
+      countdown: COUNTDOWN_SECONDS - elapsed,
+      elapsedSeconds: 0,
+    };
+  }
+
+  return {
+    phase: 'started',
+    countdown: 0,
+    elapsedSeconds: Math.min(elapsed - COUNTDOWN_SECONDS, STARTED_SECONDS),
+  };
+};
+
+export default function KickoffMode({ onComplete, screenScale = 1, kickoffConfig = {}, elapsedSeconds: initialElapsedSeconds = 0, centerOnly = false }) {
   const readyTitle = kickoffConfig.readyTitle || 'הסדנא עומדת להתחיל';
   const readySubtitle = kickoffConfig.readySubtitle || 'נא להכנס לאולם';
   const startedTitle = kickoffConfig.startedTitle || 'הסדנא התחילה';
   const quietText = kickoffConfig.quietText || 'נא לשמור על השקט';
 
-  const [phase, setPhase] = useState('countdown');
-  const [countdown, setCountdown] = useState(60);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [phase, setPhase] = useState(() => getInitialState(initialElapsedSeconds).phase);
+  const [countdown, setCountdown] = useState(() => getInitialState(initialElapsedSeconds).countdown);
+  const [elapsedSeconds, setElapsedSeconds] = useState(() => getInitialState(initialElapsedSeconds).elapsedSeconds);
 
   useEffect(() => {
     if (phase !== 'countdown') return;
@@ -29,7 +49,7 @@ export default function KickoffMode({ onComplete, screenScale = 1, kickoffConfig
     if (phase !== 'started') return;
     const interval = setInterval(() => {
       setElapsedSeconds(prev => {
-        if (prev >= 180) { clearInterval(interval); onComplete?.(); return prev; }
+        if (prev >= STARTED_SECONDS) { clearInterval(interval); onComplete?.(); return prev; }
         return prev + 1;
       });
     }, 1000);
