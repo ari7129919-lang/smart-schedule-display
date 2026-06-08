@@ -396,7 +396,7 @@ export default function Admin() {
   const addRule = () => {
     setEditingSettings(prev => ({
       ...prev,
-      fixedRules: [...(prev.fixedRules || []), '']
+      fixedRules: [...(prev.fixedRules || []), { text: '', color: '' }]
     }));
   };
 
@@ -1496,31 +1496,51 @@ export default function Admin() {
                           </Button>
                         </CardHeader>
                         <CardContent className="space-y-3">
-                          {(editingSettings.fixedRules || []).map((rule, idx) => (
-                            <div key={idx} className="flex gap-2">
-                              <Input
-                                value={rule}
-                                onChange={e => {
-                                  const rules = [...(editingSettings.fixedRules || [])];
-                                  rules[idx] = e.target.value;
-                                  setEditingSettings({...editingSettings, fixedRules: rules});
-                                }}
-                                placeholder="כלל..."
-                              />
-                              <Button 
-                                variant="ghost" 
-                                size="icon"
-                                onClick={() => {
-                                  setEditingSettings({
-                                    ...editingSettings,
-                                    fixedRules: editingSettings.fixedRules.filter((_, i) => i !== idx)
-                                  });
-                                }}
-                              >
-                                <Trash2 className="w-4 h-4 text-red-500" />
-                              </Button>
-                            </div>
-                          ))}
+                          {(editingSettings.fixedRules || []).map((rule, idx) => {
+                            const ruleObj = typeof rule === 'string' ? { text: rule, color: '' } : rule;
+                            return (
+                              <div key={idx} className="flex gap-2 items-center">
+                                <Input
+                                  value={ruleObj.text || ''}
+                                  onChange={e => {
+                                    const rules = [...(editingSettings.fixedRules || [])];
+                                    rules[idx] = { ...ruleObj, text: e.target.value };
+                                    setEditingSettings({...editingSettings, fixedRules: rules});
+                                  }}
+                                  placeholder="כלל..."
+                                  className="flex-1"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const rules = [...(editingSettings.fixedRules || [])];
+                                    rules[idx] = { ...ruleObj, color: ruleObj.color === 'red' ? '' : 'red' };
+                                    setEditingSettings({...editingSettings, fixedRules: rules});
+                                  }}
+                                  className={`flex-shrink-0 px-3 py-2 rounded-md border text-sm font-medium transition-colors ${
+                                    ruleObj.color === 'red'
+                                      ? 'bg-red-50 border-red-400 text-red-600'
+                                      : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                                  }`}
+                                  title={ruleObj.color === 'red' ? 'בטל צבע אדום' : 'הפוך לאדום'}
+                                >
+                                  אדום
+                                </button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => {
+                                    setEditingSettings({
+                                      ...editingSettings,
+                                      fixedRules: editingSettings.fixedRules.filter((_, i) => i !== idx)
+                                    });
+                                  }}
+                                >
+                                  <Trash2 className="w-4 h-4 text-red-500" />
+                                </Button>
+                              </div>
+                            );
+                          })}
                           {(!editingSettings.fixedRules || editingSettings.fixedRules.length === 0) && (
                             <p className="text-gray-500 text-center py-4">אין כללים מוגדרים</p>
                           )}

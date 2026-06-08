@@ -51,7 +51,9 @@ export default function FixedRules({
             ease: 'linear'
           }}
         >
-          {duplicatedRules.map((rule, idx) => (
+          {duplicatedRules.map((rule, idx) => {
+            const ruleObj = typeof rule === 'string' ? { text: rule, color: '' } : rule;
+            return (
             <div 
               key={idx}
               className="flex items-start gap-3"
@@ -59,12 +61,12 @@ export default function FixedRules({
               <LeafIcon single size={14 * screenScale} color="#D6DCE5" className="mt-1 flex-shrink-0" />
               <p 
                 className="text-secondary"
-                style={{ fontSize: `${22 * screenScale}px`, lineHeight: 1.5 }}
+                style={{ fontSize: `${22 * screenScale}px`, lineHeight: 1.5, color: ruleObj.color === 'red' ? '#dc2626' : undefined }}
               >
-                {rule}
+                {ruleObj.text || ''}
               </p>
             </div>
-          ))}
+          ); })}
         </motion.div>
       </div>
     </div>
