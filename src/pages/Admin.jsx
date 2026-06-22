@@ -13,8 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { 
   Settings, Calendar, FileText, Users, Clock, Play, 
-  Plus, Trash2, Save, Eye, RefreshCw, Monitor, Timer, ExternalLink, Phone,
-  Palette, Star, Copy, Gift, Pencil
+  Plus, Trash2, Save, RefreshCw, Monitor, Timer, ExternalLink, Phone,
+  Palette, Star, Copy, Gift, Pencil, Bell
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -25,6 +25,7 @@ import DisplayPreviewModal from '@/components/admin/DisplayPreviewModal';
 import BackgroundTab from '@/components/admin/BackgroundTab';
 import NoticesManager from '@/components/admin/NoticesManager';
 import TickerManager from '@/components/admin/TickerManager';
+import PopupSettingsTab from '@/components/admin/PopupSettingsTab';
 
 function ActiveTimerDisplay() {
   const [timerEnd, setTimerEnd] = useState(null);
@@ -1246,6 +1247,10 @@ export default function Admin() {
                     <Gift className="w-4 h-4" />
                     ברכות מזל טוב
                   </TabsTrigger>
+                  <TabsTrigger value="popup" className="gap-2">
+                    <Bell className="w-4 h-4" />
+                    הודעה קופצת
+                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="display" className="space-y-4">
@@ -1631,6 +1636,13 @@ export default function Admin() {
                       </div>
                     </CardContent>
                   </Card>
+                </TabsContent>
+
+                <TabsContent value="popup" className="space-y-4">
+                  <PopupSettingsTab
+                    settings={editingSettings}
+                    onChange={setEditingSettings}
+                  />
                 </TabsContent>
 
                 <div className="flex justify-end pt-4">

@@ -17,6 +17,7 @@ import MotzeiMode from '@/components/display/MotzeiMode';
 import TimerOverlay from '@/components/display/TimerOverlay';
 import PhoneNumbers from '@/components/display/PhoneNumbers';
 import BackgroundLayer from '@/components/display/BackgroundLayer';
+import PopupOverlay from '@/components/display/PopupOverlay';
 
 const dayMap = {
   0: 'sunday',
@@ -366,6 +367,9 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
         .bg-leaf { background-color: var(--leaf); }
         .bg-accent { background-color: var(--accent); }
       `}</style>
+
+      {/* Popup overlay — above everything */}
+      <PopupOverlay settings={systemSettings} screenScale={screenScale} />
 
       {/* Custom background layer — below everything */}
       {isCustomTheme && <BackgroundLayer settings={systemSettings} onCurrentBgChange={setCurrentBg} />}

@@ -72,6 +72,7 @@ async function initDatabase() {
     await addColumnIfNotExists('congratsCTAText', 'TEXT');
     await addColumnIfNotExists('congratsCTALink', 'TEXT');
     await addColumnIfNotExists('congratsRotationSeconds', 'INTEGER DEFAULT 60');
+    await addColumnIfNotExists('popupConfig', 'TEXT');
 
     // Day Schedule table
     await dbRun(`
@@ -139,6 +140,7 @@ const dbHelpers = {
       if (row.fixedRules) row.fixedRules = JSON.parse(row.fixedRules);
       if (row.backgrounds) row.backgrounds = JSON.parse(row.backgrounds);
       if (row.customModeConfig) row.customModeConfig = JSON.parse(row.customModeConfig);
+      if (row.popupConfig) row.popupConfig = JSON.parse(row.popupConfig);
       return row;
     });
   },
@@ -158,7 +160,8 @@ const dbHelpers = {
     if (row.fixedRules) row.fixedRules = JSON.parse(row.fixedRules);
     if (row.backgrounds) row.backgrounds = JSON.parse(row.backgrounds);
     if (row.customModeConfig) row.customModeConfig = JSON.parse(row.customModeConfig);
-    
+    if (row.popupConfig) row.popupConfig = JSON.parse(row.popupConfig);
+
     return row;
   },
 
@@ -180,7 +183,8 @@ const dbHelpers = {
     if (insertData.fixedRules) insertData.fixedRules = JSON.stringify(insertData.fixedRules);
     if (insertData.backgrounds) insertData.backgrounds = JSON.stringify(insertData.backgrounds);
     if (insertData.customModeConfig) insertData.customModeConfig = JSON.stringify(insertData.customModeConfig);
-    
+    if (insertData.popupConfig) insertData.popupConfig = JSON.stringify(insertData.popupConfig);
+
     const columns = Object.keys(insertData).join(', ');
     const placeholders = Object.keys(insertData).map(() => '?').join(', ');
     const values = Object.values(insertData);
@@ -203,7 +207,8 @@ const dbHelpers = {
     if (updateData.fixedRules) updateData.fixedRules = JSON.stringify(updateData.fixedRules);
     if (updateData.backgrounds) updateData.backgrounds = JSON.stringify(updateData.backgrounds);
     if (updateData.customModeConfig) updateData.customModeConfig = JSON.stringify(updateData.customModeConfig);
-    
+    if (updateData.popupConfig) updateData.popupConfig = JSON.stringify(updateData.popupConfig);
+
     const setClause = Object.keys(updateData).map(key => `${key} = ?`).join(', ');
     const values = [...Object.values(updateData), id];
     

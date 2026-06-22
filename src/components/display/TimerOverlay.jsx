@@ -99,7 +99,7 @@ export default function TimerOverlay({ screenScale = 1, fullScreenThresholdSecon
       }
     }
     return () => clearInterval(intervalRef.current);
-  }, []); // eslint-disable-line
+  }, []);  
 
   // Poll localStorage for admin commands
   useEffect(() => {

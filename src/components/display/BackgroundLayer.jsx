@@ -68,7 +68,7 @@ export default function BackgroundLayer({ settings, onCurrentBgChange }) {
     if (!stillExists && activeBgs.length > 0) {
       setCurrentId(activeBgs[0].id);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [activeBgs.map(b => b.id).join(',')]);
 
   // Rotation timer
@@ -88,7 +88,7 @@ export default function BackgroundLayer({ settings, onCurrentBgChange }) {
     }, duration);
 
     return () => clearTimeout(timerRef.current);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [currentId, rotationEnabled, activeBgs.map(b => b.id + b.durationSeconds).join(',')]);
 
   const bg = activeBgs.find(b => b.id === currentId) || activeBgs[0] || null;
@@ -96,7 +96,7 @@ export default function BackgroundLayer({ settings, onCurrentBgChange }) {
   // Notify parent about current background
   useEffect(() => {
     onCurrentBgChange?.(bg);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [bg?.id, bg?.displayMode, bg?.type]);
 
   if (!bg || bg.type === 'none') return null;
