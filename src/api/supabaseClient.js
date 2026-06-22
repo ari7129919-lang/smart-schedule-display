@@ -68,24 +68,30 @@ export const supabaseAPI = {
     
     // Map camelCase to snake_case for SystemSettings fields
     if (table === 'SystemSettings') {
-      if ('overrideDay' in data) updateData.override_day = data.overrideDay;
-      if ('overrideMode' in data) updateData.override_mode = data.overrideMode;
-      if ('timerTitle' in data) updateData.timer_title = data.timerTitle;
-      if ('timerFullScreenMinutes' in data) updateData.timer_full_screen_minutes = data.timerFullScreenMinutes;
-      if ('screenProfile' in data) updateData.screen_profile = data.screenProfile;
-      if ('groupRotationSeconds' in data) updateData.group_rotation_seconds = data.groupRotationSeconds;
-      if ('noticeRotationSeconds' in data) updateData.notice_rotation_seconds = data.noticeRotationSeconds;
-      if ('dualNoticeMode' in data) updateData.dual_notice_mode = data.dualNoticeMode;
-      if ('pauseAllSessionAdvance' in data) updateData.pause_all_session_advance = data.pauseAllSessionAdvance;
-      if ('boardDesign' in data) updateData.board_design = data.boardDesign;
-      if ('customModeConfig' in data) updateData.custom_mode_config = data.customModeConfig;
-      if ('tickerText' in data) updateData.ticker_text = data.tickerText;
-      if ('contactInfo' in data) updateData.contact_info = data.contactInfo;
-      if ('operatingHours' in data) updateData.operating_hours = data.operatingHours;
-      if ('fixedRules' in data) updateData.fixed_rules = data.fixedRules;
-      if ('backgroundRotationEnabled' in data) updateData.background_rotation_enabled = data.backgroundRotationEnabled;
-      if ('tickerEnabled' in data) updateData.ticker_enabled = data.tickerEnabled;
-      if ('popupConfig' in data) updateData.popup_config = data.popupConfig;
+      const mapField = (camel, snake) => {
+        if (camel in data) {
+          updateData[snake] = data[camel];
+          delete updateData[camel];
+        }
+      };
+      mapField('overrideDay', 'override_day');
+      mapField('overrideMode', 'override_mode');
+      mapField('timerTitle', 'timer_title');
+      mapField('timerFullScreenMinutes', 'timer_full_screen_minutes');
+      mapField('screenProfile', 'screen_profile');
+      mapField('groupRotationSeconds', 'group_rotation_seconds');
+      mapField('noticeRotationSeconds', 'notice_rotation_seconds');
+      mapField('dualNoticeMode', 'dual_notice_mode');
+      mapField('pauseAllSessionAdvance', 'pause_all_session_advance');
+      mapField('boardDesign', 'board_design');
+      mapField('customModeConfig', 'custom_mode_config');
+      mapField('tickerText', 'ticker_text');
+      mapField('contactInfo', 'contact_info');
+      mapField('operatingHours', 'operating_hours');
+      mapField('fixedRules', 'fixed_rules');
+      mapField('backgroundRotationEnabled', 'background_rotation_enabled');
+      mapField('tickerEnabled', 'ticker_enabled');
+      mapField('popupConfig', 'popup_config');
     }
     
     console.log('Supabase update - table:', table, 'id:', id);
