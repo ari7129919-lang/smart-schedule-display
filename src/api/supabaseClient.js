@@ -19,6 +19,15 @@ export const isSupabaseConfigured = () => {
 }
 
 // Generic API wrapper that matches localAPI interface
+// Helper to parse JSON fields that might be stored as strings
+const parseJsonField = (value) => {
+  if (value === null || value === undefined) return value;
+  if (typeof value === 'string') {
+    try { return JSON.parse(value); } catch { return value; }
+  }
+  return value;
+};
+
 export const supabaseAPI = {
   async find(table, query = {}) {
     let qb = supabase.from(table).select('*')
@@ -45,18 +54,21 @@ export const supabaseAPI = {
         if ('notice_rotation_seconds' in row) row.noticeRotationSeconds = row.notice_rotation_seconds;
         if ('dual_notice_mode' in row) row.dualNoticeMode = row.dual_notice_mode;
         if ('pause_all_session_advance' in row) row.pauseAllSessionAdvance = row.pause_all_session_advance;
-        if ('board_design' in row) row.boardDesign = row.board_design;
-        if ('custom_mode_config' in row) row.customModeConfig = row.custom_mode_config;
+        if ('board_design' in row) row.boardDesign = parseJsonField(row.board_design);
+        if ('custom_mode_config' in row) row.customModeConfig = parseJsonField(row.custom_mode_config);
         if ('ticker_text' in row) row.tickerText = row.ticker_text;
         if ('contact_info' in row) row.contactInfo = row.contact_info;
         if ('operating_hours' in row) row.operatingHours = row.operating_hours;
-        if ('fixed_rules' in row) row.fixedRules = row.fixed_rules;
+        if ('fixed_rules' in row) row.fixedRules = parseJsonField(row.fixed_rules);
         if ('background_rotation_enabled' in row) row.backgroundRotationEnabled = row.background_rotation_enabled;
         if ('ticker_enabled' in row) row.tickerEnabled = row.ticker_enabled;
-        if ('popup_config' in row) row.popupConfig = row.popup_config;
+        if ('popup_config' in row) row.popupConfig = parseJsonField(row.popup_config);
       });
+      if (data.length > 0) {
+        console.log('[find] popupConfig after parse:', data[0].popupConfig);
+      }
     }
-    
+
     return data || []
   },
 
@@ -85,12 +97,12 @@ export const supabaseAPI = {
       if ('ticker_text' in data) data.tickerText = data.ticker_text;
       if ('contact_info' in data) data.contactInfo = data.contact_info;
       if ('operating_hours' in data) data.operatingHours = data.operating_hours;
-      if ('fixed_rules' in data) data.fixedRules = data.fixed_rules;
+      if ('fixed_rules' in data) data.fixedRules = parseJsonField(data.fixed_rules);
       if ('background_rotation_enabled' in data) data.backgroundRotationEnabled = data.background_rotation_enabled;
       if ('ticker_enabled' in data) data.tickerEnabled = data.ticker_enabled;
-      if ('popup_config' in data) data.popupConfig = data.popup_config;
+      if ('popup_config' in data) data.popupConfig = parseJsonField(data.popup_config);
     }
-    
+
     return data
   },
 
@@ -138,8 +150,8 @@ export const supabaseAPI = {
     }
     
     console.log('Supabase update - table:', table, 'id:', id);
-    console.log('Original data overrideDay:', data.overrideDay);
-    console.log('Update data override_day:', updateData.override_day);
+    console.log('Original data popupConfig:', data.popupConfig);
+    console.log('Update data popup_config:', updateData.popup_config);
     
     const { data: result, error } = await supabase
       .from(table)

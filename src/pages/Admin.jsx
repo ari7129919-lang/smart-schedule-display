@@ -281,10 +281,10 @@ export default function Admin() {
 
   const handleSaveSettings = () => {
     if (editingSettings) {
-      console.log('Saving settings - overrideDay:', editingSettings.overrideDay);
+      console.log('Saving settings - popupConfig:', editingSettings.popupConfig);
       saveSettingsMutation.mutate(editingSettings, {
         onSuccess: (data) => {
-          console.log('Save response - overrideDay:', data?.overrideDay);
+          console.log('Save response - popupConfig:', data?.popupConfig, 'popup_config:', data?.popup_config);
         }
       });
     }

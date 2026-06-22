@@ -23,6 +23,25 @@ const DISPLAY_MODE_OPTIONS = [
 export default function PopupSettingsTab({ settings, onChange }) {
   const popupConfig = settings?.popupConfig || {};
 
+  // Compute days left for preview
+  const computeDaysLeft = () => {
+    if (!popupConfig.deadlineDate) return null;
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const deadline = new Date(popupConfig.deadlineDate);
+    deadline.setHours(0, 0, 0, 0);
+    return Math.max(0, Math.ceil((deadline - now) / (1000 * 60 * 60 * 24)));
+  };
+
+  const previewDaysLeft = computeDaysLeft();
+  const highlightStyle = 'display:inline-block;font-size:1.8em;font-weight:900;color:#FFD700;text-shadow:0 2px 10px rgba(0,0,0,0.6),0 0 30px rgba(255,215,0,0.4);line-height:1;vertical-align:middle;padding:0 4px;';
+
+  const getPreviewContent = (rawContent) => {
+    if (!rawContent) return '<p>תוכן ההודעה יופיע כאן...</p>';
+    if (previewDaysLeft === null) return rawContent;
+    return rawContent.replace(/\{daysLeft\}/g, `<span style="${highlightStyle}">${previewDaysLeft}</span>`);
+  };
+
   const updatePopup = (key, value) => {
     onChange({
       ...settings,
@@ -157,6 +176,30 @@ export default function PopupSettingsTab({ settings, onChange }) {
                   />
                   <p className="text-xs text-gray-400 mt-1">
                     הכנס URL של תמונה שתוצג בתוך ההודעה
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-4 pt-2 border-t">
+                  <div>
+                    <Label className="flex items-center gap-2 text-amber-700">
+                      <Timer className="w-4 h-4" />
+                      תאריך יעד (אופציונלי)
+                    </Label>
+                    <Input
+                      type="date"
+                      value={popupConfig.deadlineDate || ''}
+                      onChange={(e) => updatePopup('deadlineDate', e.target.value)}
+                    />
+                    <p className="text-xs text-gray-400 mt-1">
+                      הזן תאריך לספירה לאחור
+                    </p>
+                  </div>
+                </div>
+                <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
+                  <p className="text-sm text-amber-800">
+                    <strong>טיפ:</strong> השתמש ב-<code className="bg-white px-1 rounded font-mono text-amber-600">{'{daysLeft}'}</code> בתוך תוכן ההודעה — המערכת תחליף אותו אוטומטית במספר הימים שנשארו עד לתאריך היעד.
+                  </p>
+                  <p className="text-xs text-amber-600 mt-1">
+                    לדוגמה: "נשארו {'{daysLeft}'} ימים עד לסגירת הרישום!"
                   </p>
                 </div>
               </CardContent>
@@ -364,7 +407,7 @@ export default function PopupSettingsTab({ settings, onChange }) {
                           color: popupConfig.textColor || '#FFFFFF',
                         }}
                         dangerouslySetInnerHTML={{
-                          __html: popupConfig.content || '<p>תוכן ההודעה יופיע כאן...</p>',
+                          __html: getPreviewContent(popupConfig.content),
                         }}
                       />
                     </div>
@@ -404,7 +447,7 @@ export default function PopupSettingsTab({ settings, onChange }) {
                             color: popupConfig.textColor || '#FFFFFF',
                           }}
                           dangerouslySetInnerHTML={{
-                            __html: popupConfig.content || '<p>תוכן ההודעה יופיע כאן...</p>',
+                            __html: getPreviewContent(popupConfig.content),
                           }}
                         />
                       </div>

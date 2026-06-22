@@ -37,6 +37,7 @@ export default function PopupOverlay({ settings, screenScale = 1 }) {
     content = '',
     title = '',
     imageUrl = '',
+    deadlineDate = '',
     intervalMinutes = 5,
     durationSeconds = 10,
     fontSize = 32,
@@ -112,7 +113,37 @@ export default function PopupOverlay({ settings, screenScale = 1 }) {
   const variants = ANIMATION_VARIANTS[animation] || ANIMATION_VARIANTS.zoom;
   const scaledFontSize = Math.round((fontSize || 32) * screenScale);
 
-  const contentHtml = { __html: content };
+  // Compute days left until deadline
+  let daysLeft = null;
+  if (deadlineDate) {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const deadline = new Date(deadlineDate);
+    deadline.setHours(0, 0, 0, 0);
+    const diffMs = deadline - now;
+    daysLeft = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+  }
+
+  // Replace {daysLeft} placeholder with bold highlighted number
+  let processedContent = content;
+  if (daysLeft !== null) {
+    const highlightStyle = `
+      display:inline-block;
+      font-size:1.8em;
+      font-weight:900;
+      color:#FFD700;
+      text-shadow:0 2px 10px rgba(0,0,0,0.6), 0 0 30px rgba(255,215,0,0.4);
+      line-height:1;
+      vertical-align:middle;
+      padding:0 4px;
+    `.replace(/\s+/g, ' ');
+    processedContent = processedContent.replace(
+      /\{daysLeft\}/g,
+      `<span style="${highlightStyle}">${daysLeft}</span>`
+    );
+  }
+
+  const contentHtml = { __html: processedContent };
 
   // --- Modal Mode ---
   if (displayMode === 'modal') {
