@@ -31,7 +31,7 @@ const ANIMATION_VARIANTS = {
 };
 
 export default function PopupOverlay({ settings, screenScale = 1 }) {
-  const popupConfig = settings?.popupConfig || {};
+  const popupConfig = settings?.popupConfig || settings?.popup_config || {};
   const {
     enabled = false,
     content = '',

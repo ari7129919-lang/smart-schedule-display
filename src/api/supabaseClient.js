@@ -33,8 +33,28 @@ export const supabaseAPI = {
     const { data, error } = await qb
     if (error) throw error
     
-    if (table === 'SystemSettings' && data && data.length > 0) {
-      console.log('Supabase find result - overrideDay:', data[0]?.overrideDay, 'override_day:', data[0]?.override_day);
+    // Reverse snake_case → camelCase for SystemSettings
+    if (table === 'SystemSettings' && data) {
+      data.forEach(row => {
+        if ('override_day' in row) row.overrideDay = row.override_day;
+        if ('override_mode' in row) row.overrideMode = row.override_mode;
+        if ('timer_title' in row) row.timerTitle = row.timer_title;
+        if ('timer_full_screen_minutes' in row) row.timerFullScreenMinutes = row.timer_full_screen_minutes;
+        if ('screen_profile' in row) row.screenProfile = row.screen_profile;
+        if ('group_rotation_seconds' in row) row.groupRotationSeconds = row.group_rotation_seconds;
+        if ('notice_rotation_seconds' in row) row.noticeRotationSeconds = row.notice_rotation_seconds;
+        if ('dual_notice_mode' in row) row.dualNoticeMode = row.dual_notice_mode;
+        if ('pause_all_session_advance' in row) row.pauseAllSessionAdvance = row.pause_all_session_advance;
+        if ('board_design' in row) row.boardDesign = row.board_design;
+        if ('custom_mode_config' in row) row.customModeConfig = row.custom_mode_config;
+        if ('ticker_text' in row) row.tickerText = row.ticker_text;
+        if ('contact_info' in row) row.contactInfo = row.contact_info;
+        if ('operating_hours' in row) row.operatingHours = row.operating_hours;
+        if ('fixed_rules' in row) row.fixedRules = row.fixed_rules;
+        if ('background_rotation_enabled' in row) row.backgroundRotationEnabled = row.background_rotation_enabled;
+        if ('ticker_enabled' in row) row.tickerEnabled = row.ticker_enabled;
+        if ('popup_config' in row) row.popupConfig = row.popup_config;
+      });
     }
     
     return data || []
@@ -48,6 +68,29 @@ export const supabaseAPI = {
       .single()
     
     if (error) throw error
+    
+    // Reverse snake_case → camelCase for SystemSettings
+    if (table === 'SystemSettings' && data) {
+      if ('override_day' in data) data.overrideDay = data.override_day;
+      if ('override_mode' in data) data.overrideMode = data.override_mode;
+      if ('timer_title' in data) data.timerTitle = data.timer_title;
+      if ('timer_full_screen_minutes' in data) data.timerFullScreenMinutes = data.timer_full_screen_minutes;
+      if ('screen_profile' in data) data.screenProfile = data.screen_profile;
+      if ('group_rotation_seconds' in data) data.groupRotationSeconds = data.group_rotation_seconds;
+      if ('notice_rotation_seconds' in data) data.noticeRotationSeconds = data.notice_rotation_seconds;
+      if ('dual_notice_mode' in data) data.dualNoticeMode = data.dual_notice_mode;
+      if ('pause_all_session_advance' in data) data.pauseAllSessionAdvance = data.pause_all_session_advance;
+      if ('board_design' in data) data.boardDesign = data.board_design;
+      if ('custom_mode_config' in data) data.customModeConfig = data.custom_mode_config;
+      if ('ticker_text' in data) data.tickerText = data.ticker_text;
+      if ('contact_info' in data) data.contactInfo = data.contact_info;
+      if ('operating_hours' in data) data.operatingHours = data.operating_hours;
+      if ('fixed_rules' in data) data.fixedRules = data.fixed_rules;
+      if ('background_rotation_enabled' in data) data.backgroundRotationEnabled = data.background_rotation_enabled;
+      if ('ticker_enabled' in data) data.tickerEnabled = data.ticker_enabled;
+      if ('popup_config' in data) data.popupConfig = data.popup_config;
+    }
+    
     return data
   },
 
