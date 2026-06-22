@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Bell, Eye, Type, Palette, Timer, Image, Layout } from 'lucide-react';
+import { Bell, Eye, Type, Palette, Timer, Image, Layout, Monitor } from 'lucide-react';
 
 const ANIMATION_OPTIONS = [
   { value: 'fade', label: 'ה.fade בהדרגה' },
