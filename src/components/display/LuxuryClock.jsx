@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
+import useIsraelClock, { getIsraelTime } from '@/hooks/useIsraelClock';
 
 const hebrewNumerals = {
   1:'א',2:'ב',3:'ג',4:'ד',5:'ה',6:'ו',7:'ז',8:'ח',9:'ט',
@@ -113,18 +114,7 @@ export default function LuxuryClock({ screenScale = 1, clockStyle = 'gold', cloc
   const s = screenScale * clockSize;
   const style = CLOCK_STYLES[clockStyle] || CLOCK_STYLES.gold;
 
-  const [time, setTime] = useState(() => {
-    const now = new Date();
-    return `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
-  });
-
-  useEffect(() => {
-    const iv = setInterval(() => {
-      const now = new Date();
-      setTime(`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`);
-    }, 1000);
-    return () => clearInterval(iv);
-  }, []);
+  const time = getIsraelTime(useIsraelClock());
 
   const hebrewDate = useMemo(() => getHebrewDate(), []);
   const today = new Date();

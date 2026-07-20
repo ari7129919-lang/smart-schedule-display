@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import useIsraelClock, { getIsraelTime } from '@/hooks/useIsraelClock';
 
 // Hebrew number conversion
 const hebrewNumerals = {
@@ -75,20 +76,8 @@ export default function Header({
   const hebrewDay = hebrewDays[dayOfWeek];
   const hebrewDate = useMemo(() => getHebrewDate(), []);
 
-  // Live clock
-  const [clockTime, setClockTime] = useState(() => {
-    const now = new Date();
-    return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
-  });
-
-  useEffect(() => {
-    const tick = () => {
-      const now = new Date();
-      setClockTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`);
-    };
-    const interval = setInterval(tick, 1000);
-    return () => clearInterval(interval);
-  }, []);
+  // Network-synchronised clock, pinned to Israel time and the exact second boundary.
+  const clockTime = getIsraelTime(useIsraelClock());
 
   // Countdown timer
   const [timerRemaining, setTimerRemaining] = useState(0);
