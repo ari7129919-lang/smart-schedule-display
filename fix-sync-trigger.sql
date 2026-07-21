@@ -82,7 +82,11 @@ BEGIN
   IF NEW."timerTitle" IS NOT NULL THEN NEW.timer_title := NEW."timerTitle"; ELSIF NEW.timer_title IS NOT NULL THEN NEW."timerTitle" := NEW.timer_title; END IF;
   IF NEW."timerFullScreenMinutes" IS NOT NULL THEN NEW.timer_full_screen_minutes := NEW."timerFullScreenMinutes"; ELSIF NEW.timer_full_screen_minutes IS NOT NULL THEN NEW."timerFullScreenMinutes" := NEW.timer_full_screen_minutes; END IF;
   IF NEW."overrideMode" IS NOT NULL THEN NEW.override_mode := NEW."overrideMode"; ELSIF NEW.override_mode IS NOT NULL THEN NEW."overrideMode" := NEW.override_mode; END IF;
-  IF NEW."overrideDay" IS NOT NULL THEN NEW.override_day := NEW."overrideDay"; ELSIF NEW.override_day IS NOT NULL THEN NEW."overrideDay" := NEW.override_day; END IF;
+  IF NEW.override_day IS NULL THEN
+    NEW."overrideDay" := NULL;
+  ELSE
+    NEW."overrideDay" := NEW.override_day;
+  END IF;
   IF NEW."customModeConfig" IS NOT NULL THEN NEW.custom_mode_config := NEW."customModeConfig"; ELSIF NEW.custom_mode_config IS NOT NULL THEN NEW."customModeConfig" := NEW.custom_mode_config; END IF;
   IF NEW."boardDesign" IS NOT NULL THEN NEW.board_design := NEW."boardDesign"; ELSIF NEW.board_design IS NOT NULL THEN NEW."boardDesign" := NEW.board_design; END IF;
   IF NEW."fixedRules" IS NOT NULL THEN NEW.fixed_rules := NEW."fixedRules"; ELSIF NEW.fixed_rules IS NOT NULL THEN NEW."fixedRules" := NEW.fixed_rules; END IF;

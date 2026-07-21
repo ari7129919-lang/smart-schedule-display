@@ -22,9 +22,27 @@ export const isSupabaseConfigured = () => {
 // Helper to parse JSON fields that might be stored as strings
 const parseJsonField = (value) => {
   if (value === null || value === undefined) return value;
+
   if (typeof value === 'string') {
-    try { return JSON.parse(value); } catch { return value; }
+    try {
+      return parseJsonField(JSON.parse(value));
+    } catch {
+      return value;
+    }
   }
+
+  if (typeof value === 'object' && !Array.isArray(value)) {
+    const keys = Object.keys(value);
+    const isCharacterIndexedObject = keys.length > 0 && keys.every(key => /^\d+$/.test(key));
+    if (isCharacterIndexedObject) {
+      const serialized = keys
+        .sort((a, b) => Number(a) - Number(b))
+        .map(key => value[key])
+        .join('');
+      return parseJsonField(serialized);
+    }
+  }
+
   return value;
 };
 
@@ -130,6 +148,10 @@ export const supabaseAPI = {
         }
       };
       mapField('overrideDay', 'override_day');
+      if ('overrideDay' in data) {
+        updateData.override_day = data.overrideDay;
+        updateData.overrideDay = data.overrideDay;
+      }
       mapField('overrideMode', 'override_mode');
       mapField('timerTitle', 'timer_title');
       mapField('timerFullScreenMinutes', 'timer_full_screen_minutes');
@@ -147,6 +169,12 @@ export const supabaseAPI = {
       mapField('backgroundRotationEnabled', 'background_rotation_enabled');
       mapField('tickerEnabled', 'ticker_enabled');
       mapField('popupConfig', 'popup_config');
+
+      ['board_design', 'custom_mode_config', 'fixed_rules', 'popup_config'].forEach(field => {
+        if (field in updateData) {
+          updateData[field] = parseJsonField(updateData[field]);
+        }
+      });
     }
     
     console.log('Supabase update - table:', table, 'id:', id);
