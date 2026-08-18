@@ -18,6 +18,7 @@ import TimerOverlay from '@/components/display/TimerOverlay';
 import PhoneNumbers from '@/components/display/PhoneNumbers';
 import BackgroundLayer from '@/components/display/BackgroundLayer';
 import PopupOverlay from '@/components/display/PopupOverlay';
+import useIsraelClock, { getIsraelSecondsSinceMidnight } from '@/hooks/useIsraelClock';
 
 const dayMap = {
   0: 'sunday',
@@ -47,10 +48,6 @@ const parseTimeToSeconds = (time) => {
   return (hours * 60 + minutes) * 60;
 };
 
-const getSecondsSinceMidnight = (date) => (
-  date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds()
-);
-
 const getKickoffWindow = (workshop) => {
   if (!workshop?.kickoffEnabled) return null;
   const kickoffStart = parseTimeToSeconds(workshop.kickoffStartTime || workshop.startTime);
@@ -62,6 +59,7 @@ const getKickoffWindow = (workshop) => {
 };
 
 export default function Display({ previewMode = false, fitToScreen = false }) {
+  const scheduleNow = useIsraelClock();
   const [displayMode, setDisplayMode] = useState('normal');
   const [breakDuration, setBreakDuration] = useState(10);
   const [timerEndTime, setTimerEndTime] = useState(null);
@@ -199,13 +197,6 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
     return daySchedules?.find(d => d.dayOfWeek === targetDay) || {};
   }, [daySchedules, currentDayKey, systemSettings.overrideDay]);
 
-  // Clock tick every 30 seconds to keep schedule logic alive
-  const [tick, setTick] = useState(0);
-  useEffect(() => {
-    const iv = setInterval(() => setTick(t => t + 1), 30000);
-    return () => clearInterval(iv);
-  }, []);
-
   // Auto-compute current session for each workshop based on weekStartDate
   const workshopsWithAutoSession = useMemo(() => {
     const workshops = todaySchedule.workshops || [];
@@ -235,8 +226,7 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
 
   // Get current workshop based on time
   const currentWorkshop = useMemo(() => {
-    const now = new Date();
-    const currentTime = getSecondsSinceMidnight(now);
+    const currentTime = getIsraelSecondsSinceMidnight(scheduleNow);
     
     return workshopsWithAutoSession.find(w => {
       if (!w.startTime || !w.endTime) return false;
@@ -247,15 +237,14 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
       const isDuringKickoff = kickoffWindow && currentTime >= kickoffWindow.start && currentTime < kickoffWindow.end;
       return isDuringWorkshop || isDuringKickoff;
     });
-  }, [workshopsWithAutoSession, tick]);
+  }, [workshopsWithAutoSession, scheduleNow]);
 
   const kickoffElapsedSeconds = useMemo(() => {
-    const now = new Date();
-    const currentTime = getSecondsSinceMidnight(now);
+    const currentTime = getIsraelSecondsSinceMidnight(scheduleNow);
     const kickoffWindow = getKickoffWindow(currentWorkshop);
     if (!kickoffWindow || currentTime < kickoffWindow.start || currentTime >= kickoffWindow.end) return null;
     return currentTime - kickoffWindow.start;
-  }, [currentWorkshop, tick]);
+  }, [currentWorkshop, scheduleNow]);
 
   const todayNotices = useMemo(() => {
     return (notices || [])
@@ -308,7 +297,7 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
     }
 
     setDisplayMode('normal');
-  }, [systemSettings, kickoffElapsedSeconds, tick]);
+  }, [systemSettings, kickoffElapsedSeconds]);
 
   const handleKickoffComplete = useCallback(() => {
     setDisplayMode('normal');

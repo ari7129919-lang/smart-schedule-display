@@ -17,6 +17,16 @@ let syncPromise = null;
 
 export const getIsraelTime = (date = new Date()) => timeFormatter.format(date);
 
+export const getIsraelSecondsSinceMidnight = (date = new Date()) => {
+  const parts = timeFormatter.formatToParts(date);
+  const values = Object.fromEntries(
+    parts
+      .filter(({ type }) => ['hour', 'minute', 'second'].includes(type))
+      .map(({ type, value }) => [type, Number(value)])
+  );
+  return values.hour * 3600 + values.minute * 60 + values.second;
+};
+
 export const getIsraelDate = (timestamp = Date.now()) => new Date(timestamp + clockOffsetMs);
 
 // The response Date header gives us an independent, network-synchronised clock.

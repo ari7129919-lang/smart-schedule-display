@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import LuxuryClock from './LuxuryClock';
 
@@ -29,32 +29,11 @@ export default function KickoffMode({ onComplete, screenScale = 1, kickoffConfig
   const readySubtitle = kickoffConfig.readySubtitle || 'נא להכנס לאולם';
   const startedTitle = kickoffConfig.startedTitle || 'הסדנא התחילה';
   const quietText = kickoffConfig.quietText || 'נא לשמור על השקט';
-
-  const [phase, setPhase] = useState(() => getInitialState(initialElapsedSeconds).phase);
-  const [countdown, setCountdown] = useState(() => getInitialState(initialElapsedSeconds).countdown);
-  const [elapsedSeconds, setElapsedSeconds] = useState(() => getInitialState(initialElapsedSeconds).elapsedSeconds);
+  const { phase, countdown, elapsedSeconds } = getInitialState(initialElapsedSeconds);
 
   useEffect(() => {
-    if (phase !== 'countdown') return;
-    const interval = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) { clearInterval(interval); setPhase('started'); return 0; }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [phase]);
-
-  useEffect(() => {
-    if (phase !== 'started') return;
-    const interval = setInterval(() => {
-      setElapsedSeconds(prev => {
-        if (prev >= STARTED_SECONDS) { clearInterval(interval); onComplete?.(); return prev; }
-        return prev + 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [phase, onComplete]);
+    if (initialElapsedSeconds >= COUNTDOWN_SECONDS + STARTED_SECONDS) onComplete?.();
+  }, [initialElapsedSeconds, onComplete]);
 
   const elapsedMinutes = Math.floor(elapsedSeconds / 60);
   const elapsedSecs = elapsedSeconds % 60;
