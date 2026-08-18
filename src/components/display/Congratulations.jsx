@@ -28,11 +28,12 @@ export default function Congratulations({
   }, [ctaEnabled, ctaText, rotationSeconds]);
 
   // Remove duplicates and filter expired items
+  const itemsForMemo = items.length > 0 ? items : null;
   const uniqueItems = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const seen = new Set();
-    return items.filter(item => {
+    return (itemsForMemo || []).filter(item => {
       if (seen.has(item.name)) return false;
       seen.add(item.name);
       if (item.expiresAt) {
@@ -42,7 +43,7 @@ export default function Congratulations({
       }
       return true;
     });
-  }, [items]);
+  }, [itemsForMemo]);
 
   const duplicatedItems = [...uniqueItems, ...uniqueItems, ...uniqueItems];
   const hasItems = uniqueItems.length > 0;
@@ -193,6 +194,16 @@ export default function Congratulations({
     </motion.div>
   );
 
+  const content = useMemo(() => {
+    if (showCTA && ctaEnabled && ctaText) {
+      return <CTABlock key="cta" />;
+    }
+    if (hasItems) {
+      return <CongratsList key="congrats" />;
+    }
+    return <EmptyState key="empty" />;
+  }, [showCTA, ctaEnabled, ctaText, ctaLink, screenScale, uniqueItems, hasItems]);
+
   return (
     <div 
       className="board-card overflow-hidden"
@@ -204,13 +215,7 @@ export default function Congratulations({
       }}
     >
       <AnimatePresence mode="wait">
-        {showCTA && ctaEnabled && ctaText ? (
-          <CTABlock key="cta" />
-        ) : hasItems ? (
-          <CongratsList key="congrats" />
-        ) : (
-          <EmptyState key="empty" />
-        )}
+        {content}
       </AnimatePresence>
     </div>
   );
