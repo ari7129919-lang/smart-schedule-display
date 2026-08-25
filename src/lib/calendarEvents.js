@@ -98,16 +98,35 @@ export function formatGregorianDate(dateKey) {
   return gregorianFormatter.format(new Date(`${dateKey}T12:00:00Z`));
 }
 
-export function formatHebrewDate(dateKey) {
-  const parts = Object.fromEntries(
+function getHebrewParts(dateKey) {
+  return Object.fromEntries(
     hebrewFormatter.formatToParts(new Date(`${dateKey}T12:00:00Z`))
       .filter(({ type }) => ['day', 'month', 'year'].includes(type))
       .map(({ type, value }) => [type, value])
   );
-  const day = Number(String(parts.day || '').replace(/[^0-9]/g, ''));
+}
+
+export function formatHebrewDay(dateKey) {
+  const parts = getHebrewParts(dateKey);
+  return toHebrewNumeral(Number(String(parts.day || '').replace(/[^0-9]/g, '')));
+}
+
+export function formatHebrewMonthYear(dateKey) {
+  const parts = getHebrewParts(dateKey);
   const year = Number(String(parts.year || '').replace(/[^0-9]/g, ''));
-  const hebrewYear = year >= 1000 ? year % 1000 : year;
-  return `${toHebrewNumeral(day)} ${parts.month || ''} ${toHebrewNumeral(hebrewYear)}`.trim();
+  return `${parts.month || ''} ${toHebrewNumeral(year >= 1000 ? year % 1000 : year)}`.trim();
+}
+
+export function formatGregorianMonthYear(dateKey) {
+  return new Intl.DateTimeFormat('he-IL', {
+    timeZone: ISRAEL_TIME_ZONE,
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date(`${dateKey}T12:00:00Z`));
+}
+
+export function formatHebrewDate(dateKey) {
+  return `${formatHebrewDay(dateKey)} ${formatHebrewMonthYear(dateKey)}`.trim();
 }
 
 export function formatWeekday(dateKey) {

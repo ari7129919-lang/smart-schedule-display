@@ -61,12 +61,11 @@ const getKickoffWindow = (workshop) => {
   };
 };
 
-export default function Display({ previewMode = false, fitToScreen = false }) {
+export default function Display({ previewMode = false, fitToScreen: _fitToScreen = false }) {
   const scheduleNow = useIsraelClock();
   const [displayMode, setDisplayMode] = useState('normal');
   const [calendarVisible, setCalendarVisible] = useState(false);
-  const [showUpcoming, setShowUpcoming] = useState(false);
-  const [breakDuration, setBreakDuration] = useState(10);
+  const [breakDuration] = useState(10);
   const [timerEndTime, setTimerEndTime] = useState(null);
   const queryClient = useQueryClient();
   
@@ -196,7 +195,6 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
   const footerColor = isCustomTheme ? (design.footerColor || '#1A2B4C') : '#1A2B4C';
   const accentColor = isCustomTheme ? (design.accentColor || '#E6F4F4') : '#E6F4F4';
   const sideWidth = design.sideColumnWidth ? `${design.sideColumnWidth}%` : '22%';
-  const centerWidth = design.sideColumnWidth ? `${100 - 2 * parseInt(design.sideColumnWidth)}%` : '50%';
   const noticeFontScale = parseFloat(design.noticeFontScale) || 1.0;
   const noticeContentScale = parseFloat(design.noticeContentScale) || 1.0;
   const clockFontScale = parseFloat(design.clockFontScale) || 1.0;
@@ -277,7 +275,7 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
   }, [notices, currentDayKey, currentWorkshop?.name]);
 
   const upcomingEvent = useMemo(() => getUpcomingEvent(calendarEvents, new Date()), [calendarEvents, scheduleNow]);
-  const hasCongratulations = (todaySchedule.congratulations || []).length > 0;
+  const showUpcomingContent = systemSettings.upcomingEventEnabled !== false && !!upcomingEvent && Math.floor(scheduleNow.getTime() / 60000) % 2 === 1;
 
   // Rotate the calendar overlay independently from the scheduled display modes.
   useEffect(() => {
@@ -295,15 +293,6 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
     showTimer = setTimeout(showCalendar, (systemSettings.calendarRotationMinutes || 5) * 60 * 1000);
     return () => { clearTimeout(showTimer); clearTimeout(hideTimer); };
   }, [calendarEvents.length, displayMode, systemSettings.calendarEnabled, systemSettings.calendarDurationSeconds, systemSettings.calendarRotationMinutes]);
-
-  useEffect(() => {
-    if (systemSettings.upcomingEventEnabled === false || !upcomingEvent || !hasCongratulations) {
-      setShowUpcoming(systemSettings.upcomingEventEnabled !== false && !!upcomingEvent);
-      return undefined;
-    }
-    const interval = setInterval(() => setShowUpcoming(value => !value), 60 * 1000);
-    return () => clearInterval(interval);
-  }, [hasCongratulations, systemSettings.upcomingEventEnabled, upcomingEvent]);
 
   // Calculate current circle list based on session number
   const currentCircleNames = useMemo(() => {
@@ -512,11 +501,19 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
                     dualMode={systemSettings.dualNoticeMode || false}
                   />
                 )}
+                {calendarVisible && displayMode === 'normal' && (
+                  <CalendarDisplay
+                    events={calendarEvents}
+                    upcomingEvent={upcomingEvent}
+                    screenScale={screenScale * noticeFontScale}
+                    rotationSeconds={systemSettings.calendarCellRotationSeconds || 6}
+                  />
+                )}
               </div>
 
               {/* Left Column */}
               <div className="flex flex-col flex-shrink-0" style={{ width: sideWidth, gap: `${24 * screenScale}px` }}>
-                {shouldShow('showCongrats') && showUpcoming && upcomingEvent ? (
+                {shouldShow('showCongrats') && showUpcomingContent ? (
                   <UpcomingEvent event={upcomingEvent} screenScale={screenScale * blockTextScale} />
                 ) : shouldShow('showCongrats') && (
                   <Congratulations
@@ -542,14 +539,6 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
                 )}
               </div>
             </div>
-            {calendarVisible && displayMode === 'normal' && (
-              <CalendarDisplay
-                events={calendarEvents}
-                upcomingEvent={upcomingEvent}
-                screenScale={screenScale * noticeFontScale}
-                rotationSeconds={systemSettings.calendarCellRotationSeconds || 6}
-              />
-            )}
           </main>
 
           <ScrollingTicker 
