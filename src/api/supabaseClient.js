@@ -81,6 +81,12 @@ export const supabaseAPI = {
         if ('background_rotation_enabled' in row) row.backgroundRotationEnabled = row.background_rotation_enabled;
         if ('ticker_enabled' in row) row.tickerEnabled = row.ticker_enabled;
         if ('popup_config' in row) row.popupConfig = parseJsonField(row.popup_config);
+        if ('calendar_enabled' in row) row.calendarEnabled = row.calendar_enabled;
+        if ('calendar_rotation_minutes' in row) row.calendarRotationMinutes = row.calendar_rotation_minutes;
+        if ('calendar_duration_seconds' in row) row.calendarDurationSeconds = row.calendar_duration_seconds;
+        if ('calendar_cell_rotation_seconds' in row) row.calendarCellRotationSeconds = row.calendar_cell_rotation_seconds;
+        if ('upcoming_event_enabled' in row) row.upcomingEventEnabled = row.upcoming_event_enabled;
+        if ('upcoming_event_rotation_seconds' in row) row.upcomingEventRotationSeconds = row.upcoming_event_rotation_seconds;
       });
       if (data.length > 0) {
         console.log('[find] popupConfig after parse:', data[0].popupConfig);
@@ -119,6 +125,12 @@ export const supabaseAPI = {
       if ('background_rotation_enabled' in data) data.backgroundRotationEnabled = data.background_rotation_enabled;
       if ('ticker_enabled' in data) data.tickerEnabled = data.ticker_enabled;
       if ('popup_config' in data) data.popupConfig = parseJsonField(data.popup_config);
+      if ('calendar_enabled' in data) data.calendarEnabled = data.calendar_enabled;
+      if ('calendar_rotation_minutes' in data) data.calendarRotationMinutes = data.calendar_rotation_minutes;
+      if ('calendar_duration_seconds' in data) data.calendarDurationSeconds = data.calendar_duration_seconds;
+      if ('calendar_cell_rotation_seconds' in data) data.calendarCellRotationSeconds = data.calendar_cell_rotation_seconds;
+      if ('upcoming_event_enabled' in data) data.upcomingEventEnabled = data.upcoming_event_enabled;
+      if ('upcoming_event_rotation_seconds' in data) data.upcomingEventRotationSeconds = data.upcoming_event_rotation_seconds;
     }
 
     return data
@@ -169,6 +181,12 @@ export const supabaseAPI = {
       mapField('backgroundRotationEnabled', 'background_rotation_enabled');
       mapField('tickerEnabled', 'ticker_enabled');
       mapField('popupConfig', 'popup_config');
+      mapField('calendarEnabled', 'calendar_enabled');
+      mapField('calendarRotationMinutes', 'calendar_rotation_minutes');
+      mapField('calendarDurationSeconds', 'calendar_duration_seconds');
+      mapField('calendarCellRotationSeconds', 'calendar_cell_rotation_seconds');
+      mapField('upcomingEventEnabled', 'upcoming_event_enabled');
+      mapField('upcomingEventRotationSeconds', 'upcoming_event_rotation_seconds');
 
       ['board_design', 'custom_mode_config', 'fixed_rules', 'popup_config'].forEach(field => {
         if (field in updateData) {

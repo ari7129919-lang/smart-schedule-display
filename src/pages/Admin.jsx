@@ -26,6 +26,7 @@ import BackgroundTab from '@/components/admin/BackgroundTab';
 import NoticesManager from '@/components/admin/NoticesManager';
 import TickerManager from '@/components/admin/TickerManager';
 import PopupSettingsTab from '@/components/admin/PopupSettingsTab';
+import CalendarEventsManager from '@/components/admin/CalendarEventsManager';
 
 function ActiveTimerDisplay() {
   const [timerEnd, setTimerEnd] = useState(null);
@@ -144,6 +145,11 @@ export default function Admin() {
     queryFn: () => supabaseAPI.find('TickerItem')
   });
 
+  const { data: calendarEvents = [] } = useQuery({
+    queryKey: ['calendarEvents'],
+    queryFn: () => supabaseAPI.find('CalendarEvent')
+  });
+
   const savePhoneMutation = useMutation({
     mutationFn: (data) => {
       if (data.id) return supabaseAPI.update('PhoneNumbers', data.id, data);
@@ -257,6 +263,22 @@ export default function Admin() {
   const deleteTickerItemMutation = useMutation({
     mutationFn: (id) => supabaseAPI.delete('TickerItem', id),
     onSuccess: () => queryClient.invalidateQueries(['tickerItems'])
+  });
+
+  const saveCalendarEventMutation = useMutation({
+    mutationFn: (data) => data.id ? supabaseAPI.update('CalendarEvent', data.id, data) : supabaseAPI.create('CalendarEvent', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['calendarEvents']);
+      handleRefreshDisplay();
+    }
+  });
+
+  const deleteCalendarEventMutation = useMutation({
+    mutationFn: (id) => supabaseAPI.delete('CalendarEvent', id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['calendarEvents']);
+      handleRefreshDisplay();
+    }
   });
 
   const reorderTickerItemsMutation = useMutation({
@@ -444,6 +466,10 @@ export default function Admin() {
             <TabsTrigger value="notices" className="gap-2">
               <FileText className="w-4 h-4" />
               מודעות
+            </TabsTrigger>
+            <TabsTrigger value="calendar" className="gap-2">
+              <Calendar className="w-4 h-4" />
+              לוח שנה
             </TabsTrigger>
             <TabsTrigger value="phones" className="gap-2">
               <Phone className="w-4 h-4" />
@@ -1213,6 +1239,15 @@ export default function Admin() {
             </Tabs>
           </TabsContent>
 
+          {/* Calendar Events */}
+          <TabsContent value="calendar" className="space-y-6">
+            <CalendarEventsManager
+              events={calendarEvents}
+              onSave={saveCalendarEventMutation.mutate}
+              onDelete={deleteCalendarEventMutation.mutate}
+            />
+          </TabsContent>
+
           {/* Phone Numbers */}
           <TabsContent value="phones" className="space-y-6">
             <PhoneNumbersManager
@@ -1250,6 +1285,10 @@ export default function Admin() {
                   <TabsTrigger value="popup" className="gap-2">
                     <Bell className="w-4 h-4" />
                     הודעה קופצת
+                  </TabsTrigger>
+                  <TabsTrigger value="calendar" className="gap-2">
+                    <Calendar className="w-4 h-4" />
+                    לוח שנה
                   </TabsTrigger>
                 </TabsList>
 
@@ -1643,6 +1682,22 @@ export default function Admin() {
                     settings={editingSettings}
                     onChange={setEditingSettings}
                   />
+                </TabsContent>
+
+                <TabsContent value="calendar" className="space-y-4">
+                  <Card>
+                    <CardHeader><CardTitle className="flex items-center gap-2"><Calendar className="w-5 h-5" />הגדרות לוח שנה</CardTitle></CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center gap-3 rounded-lg border bg-blue-50 p-4"><Switch checked={editingSettings.calendarEnabled !== false} onCheckedChange={v => setEditingSettings({...editingSettings, calendarEnabled: v})} /><div><Label className="font-medium">הצג לוח שנה בתצוגה</Label><p className="text-sm text-gray-500">הלוח יופיע באזור המרכז בלבד ולא יכסה את כל המסך</p></div></div>
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div><Label>הצג לוח שנה כל (דקות)</Label><Select value={String(editingSettings.calendarRotationMinutes || 5)} onValueChange={value => setEditingSettings({...editingSettings, calendarRotationMinutes: Number(value)})}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="1">כל דקה</SelectItem><SelectItem value="2">כל 2 דקות</SelectItem><SelectItem value="3">כל 3 דקות</SelectItem><SelectItem value="5">כל 5 דקות</SelectItem><SelectItem value="10">כל 10 דקות</SelectItem><SelectItem value="15">כל 15 דקות</SelectItem><SelectItem value="30">כל 30 דקות</SelectItem></SelectContent></Select><p className="mt-1 text-xs text-gray-500">הזמן בין הופעה אחת של לוח השנה להופעה הבאה במרכז המסך</p></div>
+                        <div><Label>משך הצגת הלוח (שניות)</Label><Input type="number" min="5" max="600" value={editingSettings.calendarDurationSeconds || 20} onChange={e => setEditingSettings({...editingSettings, calendarDurationSeconds: Number(e.target.value)})} /></div>
+                        <div><Label>החלפת אירועים באותו יום (שניות)</Label><Input type="number" min="2" max="120" value={editingSettings.calendarCellRotationSeconds || 6} onChange={e => setEditingSettings({...editingSettings, calendarCellRotationSeconds: Number(e.target.value)})} /></div>
+                        <div className="flex items-center rounded-lg border bg-emerald-50 p-3 text-sm text-emerald-800"><strong>החלפת מזל טוב / אירוע קרוב: כל דקה</strong><span className="mr-2 text-emerald-600">(קבוע)</span></div>
+                      </div>
+                      <div className="flex items-center gap-3 rounded-lg border p-4"><Switch checked={editingSettings.upcomingEventEnabled !== false} onCheckedChange={v => setEditingSettings({...editingSettings, upcomingEventEnabled: v})} /><div><Label className="font-medium">הצג בלוק אירוע קרוב</Label><p className="text-sm text-gray-500">בלוק האירוע יתחלף עם בלוק ברכות המזל טוב בעמודה הצדדית</p></div></div>
+                    </CardContent>
+                  </Card>
                 </TabsContent>
 
                 <div className="flex justify-end pt-4">

@@ -1,0 +1,15 @@
+{
+  "name": "CalendarEvent",
+  "type": "object",
+  "properties": {
+    "title": { "type": "string", "description": "כותרת האירוע" },
+    "description": { "type": "string", "description": "פרטי האירוע" },
+    "eventDate": { "type": "string", "format": "date", "description": "תאריך האירוע" },
+    "startTime": { "type": "string", "description": "שעת התחלה" },
+    "endTime": { "type": "string", "description": "שעת סיום" },
+    "location": { "type": "string", "description": "מיקום האירוע" },
+    "color": { "type": "string", "description": "צבע סימון" },
+    "active": { "type": "boolean", "description": "האם האירוע פעיל" }
+  },
+  "required": ["title", "eventDate", "active"]
+}

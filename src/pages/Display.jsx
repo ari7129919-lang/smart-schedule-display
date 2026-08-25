@@ -12,7 +12,10 @@ import Congratulations from '@/components/display/Congratulations';
 import FixedRules from '@/components/display/FixedRules';
 import ScrollingTicker from '@/components/display/ScrollingTicker';
 import KickoffMode from '@/components/display/KickoffMode';
+import CalendarDisplay from '@/components/display/CalendarDisplay';
+import UpcomingEvent from '@/components/display/UpcomingEvent';
 import BreakMode from '@/components/display/BreakMode';
+import { getUpcomingEvent } from '@/lib/calendarEvents';
 import MotzeiMode from '@/components/display/MotzeiMode';
 import TimerOverlay from '@/components/display/TimerOverlay';
 import PhoneNumbers from '@/components/display/PhoneNumbers';
@@ -61,6 +64,8 @@ const getKickoffWindow = (workshop) => {
 export default function Display({ previewMode = false, fitToScreen = false }) {
   const scheduleNow = useIsraelClock();
   const [displayMode, setDisplayMode] = useState('normal');
+  const [calendarVisible, setCalendarVisible] = useState(false);
+  const [showUpcoming, setShowUpcoming] = useState(false);
   const [breakDuration, setBreakDuration] = useState(10);
   const [timerEndTime, setTimerEndTime] = useState(null);
   const queryClient = useQueryClient();
@@ -84,6 +89,7 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
         if (prev !== newDay) {
           queryClient.invalidateQueries(['daySchedules']);
           queryClient.invalidateQueries(['notices']);
+        queryClient.invalidateQueries(['calendarEvents']);
           return newDay;
         }
         return prev;
@@ -101,6 +107,7 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
         queryClient.invalidateQueries(['settings']);
         queryClient.invalidateQueries(['daySchedules']);
         queryClient.invalidateQueries(['notices']);
+        queryClient.invalidateQueries(['calendarEvents']);
       }
     };
     window.addEventListener('message', handleMessage);
@@ -113,6 +120,7 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
         queryClient.invalidateQueries(['settings']);
         queryClient.invalidateQueries(['daySchedules']);
         queryClient.invalidateQueries(['notices']);
+        queryClient.invalidateQueries(['calendarEvents']);
       }
       
       // Sync header timer display from localStorage (TimerOverlay owns stop logic)
@@ -166,6 +174,12 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
   const { data: tickerItems = [] } = useQuery({
     queryKey: ['tickerItems'],
     queryFn: () => supabaseAPI.find('TickerItem'),
+    refetchInterval: 20000
+  });
+
+  const { data: calendarEvents = [] } = useQuery({
+    queryKey: ['calendarEvents'],
+    queryFn: () => supabaseAPI.find('CalendarEvent'),
     refetchInterval: 20000
   });
 
@@ -261,6 +275,35 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
       })
       .sort((a, b) => (a.priority || 0) - (b.priority || 0));
   }, [notices, currentDayKey, currentWorkshop?.name]);
+
+  const upcomingEvent = useMemo(() => getUpcomingEvent(calendarEvents, new Date()), [calendarEvents, scheduleNow]);
+  const hasCongratulations = (todaySchedule.congratulations || []).length > 0;
+
+  // Rotate the calendar overlay independently from the scheduled display modes.
+  useEffect(() => {
+    if (systemSettings.calendarEnabled === false || calendarEvents.length === 0 || displayMode !== 'normal') {
+      setCalendarVisible(false);
+      return undefined;
+    }
+    let hideTimer;
+    let showTimer;
+    const showCalendar = () => {
+      setCalendarVisible(true);
+      hideTimer = setTimeout(() => setCalendarVisible(false), (systemSettings.calendarDurationSeconds || 20) * 1000);
+      showTimer = setTimeout(showCalendar, (systemSettings.calendarRotationMinutes || 5) * 60 * 1000);
+    };
+    showTimer = setTimeout(showCalendar, (systemSettings.calendarRotationMinutes || 5) * 60 * 1000);
+    return () => { clearTimeout(showTimer); clearTimeout(hideTimer); };
+  }, [calendarEvents.length, displayMode, systemSettings.calendarEnabled, systemSettings.calendarDurationSeconds, systemSettings.calendarRotationMinutes]);
+
+  useEffect(() => {
+    if (systemSettings.upcomingEventEnabled === false || !upcomingEvent || !hasCongratulations) {
+      setShowUpcoming(systemSettings.upcomingEventEnabled !== false && !!upcomingEvent);
+      return undefined;
+    }
+    const interval = setInterval(() => setShowUpcoming(value => !value), 60 * 1000);
+    return () => clearInterval(interval);
+  }, [hasCongratulations, systemSettings.upcomingEventEnabled, upcomingEvent]);
 
   // Calculate current circle list based on session number
   const currentCircleNames = useMemo(() => {
@@ -459,7 +502,15 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
                     centerOnly={true}
                   />
                 )}
-                {shouldShow('showNotices') && displayMode !== 'kickoff' && (
+                {calendarVisible && displayMode === 'normal' && (
+                  <CalendarDisplay
+                    events={calendarEvents}
+                    upcomingEvent={upcomingEvent}
+                    screenScale={screenScale * noticeFontScale}
+                    rotationSeconds={systemSettings.calendarCellRotationSeconds || 6}
+                  />
+                )}
+                {shouldShow('showNotices') && displayMode !== 'kickoff' && !calendarVisible && (
                   <NoticesGallery 
                     notices={todayNotices}
                     rotationSeconds={systemSettings.noticeRotationSeconds || 20}
@@ -473,8 +524,10 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
 
               {/* Left Column */}
               <div className="flex flex-col flex-shrink-0" style={{ width: sideWidth, gap: `${24 * screenScale}px` }}>
-                {shouldShow('showCongrats') && (
-                  <Congratulations 
+                {shouldShow('showCongrats') && showUpcoming && upcomingEvent ? (
+                  <UpcomingEvent event={upcomingEvent} screenScale={screenScale * blockTextScale} />
+                ) : shouldShow('showCongrats') && (
+                  <Congratulations
                     items={todaySchedule.congratulations || []}
                     screenScale={screenScale * blockTextScale}
                     ctaEnabled={systemSettings.congratsCTAEnabled || false}

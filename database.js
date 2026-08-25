@@ -73,6 +73,12 @@ async function initDatabase() {
     await addColumnIfNotExists('congratsCTALink', 'TEXT');
     await addColumnIfNotExists('congratsRotationSeconds', 'INTEGER DEFAULT 60');
     await addColumnIfNotExists('popupConfig', 'TEXT');
+    await addColumnIfNotExists('calendarEnabled', 'INTEGER DEFAULT 1');
+    await addColumnIfNotExists('calendarRotationMinutes', 'INTEGER DEFAULT 5');
+    await addColumnIfNotExists('calendarDurationSeconds', 'INTEGER DEFAULT 20');
+    await addColumnIfNotExists('calendarCellRotationSeconds', 'INTEGER DEFAULT 6');
+    await addColumnIfNotExists('upcomingEventEnabled', 'INTEGER DEFAULT 1');
+    await addColumnIfNotExists('upcomingEventRotationSeconds', 'INTEGER DEFAULT 60');
 
     // Day Schedule table
     await dbRun(`
@@ -101,6 +107,23 @@ async function initDatabase() {
         imageUrl TEXT,
         active INTEGER DEFAULT 1,
         archived INTEGER DEFAULT 0,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Calendar Events table
+    await dbRun(`
+      CREATE TABLE IF NOT EXISTS CalendarEvent (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        description TEXT DEFAULT '',
+        eventDate TEXT NOT NULL,
+        startTime TEXT,
+        endTime TEXT,
+        location TEXT DEFAULT '',
+        color TEXT DEFAULT '#5FAFA8',
+        active INTEGER DEFAULT 1,
         createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
         updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
       )

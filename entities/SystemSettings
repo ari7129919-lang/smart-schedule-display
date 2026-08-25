@@ -267,7 +267,13 @@
     "congratsRotationSeconds": {
       "type": "number",
       "description": "זמן החלפת בלוק מתחלף בשניות"
-    }
+    },
+    "calendarEnabled": { "type": "boolean", "description": "הפעלת לוח השנה בתצוגה" },
+    "calendarRotationMinutes": { "type": "number", "description": "כל כמה דקות להציג את לוח השנה" },
+    "calendarDurationSeconds": { "type": "number", "description": "משך הצגת לוח השנה בשניות" },
+    "calendarCellRotationSeconds": { "type": "number", "description": "החלפה בין אירועים באותו יום בשניות" },
+    "upcomingEventEnabled": { "type": "boolean", "description": "הצגת בלוק האירוע הקרוב" },
+    "upcomingEventRotationSeconds": { "type": "number", "description": "החלפה בין ברכות לאירוע הקרוב בשניות" }
   },
   "required": [
     "screenProfile"
