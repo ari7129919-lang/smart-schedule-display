@@ -9,8 +9,8 @@ export default function UpcomingEvent({ event, screenScale = 1 }) {
       <CalendarClock className="mx-auto mb-2 text-emerald-700" size={36 * screenScale} />
       <div className="font-bold text-emerald-700" style={{ fontSize: `${18 * screenScale}px` }}>האירוע הקרוב</div>
       <h3 className="mt-1 font-black text-slate-800" style={{ fontSize: `${26 * screenScale}px`, lineHeight: 1.15 }}>{event.title}</h3>
-      <div className="mt-3 font-black text-emerald-800" style={{ fontSize: `${23 * screenScale}px` }}>{formatHebrewDate(event.eventDate)}</div>
-      <div className="text-slate-500" style={{ fontSize: `${14 * screenScale}px` }}>{formatGregorianDate(event.eventDate)}</div>
+      <div className="mt-3 font-black text-emerald-800" style={{ fontSize: `${28 * screenScale}px` }}>{formatHebrewDate(event.eventDate)}</div>
+      <div className="text-slate-500" style={{ fontSize: `${13 * screenScale}px` }}>{formatGregorianDate(event.eventDate)}</div>
       <div className="mt-2 flex items-center justify-center gap-1 font-bold text-slate-700" style={{ fontSize: `${18 * screenScale}px` }}><Clock3 size={17 * screenScale} />{formatEventTime(event)}</div>
       {event.location && <div className="mt-1 flex items-center justify-center gap-1 text-slate-600" style={{ fontSize: `${15 * screenScale}px` }}><MapPin size={15 * screenScale} />{event.location}</div>}
       {event.description && <div className="mt-3 line-clamp-4 text-slate-600" style={{ fontSize: `${15 * screenScale}px` }}>{event.description}</div>}

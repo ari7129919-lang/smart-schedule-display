@@ -502,14 +502,6 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
                     centerOnly={true}
                   />
                 )}
-                {calendarVisible && displayMode === 'normal' && (
-                  <CalendarDisplay
-                    events={calendarEvents}
-                    upcomingEvent={upcomingEvent}
-                    screenScale={screenScale * noticeFontScale}
-                    rotationSeconds={systemSettings.calendarCellRotationSeconds || 6}
-                  />
-                )}
                 {shouldShow('showNotices') && displayMode !== 'kickoff' && !calendarVisible && (
                   <NoticesGallery 
                     notices={todayNotices}
@@ -550,6 +542,14 @@ export default function Display({ previewMode = false, fitToScreen = false }) {
                 )}
               </div>
             </div>
+            {calendarVisible && displayMode === 'normal' && (
+              <CalendarDisplay
+                events={calendarEvents}
+                upcomingEvent={upcomingEvent}
+                screenScale={screenScale * noticeFontScale}
+                rotationSeconds={systemSettings.calendarCellRotationSeconds || 6}
+              />
+            )}
           </main>
 
           <ScrollingTicker 
