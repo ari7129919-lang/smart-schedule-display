@@ -37,6 +37,8 @@ const HEBREW_DIGITS = [
 function toHebrewNumeral(value) {
   let remainder = Number(value);
   if (!Number.isFinite(remainder) || remainder <= 0) return '';
+  if (remainder === 15) return 'ט\u05f4ו';
+  if (remainder === 16) return 'ט\u05f4ז';
   let result = '';
   for (const [amount, letter] of HEBREW_DIGITS) {
     while (remainder >= amount) {
