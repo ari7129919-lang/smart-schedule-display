@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { CalendarDays, Clock3, ListDetails, MapPin } from 'lucide-react';
+import { CalendarDays, Clock3, ClipboardList, MapPin } from 'lucide-react';
 import {
   getCalendarDays,
   getEventsForDate,
@@ -75,7 +75,7 @@ function EventDetailsPanel({ events, screenScale, rotationSeconds }) {
   return (
     <div className="shrink-0 rounded-2xl border-4 border-slate-400 bg-slate-200 p-4 shadow-inner">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3 font-black text-slate-900" style={{ fontSize: `${34 * screenScale}px` }}><ListDetails size={34 * screenScale} className="shrink-0 text-emerald-700" />פרטי אירועים</div>
+        <div className="flex items-center gap-3 font-black text-slate-900" style={{ fontSize: `${34 * screenScale}px` }}><ClipboardList size={34 * screenScale} className="shrink-0 text-emerald-700" />פרטי אירועים</div>
         {events.length > 2 && <div className="rounded-full bg-slate-800 px-4 py-2 font-bold text-white" style={{ fontSize: `${18 * screenScale}px` }}>אירועים {first}–{last} מתוך {events.length}</div>}
       </div>
       <div className={pageEvents.length > 1 ? 'grid grid-cols-1 gap-3 md:grid-cols-2' : 'grid grid-cols-1 gap-3'}>{pageEvents.map(event => <EventDetailsCard key={event.id} event={event} screenScale={screenScale} />)}</div>
