@@ -38,7 +38,7 @@ export default function CalendarEventsManager({ events = [], onSave, onDelete })
                   <strong className="text-lg">{event.title}</strong>
                   {!event.active && <span className="text-xs rounded-full bg-gray-100 px-2 py-1 text-gray-500">כבוי</span>}
                 </div>
-                <div className="text-sm text-gray-600">{formatGregorianDate(event.eventDate)} · {formatHebrewDate(event.eventDate)} · {formatEventTime(event)}{event.location ? ` · ${event.location}` : ''}</div>
+                <div className="text-sm text-gray-600">{formatGregorianDate(event.eventDate)} · {formatHebrewDate(event.eventDate)}{formatEventTime(event) ? ` · ${formatEventTime(event)}` : ''}{event.location ? ` · ${event.location}` : ''}</div>
                 {event.description && <div className="mt-1 truncate text-sm text-gray-500">{event.description}</div>}
               </div>
               <Button variant="outline" size="sm" onClick={() => setEditing({ ...event })} className="gap-1"><Pencil className="w-4 h-4" />ערוך</Button>
@@ -65,7 +65,7 @@ export default function CalendarEventsManager({ events = [], onSave, onDelete })
             </div>
             <div><Label>פרטים</Label><textarea value={editing.description || ''} onChange={e => setEditing({ ...editing, description: e.target.value })} rows={3} className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm" placeholder="מה חשוב שהצופים ידעו?" /></div>
             <div className="flex items-center gap-3"><Switch checked={editing.active !== false} onCheckedChange={active => setEditing({ ...editing, active })} /><Label>אירוע פעיל להצגה</Label></div>
-            {editing.eventDate && <p className="rounded bg-blue-50 p-3 text-sm text-blue-800">תצוגה: {formatGregorianDate(editing.eventDate)} · {formatHebrewDate(editing.eventDate)} · {formatEventTime(editing)}</p>}
+            {editing.eventDate && <p className="rounded bg-blue-50 p-3 text-sm text-blue-800">תצוגה: {formatGregorianDate(editing.eventDate)} · {formatHebrewDate(editing.eventDate)}{formatEventTime(editing) ? ` · ${formatEventTime(editing)}` : ''}</p>}
             <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setEditing(null)}>ביטול</Button><Button onClick={save} disabled={!editing.title?.trim() || !editing.eventDate} className="gap-2"><Save className="w-4 h-4" />שמור אירוע</Button></div>
           </CardContent>
         </Card>

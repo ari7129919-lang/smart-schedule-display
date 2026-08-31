@@ -136,6 +136,7 @@ export function formatWeekday(dateKey) {
 }
 
 export function formatEventTime(event) {
-  if (!event?.startTime) return 'כל היום';
+  if (!event?.startTime && !event?.endTime) return '';
+  if (!event?.startTime) return event.endTime;
   return event.endTime ? `${event.startTime}–${event.endTime}` : event.startTime;
 }
