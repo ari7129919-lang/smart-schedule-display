@@ -283,15 +283,32 @@ export default function Display({ previewMode = false, fitToScreen: _fitToScreen
       setCalendarVisible(false);
       return undefined;
     }
-    let hideTimer;
+
+    const rotationMs = Math.max(1, Number(systemSettings.calendarRotationMinutes) || 5) * 60 * 1000;
+    const durationMs = Math.max(1, Number(systemSettings.calendarDurationSeconds) || 20) * 1000;
     let showTimer;
-    const showCalendar = () => {
-      setCalendarVisible(true);
-      hideTimer = setTimeout(() => setCalendarVisible(false), (systemSettings.calendarDurationSeconds || 20) * 1000);
-      showTimer = setTimeout(showCalendar, (systemSettings.calendarRotationMinutes || 5) * 60 * 1000);
+    let hideTimer;
+    let cancelled = false;
+
+    const scheduleNextShow = () => {
+      showTimer = setTimeout(() => {
+        if (cancelled) return;
+        setCalendarVisible(true);
+        hideTimer = setTimeout(() => {
+          if (cancelled) return;
+          setCalendarVisible(false);
+          scheduleNextShow();
+        }, durationMs);
+      }, rotationMs);
     };
-    showTimer = setTimeout(showCalendar, (systemSettings.calendarRotationMinutes || 5) * 60 * 1000);
-    return () => { clearTimeout(showTimer); clearTimeout(hideTimer); };
+
+    setCalendarVisible(false);
+    scheduleNextShow();
+    return () => {
+      cancelled = true;
+      clearTimeout(showTimer);
+      clearTimeout(hideTimer);
+    };
   }, [calendarEvents.length, displayMode, systemSettings.calendarEnabled, systemSettings.calendarDurationSeconds, systemSettings.calendarRotationMinutes]);
 
   // Calculate current circle list based on session number
