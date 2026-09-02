@@ -70,6 +70,7 @@ export const supabaseAPI = {
         if ('screen_profile' in row) row.screenProfile = row.screen_profile;
         if ('group_rotation_seconds' in row) row.groupRotationSeconds = row.group_rotation_seconds;
         if ('notice_rotation_seconds' in row) row.noticeRotationSeconds = row.notice_rotation_seconds;
+        if ('special_notice_rotation_seconds' in row) row.specialNoticeRotationSeconds = row.special_notice_rotation_seconds;
         if ('dual_notice_mode' in row) row.dualNoticeMode = row.dual_notice_mode;
         if ('pause_all_session_advance' in row) row.pauseAllSessionAdvance = row.pause_all_session_advance;
         if ('board_design' in row) row.boardDesign = parseJsonField(row.board_design);
@@ -114,6 +115,7 @@ export const supabaseAPI = {
       if ('screen_profile' in data) data.screenProfile = data.screen_profile;
       if ('group_rotation_seconds' in data) data.groupRotationSeconds = data.group_rotation_seconds;
       if ('notice_rotation_seconds' in data) data.noticeRotationSeconds = data.notice_rotation_seconds;
+      if ('special_notice_rotation_seconds' in data) data.specialNoticeRotationSeconds = data.special_notice_rotation_seconds;
       if ('dual_notice_mode' in data) data.dualNoticeMode = data.dual_notice_mode;
       if ('pause_all_session_advance' in data) data.pauseAllSessionAdvance = data.pause_all_session_advance;
       if ('board_design' in data) data.boardDesign = data.board_design;
@@ -170,6 +172,7 @@ export const supabaseAPI = {
       mapField('screenProfile', 'screen_profile');
       mapField('groupRotationSeconds', 'group_rotation_seconds');
       mapField('noticeRotationSeconds', 'notice_rotation_seconds');
+      mapField('specialNoticeRotationSeconds', 'special_notice_rotation_seconds');
       mapField('dualNoticeMode', 'dual_notice_mode');
       mapField('pauseAllSessionAdvance', 'pause_all_session_advance');
       mapField('boardDesign', 'board_design');

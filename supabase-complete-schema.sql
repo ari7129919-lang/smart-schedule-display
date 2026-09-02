@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS "SystemSettings" (
   screen_profile TEXT DEFAULT '50',
   group_rotation_seconds INTEGER DEFAULT 8,
   notice_rotation_seconds INTEGER DEFAULT 20,
+  special_notice_rotation_seconds INTEGER DEFAULT 8,
   timer_title TEXT,
   timer_full_screen_minutes INTEGER DEFAULT 3,
   override_mode TEXT DEFAULT 'none',
@@ -39,6 +40,7 @@ CREATE TABLE IF NOT EXISTS "SystemSettings" (
   "screenProfile" TEXT DEFAULT '50',
   "groupRotationSeconds" INTEGER DEFAULT 8,
   "noticeRotationSeconds" INTEGER DEFAULT 20,
+  "specialNoticeRotationSeconds" INTEGER DEFAULT 8,
   "timerTitle" TEXT,
   "timerFullScreenMinutes" INTEGER DEFAULT 3,
   "overrideMode" TEXT DEFAULT 'none',
@@ -105,7 +107,30 @@ DROP INDEX IF EXISTS idx_day_schedule_day_of_week;
 CREATE INDEX idx_day_schedule_day_of_week ON "DaySchedule"(day_of_week);
 
 -- ============================================================================
--- 3. Notice Table (COMPLETE)
+-- 3. SpecialNotice Table (COMPLETE)
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS "SpecialNotice" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  title TEXT NOT NULL,
+  content TEXT DEFAULT '',
+  active BOOLEAN DEFAULT true,
+  archived BOOLEAN DEFAULT false,
+  priority INTEGER DEFAULT 0,
+  "displaySeconds" INTEGER,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+ALTER TABLE "SpecialNotice" ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all access" ON "SpecialNotice";
+CREATE POLICY "Allow all access" ON "SpecialNotice" FOR ALL USING (true) WITH CHECK (true);
+CREATE INDEX IF NOT EXISTS idx_special_notice_active ON "SpecialNotice"(active);
+DROP TRIGGER IF EXISTS update_special_notice_updated_at ON "SpecialNotice";
+CREATE TRIGGER update_special_notice_updated_at BEFORE UPDATE ON "SpecialNotice"
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================================================
+-- 4. Notice Table (COMPLETE)
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS "Notice" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,

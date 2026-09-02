@@ -6,6 +6,7 @@ import { AnimatePresence } from 'framer-motion';
 import Header from '@/components/display/Header';
 import InternalCircle from '@/components/display/InternalCircle';
 import SmallGroups from '@/components/display/SmallGroups';
+import SpecialNoticesBlock from '@/components/display/SpecialNoticesBlock';
 import DutyPerson from '@/components/display/DutyPerson';
 import NoticesGallery from '@/components/display/NoticesGallery';
 import Congratulations from '@/components/display/Congratulations';
@@ -88,6 +89,7 @@ export default function Display({ previewMode = false, fitToScreen: _fitToScreen
         if (prev !== newDay) {
           queryClient.invalidateQueries(['daySchedules']);
           queryClient.invalidateQueries(['notices']);
+        queryClient.invalidateQueries(['specialNotices']);
         queryClient.invalidateQueries(['calendarEvents']);
           return newDay;
         }
@@ -106,6 +108,7 @@ export default function Display({ previewMode = false, fitToScreen: _fitToScreen
         queryClient.invalidateQueries(['settings']);
         queryClient.invalidateQueries(['daySchedules']);
         queryClient.invalidateQueries(['notices']);
+        queryClient.invalidateQueries(['specialNotices']);
         queryClient.invalidateQueries(['calendarEvents']);
       }
     };
@@ -119,6 +122,7 @@ export default function Display({ previewMode = false, fitToScreen: _fitToScreen
         queryClient.invalidateQueries(['settings']);
         queryClient.invalidateQueries(['daySchedules']);
         queryClient.invalidateQueries(['notices']);
+        queryClient.invalidateQueries(['specialNotices']);
         queryClient.invalidateQueries(['calendarEvents']);
       }
       
@@ -161,6 +165,12 @@ export default function Display({ previewMode = false, fitToScreen: _fitToScreen
   const { data: notices } = useQuery({
     queryKey: ['notices'],
     queryFn: () => supabaseAPI.find('Notice'),
+    refetchInterval: 20000
+  });
+
+  const { data: specialNotices = [] } = useQuery({
+    queryKey: ['specialNotices'],
+    queryFn: () => supabaseAPI.find('SpecialNotice'),
     refetchInterval: 20000
   });
 
@@ -250,6 +260,14 @@ export default function Display({ previewMode = false, fitToScreen: _fitToScreen
       return isDuringWorkshop || isDuringKickoff;
     });
   }, [workshopsWithAutoSession, scheduleNow]);
+
+  const selectedSpecialNotices = useMemo(() => {
+    const ids = new Set((currentWorkshop?.specialNoticeIds || []).map(String));
+    return (specialNotices || []).filter(notice => ids.has(String(notice.id)));
+  }, [currentWorkshop?.specialNoticeIds, specialNotices]);
+
+  const specialNoticeEnabled = currentWorkshop?.specialNoticeEnabled === true;
+  const specialNoticeReplaces = currentWorkshop?.specialNoticeReplaces || 'groups';
 
   const kickoffElapsedSeconds = useMemo(() => {
     const currentTime = getIsraelSecondsSinceMidnight(scheduleNow);
@@ -469,7 +487,7 @@ export default function Display({ previewMode = false, fitToScreen: _fitToScreen
             <div className="flex h-full" style={{ gap: `${24 * screenScale}px` }}>
               {/* Right Column */}
               <div className="flex flex-col flex-shrink-0" style={{ width: sideWidth, gap: `${24 * screenScale}px` }}>
-                {shouldShow('showCircle') && !todaySchedule.hideInternalCircle && !currentWorkshop?.hideInternalCircle && (
+                {shouldShow('showCircle') && !(specialNoticeEnabled && specialNoticeReplaces === 'circle') && !todaySchedule.hideInternalCircle && !currentWorkshop?.hideInternalCircle && (
                   <InternalCircle
                     names={currentCircleNames}
                     screenScale={screenScale * blockTextScale}
@@ -480,10 +498,17 @@ export default function Display({ previewMode = false, fitToScreen: _fitToScreen
                     animationSpeed={design.circleAnimationSpeed || 'normal'}
                   />
                 )}
-                {shouldShow('showGroups') && !todaySchedule.hideSmallGroups && !currentWorkshop?.hideSmallGroups && (
+                {shouldShow('showGroups') && !(specialNoticeEnabled && specialNoticeReplaces === 'groups') && !todaySchedule.hideSmallGroups && !currentWorkshop?.hideSmallGroups && (
                   <SmallGroups
                     groups={todaySchedule.smallGroups || []}
                     rotationSeconds={systemSettings.groupRotationSeconds || 8}
+                    screenScale={screenScale * blockTextScale}
+                  />
+                )}
+                {shouldShow('showSpecialNotices') && specialNoticeEnabled && (
+                  <SpecialNoticesBlock
+                    notices={selectedSpecialNotices}
+                    rotationSeconds={systemSettings.specialNoticeRotationSeconds || 8}
                     screenScale={screenScale * blockTextScale}
                   />
                 )}

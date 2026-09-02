@@ -11,6 +11,7 @@ ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "pauseAllSessionAdvance" B
 ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "screenProfile" TEXT DEFAULT '50';
 ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "groupRotationSeconds" INTEGER DEFAULT 8;
 ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "noticeRotationSeconds" INTEGER DEFAULT 20;
+ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "specialNoticeRotationSeconds" INTEGER DEFAULT 8;
 ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "timerTitle" TEXT;
 ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "timerFullScreenMinutes" INTEGER DEFAULT 3;
 ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "overrideMode" TEXT DEFAULT 'none';
@@ -47,6 +48,29 @@ ALTER TABLE "DaySchedule" ADD COLUMN IF NOT EXISTS "hideSmallGroups" BOOLEAN DEF
 ALTER TABLE "DaySchedule" ADD COLUMN IF NOT EXISTS "smallGroups" JSONB DEFAULT '[]';
 ALTER TABLE "DaySchedule" ADD COLUMN IF NOT EXISTS "workshops" JSONB DEFAULT '[]';
 ALTER TABLE "DaySchedule" ADD COLUMN IF NOT EXISTS "congratulations" JSONB DEFAULT '[]';
+
+-- ============================================================================
+-- SpecialNotice - מאגר הודעות מיוחדות לבלוק צדדי
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS "SpecialNotice" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  title TEXT NOT NULL,
+  content TEXT DEFAULT '',
+  active BOOLEAN DEFAULT true,
+  archived BOOLEAN DEFAULT false,
+  priority INTEGER DEFAULT 0,
+  "displaySeconds" INTEGER,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+ALTER TABLE "SpecialNotice" ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all access" ON "SpecialNotice";
+CREATE POLICY "Allow all access" ON "SpecialNotice" FOR ALL USING (true) WITH CHECK (true);
+CREATE INDEX IF NOT EXISTS idx_special_notice_active ON "SpecialNotice"(active);
+DROP TRIGGER IF EXISTS update_special_notice_updated_at ON "SpecialNotice";
+CREATE TRIGGER update_special_notice_updated_at BEFORE UPDATE ON "SpecialNotice"
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 ALTER TABLE "DaySchedule" ADD COLUMN IF NOT EXISTS "dutyPerson" TEXT;
 
 -- ============================================================================

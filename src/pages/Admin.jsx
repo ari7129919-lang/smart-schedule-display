@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { 
@@ -24,6 +25,7 @@ import SpecialActivitiesTab from '@/components/admin/SpecialActivitiesTab';
 import DisplayPreviewModal from '@/components/admin/DisplayPreviewModal';
 import BackgroundTab from '@/components/admin/BackgroundTab';
 import NoticesManager from '@/components/admin/NoticesManager';
+import SpecialNoticesManager from '@/components/admin/SpecialNoticesManager';
 import TickerManager from '@/components/admin/TickerManager';
 import PopupSettingsTab from '@/components/admin/PopupSettingsTab';
 import CalendarEventsManager from '@/components/admin/CalendarEventsManager';
@@ -130,6 +132,11 @@ export default function Admin() {
     queryFn: () => supabaseAPI.find('Notice')
   });
 
+  const { data: specialNotices = [], isLoading: loadingSpecialNotices } = useQuery({
+    queryKey: ['specialNotices'],
+    queryFn: () => supabaseAPI.find('SpecialNotice')
+  });
+
   const { data: settings = [], isLoading: loadingSettings } = useQuery({
     queryKey: ['settings'],
     queryFn: () => supabaseAPI.find('SystemSettings')
@@ -231,6 +238,22 @@ export default function Admin() {
     }
   });
 
+  const saveSpecialNoticeMutation = useMutation({
+    mutationFn: (data) => data.id ? supabaseAPI.update('SpecialNotice', data.id, data) : supabaseAPI.create('SpecialNotice', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['specialNotices']);
+      handleRefreshDisplay();
+    }
+  });
+
+  const deleteSpecialNoticeMutation = useMutation({
+    mutationFn: (id) => supabaseAPI.delete('SpecialNotice', id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['specialNotices']);
+      handleRefreshDisplay();
+    }
+  });
+
   const reorderNoticesMutation = useMutation({
     mutationFn: async (reorderedNotices) => {
       // Update each notice's priority to match its new position (1-based)
@@ -296,9 +319,15 @@ export default function Admin() {
   });
 
   const handleSaveSchedule = () => {
-    if (editingSchedule) {
-      saveScheduleMutation.mutate(editingSchedule);
+    if (!editingSchedule) return;
+    const invalidWorkshop = (editingSchedule.workshops || []).find(
+      workshop => workshop.specialNoticeEnabled && !(workshop.specialNoticeIds || []).length
+    );
+    if (invalidWorkshop) {
+      alert('יש לבחור לפחות הודעה מיוחדת אחת לכל סדנה שבה האפשרות מופעלת.');
+      return;
     }
+    saveScheduleMutation.mutate(editingSchedule);
   };
 
   const handleSaveSettings = () => {
@@ -382,7 +411,10 @@ export default function Admin() {
         totalSessions: 12,
         currentSession: 1,
         kickoffEnabled: true,
-        kickoffStartTime: ''
+        kickoffStartTime: '',
+        specialNoticeEnabled: false,
+        specialNoticeReplaces: 'groups',
+        specialNoticeIds: []
       }]
     }));
   };
@@ -470,6 +502,10 @@ export default function Admin() {
             <TabsTrigger value="calendar" className="gap-2">
               <Calendar className="w-4 h-4" />
               לוח שנה
+            </TabsTrigger>
+            <TabsTrigger value="special-notices" className="gap-2">
+              <Bell className="w-4 h-4" />
+              הודעות מיוחדות
             </TabsTrigger>
             <TabsTrigger value="phones" className="gap-2">
               <Phone className="w-4 h-4" />
@@ -622,6 +658,9 @@ export default function Admin() {
                                 <div className="flex flex-wrap gap-1 pt-1">
                                   {workshop.hideSmallGroups !== true && (
                                     <span className="text-xs px-2 py-0.5 bg-green-100 rounded-full text-green-700">קבוצות קטנות</span>
+                                  )}
+                                  {workshop.specialNoticeEnabled && (
+                                    <span className="text-xs px-2 py-0.5 bg-purple-100 rounded-full text-purple-700">הודעות מיוחדות במקום {workshop.specialNoticeReplaces === 'circle' ? 'מעגל' : 'קבוצות'}</span>
                                   )}
                                   {workshop.hideInternalCircle !== true && (
                                     <span className="text-xs px-2 py-0.5 bg-green-100 rounded-full text-green-700">מעגל פנימי</span>
@@ -793,6 +832,63 @@ export default function Admin() {
                                     <Label className="text-sm text-blue-600">מונה שבועי (ללא מגבלה)</Label>
                                   </div>
                                 </div>
+                              </div>
+
+                              <div className="border border-purple-200 rounded-lg p-4 bg-purple-50/50 space-y-4">
+                                <div className="flex items-center gap-2">
+                                  <Switch
+                                    checked={workshop.specialNoticeEnabled === true}
+                                    onCheckedChange={v => updateWorkshop(idx, 'specialNoticeEnabled', v)}
+                                  />
+                                  <Label className="font-semibold text-purple-700">הצג הודעות מיוחדות בסדנה זו</Label>
+                                </div>
+                                {workshop.specialNoticeEnabled && (
+                                  <>
+                                    <div>
+                                      <Label>איזה בלוק להחליף?</Label>
+                                      <Select
+                                        value={workshop.specialNoticeReplaces || 'groups'}
+                                        onValueChange={value => updateWorkshop(idx, 'specialNoticeReplaces', value)}
+                                      >
+                                        <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="groups">קבוצות קטנות</SelectItem>
+                                          <SelectItem value="circle">מעגל פנימי</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                      <p className="text-xs text-purple-700 mt-1">הבלוק הנבחר יוסתר, והבלוק השני ימשיך להופיע.</p>
+                                    </div>
+                                    <div>
+                                      <Label>בחר הודעות להצגה ברוטציה</Label>
+                                      <div className="mt-2 space-y-2 rounded-md border bg-white p-3">
+                                        {specialNotices.filter(n => n.active !== false && !n.archived).map(notice => {
+                                          const selected = (workshop.specialNoticeIds || []).map(String).includes(String(notice.id));
+                                          return (
+                                            <label key={notice.id} className="flex cursor-pointer items-center gap-2 text-sm">
+                                              <Checkbox
+                                                checked={selected}
+                                                onCheckedChange={checked => {
+                                                  const ids = (workshop.specialNoticeIds || []).map(String);
+                                                  const nextIds = checked
+                                                    ? [...new Set([...ids, String(notice.id)])]
+                                                    : ids.filter(id => id !== String(notice.id));
+                                                  updateWorkshop(idx, 'specialNoticeIds', nextIds);
+                                                }}
+                                              />
+                                              <span dangerouslySetInnerHTML={{ __html: notice.title || 'ללא כותרת' }} />
+                                            </label>
+                                          );
+                                        })}
+                                        {specialNotices.filter(n => n.active !== false && !n.archived).length === 0 && (
+                                          <p className="text-xs text-gray-500">אין הודעות פעילות במאגר. צור הודעה בטאב "הודעות מיוחדות".</p>
+                                        )}
+                                      </div>
+                                      {workshop.specialNoticeEnabled && !(workshop.specialNoticeIds || []).length && (
+                                        <p className="text-xs text-red-600 mt-1">יש לבחור לפחות הודעה אחת להצגה.</p>
+                                      )}
+                                    </div>
+                                  </>
+                                )}
                               </div>
 
                               {workshop.noSessionLimit && (
@@ -1237,6 +1333,22 @@ export default function Admin() {
                 />
               </TabsContent>
             </Tabs>
+          </TabsContent>
+
+          {/* Special Notices */}
+          <TabsContent value="special-notices" className="space-y-6">
+            <SpecialNoticesManager
+              notices={specialNotices}
+              rotationSeconds={systemSettings.specialNoticeRotationSeconds || 8}
+              onSave={saveSpecialNoticeMutation.mutate}
+              onDelete={deleteSpecialNoticeMutation.mutate}
+              onSaveSettings={(value) => {
+                if (!editingSettings) return;
+                const updated = { ...editingSettings, specialNoticeRotationSeconds: value };
+                setEditingSettings(updated);
+                saveSettingsMutation.mutate(updated);
+              }}
+            />
           </TabsContent>
 
           {/* Calendar Events */}
