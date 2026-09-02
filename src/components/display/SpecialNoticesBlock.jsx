@@ -4,11 +4,21 @@ import LeafIcon from './LeafIcon';
 
 const styles = `
   .special-notice-content { overflow-wrap: break-word; word-break: break-word; }
+  .special-notice-content > :first-child { margin-top: 0; }
+  .special-notice-content > :last-child { margin-bottom: 0; }
   .special-notice-content p { margin: 0.3em 0; }
   .special-notice-content h1, .special-notice-content h2, .special-notice-content h3 { margin: 0.35em 0; font-weight: 700; }
   .special-notice-content ul, .special-notice-content ol { padding-right: 1.5em; }
   .special-notice-content img, .special-notice-content table { max-width: 100%; }
 `;
+
+const scaleRichTextHtml = (html, scale) => {
+  if (!html || scale === 1) return html || '';
+  return html.replace(
+    /(font-size\s*:\s*)(\d+(?:\.\d+)?)px/gi,
+    (_, prefix, size) => `${prefix}${Number(size) * scale}px`
+  );
+};
 
 export default function SpecialNoticesBlock({ notices = [], rotationSeconds = 8, screenScale = 1 }) {
   const activeNotices = useMemo(
@@ -51,8 +61,8 @@ export default function SpecialNoticesBlock({ notices = [], rotationSeconds = 8,
               transition={{ duration: 0.6 }}
               className="h-full overflow-y-auto"
             >
-              <div className="special-notice-content text-primary font-bold" style={{ fontSize: `${28 * screenScale}px`, lineHeight: 1.25 }} dangerouslySetInnerHTML={{ __html: notice.title || '' }} />
-              <div className="special-notice-content text-secondary" style={{ fontSize: `${20 * screenScale}px`, lineHeight: 1.55, marginTop: `${14 * screenScale}px` }} dangerouslySetInnerHTML={{ __html: notice.content || '' }} />
+              <div className="special-notice-content text-primary font-bold" style={{ fontSize: `${34 * screenScale}px`, lineHeight: 1.25 }} dangerouslySetInnerHTML={{ __html: scaleRichTextHtml(notice.title, screenScale) }} />
+              <div className="special-notice-content text-secondary" style={{ fontSize: `${24 * screenScale}px`, lineHeight: 1.55, marginTop: `${14 * screenScale}px` }} dangerouslySetInnerHTML={{ __html: scaleRichTextHtml(notice.content, screenScale) }} />
             </motion.div>
           </AnimatePresence>
         </div>
