@@ -33,12 +33,47 @@ let _timerStartedAt = 0;
 export default function TimerOverlay({ screenScale = 1, fullScreenThresholdSeconds = 180, centerOnly = false }) {
   const [timer, setTimer] = useState({ isActive: false, remaining: 0, duration: 0, title: '' });
   const intervalRef = useRef(null);
+  const beepTimeoutRef = useRef(null);
+  const timerEndRef = useRef(null);
   const timerRef = useRef(timer);
   timerRef.current = timer;
 
+  const scheduleNextBeep = useCallback((endTime) => {
+    clearTimeout(beepTimeoutRef.current);
+    beepTimeoutRef.current = null;
+
+    if (timerEndRef.current !== endTime) return;
+
+    const now = Date.now();
+    const millisecondsRemaining = endTime - now;
+    const remaining = Math.ceil(millisecondsRemaining / 1000);
+    if (remaining <= 0) return;
+
+    let delay;
+    if (remaining > 60) {
+      delay = millisecondsRemaining - 60000;
+    } else if (remaining > 10) {
+      delay = Math.min(2000, millisecondsRemaining - 10000);
+    } else if (remaining > 4) {
+      delay = Math.min(1000, millisecondsRemaining - 4000);
+    } else {
+      delay = 500;
+    }
+
+    beepTimeoutRef.current = setTimeout(() => {
+      if (timerEndRef.current !== endTime) return;
+      const currentRemaining = Math.ceil((endTime - Date.now()) / 1000);
+      if (currentRemaining > 0 && currentRemaining <= 60) playTick();
+      scheduleNextBeep(endTime);
+    }, Math.max(100, delay));
+  }, []);
+
   const clearAll = useCallback(() => {
     clearInterval(intervalRef.current);
+    clearTimeout(beepTimeoutRef.current);
     intervalRef.current = null;
+    beepTimeoutRef.current = null;
+    timerEndRef.current = null;
     _timerStartedAt = 0;
     localStorage.removeItem('display_timer_end');
     localStorage.removeItem('display_timer_title');
@@ -51,25 +86,30 @@ export default function TimerOverlay({ screenScale = 1, fullScreenThresholdSecon
     setTimer({ isActive: false, remaining: 0, duration: 0, title: '' });
   }, [clearAll]);
 
-  const startCountdown = useCallback((seconds, title) => {
+  const startCountdown = useCallback((endTime) => {
     clearInterval(intervalRef.current);
+    clearTimeout(beepTimeoutRef.current);
+    timerEndRef.current = endTime;
+    scheduleNextBeep(endTime);
     intervalRef.current = setInterval(() => {
       setTimer(prev => {
         const next = prev.remaining - 1;
         if (next <= 0) {
           clearInterval(intervalRef.current);
+          clearTimeout(beepTimeoutRef.current);
           intervalRef.current = null;
+          beepTimeoutRef.current = null;
+          timerEndRef.current = null;
           _timerStartedAt = 0;
           localStorage.removeItem('display_timer_end');
           localStorage.removeItem('display_timer_title');
           playEnd();
           return { isActive: false, remaining: 0, duration: 0, title: '' };
         }
-        if (next <= 10) playTick();
         return { ...prev, remaining: next };
       });
     }, 1000);
-  }, []);
+  }, [scheduleNextBeep]);
 
   const startTimer = useCallback((minutes, title = '') => {
     if (intervalRef.current) return;
@@ -80,7 +120,7 @@ export default function TimerOverlay({ screenScale = 1, fullScreenThresholdSecon
     if (title) localStorage.setItem('display_timer_title', title);
     setTimer({ isActive: true, remaining: seconds, duration: seconds, title });
     playStart();
-    startCountdown(seconds, title);
+    startCountdown(endTime);
   }, [startCountdown]);
 
   // Restore timer from localStorage on mount
@@ -93,13 +133,16 @@ export default function TimerOverlay({ screenScale = 1, fullScreenThresholdSecon
       if (remaining > 0) {
         _timerStartedAt = endTime;
         setTimer({ isActive: true, remaining, duration: remaining, title: storedTitle });
-        startCountdown(remaining, storedTitle);
+        startCountdown(endTime);
       } else {
         localStorage.removeItem('display_timer_end');
       }
     }
-    return () => clearInterval(intervalRef.current);
-  }, []);  
+    return () => {
+      clearInterval(intervalRef.current);
+      clearTimeout(beepTimeoutRef.current);
+    };
+  }, []);
 
   // Poll localStorage for admin commands
   useEffect(() => {
@@ -120,7 +163,7 @@ export default function TimerOverlay({ screenScale = 1, fullScreenThresholdSecon
           _timerStartedAt = endTime;
           setTimer({ isActive: true, remaining, duration: remaining, title: t });
           playStart();
-          startCountdown(remaining, t);
+          startCountdown(endTime);
         }
       }
     };
