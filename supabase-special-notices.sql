@@ -4,6 +4,12 @@
 ALTER TABLE "SystemSettings"
   ADD COLUMN IF NOT EXISTS "specialNoticeRotationSeconds" INTEGER DEFAULT 8;
 
+ALTER TABLE "SystemSettings"
+  ADD COLUMN IF NOT EXISTS special_notice_rotation_seconds INTEGER DEFAULT 8;
+
+-- אם הרצת בעבר את fix-sync-trigger.sql - הרץ אותו שוב אחרי הקובץ הזה
+-- (עודכן שם הסנכרון כך שיכלול גם את specialNoticeRotationSeconds)
+
 ALTER TABLE "DaySchedule"
   ADD COLUMN IF NOT EXISTS "workshops" JSONB DEFAULT '[]';
 

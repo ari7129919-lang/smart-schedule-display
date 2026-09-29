@@ -21,7 +21,10 @@ const DISPLAY_MODE_OPTIONS = [
 ];
 
 export default function PopupSettingsTab({ settings, onChange }) {
-  const popupConfig = settings?.popupConfig || {};
+  const rawPopupConfig = settings?.popupConfig;
+  const popupConfig = rawPopupConfig && typeof rawPopupConfig === 'object' && !Array.isArray(rawPopupConfig)
+    ? rawPopupConfig
+    : {};
 
   // Compute days left for preview
   const computeDaysLeft = () => {

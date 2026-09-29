@@ -33,13 +33,22 @@ const parseJsonField = (value) => {
 
   if (typeof value === 'object' && !Array.isArray(value)) {
     const keys = Object.keys(value);
-    const isCharacterIndexedObject = keys.length > 0 && keys.every(key => /^\d+$/.test(key));
-    if (isCharacterIndexedObject) {
-      const serialized = keys
+    const numericKeys = keys.filter(key => /^\d+$/.test(key));
+    const isSerializedObject = numericKeys.length > 0 &&
+      numericKeys.every(key => typeof value[key] === 'string');
+    if (isSerializedObject) {
+      const serialized = numericKeys
         .sort((a, b) => Number(a) - Number(b))
         .map(key => value[key])
         .join('');
-      return parseJsonField(serialized);
+      const inner = parseJsonField(serialized);
+      const namedKeys = keys.filter(key => !/^\d+$/.test(key));
+      if (namedKeys.length === 0) return inner;
+      const namedValues = {};
+      namedKeys.forEach(key => { namedValues[key] = value[key]; });
+      return inner && typeof inner === 'object' && !Array.isArray(inner)
+        ? { ...inner, ...namedValues }
+        : namedValues;
     }
   }
 

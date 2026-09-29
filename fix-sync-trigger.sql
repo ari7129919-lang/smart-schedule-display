@@ -71,6 +71,9 @@ CREATE TRIGGER sync_dayschedule_trigger
   FOR EACH ROW EXECUTE FUNCTION sync_dayschedule_columns();
 
 -- 2. SystemSettings - סנכרון
+ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "specialNoticeRotationSeconds" INTEGER DEFAULT 8;
+ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS special_notice_rotation_seconds INTEGER DEFAULT 8;
+
 CREATE OR REPLACE FUNCTION sync_systemsettings_columns()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -79,6 +82,7 @@ BEGIN
   IF NEW."screenProfile" IS NOT NULL THEN NEW.screen_profile := NEW."screenProfile"; ELSIF NEW.screen_profile IS NOT NULL THEN NEW."screenProfile" := NEW.screen_profile; END IF;
   IF NEW."groupRotationSeconds" IS NOT NULL THEN NEW.group_rotation_seconds := NEW."groupRotationSeconds"; ELSIF NEW.group_rotation_seconds IS NOT NULL THEN NEW."groupRotationSeconds" := NEW.group_rotation_seconds; END IF;
   IF NEW."noticeRotationSeconds" IS NOT NULL THEN NEW.notice_rotation_seconds := NEW."noticeRotationSeconds"; ELSIF NEW.notice_rotation_seconds IS NOT NULL THEN NEW."noticeRotationSeconds" := NEW.notice_rotation_seconds; END IF;
+  IF NEW."specialNoticeRotationSeconds" IS NOT NULL THEN NEW.special_notice_rotation_seconds := NEW."specialNoticeRotationSeconds"; ELSIF NEW.special_notice_rotation_seconds IS NOT NULL THEN NEW."specialNoticeRotationSeconds" := NEW.special_notice_rotation_seconds; END IF;
   IF NEW."timerTitle" IS NOT NULL THEN NEW.timer_title := NEW."timerTitle"; ELSIF NEW.timer_title IS NOT NULL THEN NEW."timerTitle" := NEW.timer_title; END IF;
   IF NEW."timerFullScreenMinutes" IS NOT NULL THEN NEW.timer_full_screen_minutes := NEW."timerFullScreenMinutes"; ELSIF NEW.timer_full_screen_minutes IS NOT NULL THEN NEW."timerFullScreenMinutes" := NEW.timer_full_screen_minutes; END IF;
   IF NEW."overrideMode" IS NOT NULL THEN NEW.override_mode := NEW."overrideMode"; ELSIF NEW.override_mode IS NOT NULL THEN NEW."overrideMode" := NEW.override_mode; END IF;

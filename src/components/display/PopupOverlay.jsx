@@ -31,7 +31,14 @@ const ANIMATION_VARIANTS = {
 };
 
 export default function PopupOverlay({ settings, screenScale = 1 }) {
-  const popupConfig = settings?.popupConfig || settings?.popup_config || {};
+  const rawPopup = settings?.popupConfig || settings?.popup_config;
+  let popupConfig = rawPopup;
+  if (typeof popupConfig === 'string') {
+    try { popupConfig = JSON.parse(popupConfig); } catch { popupConfig = null; }
+  }
+  if (!popupConfig || typeof popupConfig !== 'object' || Array.isArray(popupConfig)) {
+    popupConfig = {};
+  }
   const {
     enabled = false,
     content = '',
