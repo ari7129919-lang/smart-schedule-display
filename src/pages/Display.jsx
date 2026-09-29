@@ -383,7 +383,7 @@ export default function Display({ previewMode = false, fitToScreen: _fitToScreen
   };
 
   const [currentBg, setCurrentBg] = useState(null);
-  const isFullBg = isCustomTheme && currentBg && currentBg.type !== 'none' && (currentBg.displayMode || 'full') === 'full';
+  const isFullBg = currentBg && currentBg.type !== 'none' && (currentBg.displayMode || 'full') === 'full';
 
   return (
     <div 
@@ -428,7 +428,7 @@ export default function Display({ previewMode = false, fitToScreen: _fitToScreen
       <PopupOverlay settings={systemSettings} screenScale={screenScale} />
 
       {/* Custom background layer — below everything */}
-      {isCustomTheme && <BackgroundLayer settings={systemSettings} onCurrentBgChange={setCurrentBg} />}
+      <BackgroundLayer settings={systemSettings} onCurrentBgChange={setCurrentBg} />
 
       <AnimatePresence mode="wait">
         {displayMode === 'break' && (

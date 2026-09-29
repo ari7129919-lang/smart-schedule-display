@@ -11,6 +11,7 @@ function SingleBackground({ bg }) {
   };
 
   const isWatermark = bg.displayMode === 'watermark';
+  const isTakeover = bg.displayMode === 'fullscreen';
   const opacity = bg.opacity ?? (isWatermark ? 0.25 : 1);
 
   const baseStyle = {
@@ -19,7 +20,7 @@ function SingleBackground({ bg }) {
     width: '100%',
     height: '100%',
     opacity,
-    zIndex: isWatermark ? 5 : 1,
+    zIndex: isTakeover ? 60 : isWatermark ? 5 : 1,
     pointerEvents: 'none',
   };
 

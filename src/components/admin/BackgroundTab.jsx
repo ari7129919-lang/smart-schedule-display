@@ -188,7 +188,7 @@ function BackgroundItem({ bg, onChange, onDelete, onMoveUp, onMoveDown, isFirst,
                       : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
                   }`}
                 >
-                  🖥️ רקע מלא
+                  🖥️ רקע מלא (מתחת לתוכן)
                 </button>
                 <button
                   type="button"
@@ -200,6 +200,17 @@ function BackgroundItem({ bg, onChange, onDelete, onMoveUp, onMoveDown, isFirst,
                   }`}
                 >
                   💧 סימן מים
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onChange({ ...bg, displayMode: 'fullscreen' })}
+                  className={`py-2 text-xs rounded-lg border font-medium transition-all ${
+                    bg.displayMode === 'fullscreen'
+                      ? 'border-blue-500 bg-blue-600 text-white'
+                      : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  ⬛ מסך מלא — מכסה את הכול
                 </button>
               </div>
             </div>
